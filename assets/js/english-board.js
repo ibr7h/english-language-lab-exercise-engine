@@ -10,11 +10,11 @@ const STORAGE_KEY='englishLab.board.v0.8';
 const ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const VOWELS=new Set(['A','E','I','O','U']);
 const PHONICS_COLORS=Object.freeze({
-  consonant:'foam-blue',
-  vowel:'foam-coral',
-  digraph:'foam-green',
-  vowelTeam:'foam-yellow',
-  silentE:'foam-purple'
+  consonant:'glyph-blue',
+  vowel:'glyph-red',
+  digraph:'glyph-green',
+  vowelTeam:'glyph-yellow',
+  silentE:'glyph-purple'
 });
 const DIGRAPHS=['SH','CH','TH','WH','PH','CK','NG','QU'];
 const VOWEL_TEAMS=['IGH','AI','AY','EE','EA','OA','OE','OO','OU','OW','OI','OY','UE','UI','IE'];
@@ -189,8 +189,8 @@ class EnglishMagneticBoard {
     ALPHABET.forEach(letter=>{
       const b=document.createElement('button');b.type='button';
       const freeRole=VOWELS.has(letter)?'vowel':'consonant';
-      b.className=`foam-tray-letter ${colorFor(letter)}`;b.textContent=this.display(letter);
-      b.dataset.glyph=this.display(letter);
+      b.className='foam-tray-letter';
+      b.innerHTML=`<span class="foam-glyph ${colorFor(letter)}">${this.escape(this.display(letter))}</span>`;
       b.dataset.phonicsRole=freeRole;
       b.title=`${letter} · ${freeRole}`;
       b.setAttribute('aria-label',`Add foam letter ${letter}, ${freeRole}`);
@@ -254,11 +254,11 @@ class EnglishMagneticBoard {
       item.x=clamp(Number(item.x)||0,4,Math.max(4,rect.width-72));
       item.y=clamp(Number(item.y)||0,4,Math.max(4,rect.height-82));
       const el=document.createElement('button');
+      const pieceHtml=`<span class="foam-piece-glyph pointer-events-none">${this.escape(this.display(item.logicalChar))}</span>`;
       decorateBoardPieceElement(el,{
         item,selected:this.selectedIds.has(item.id),selectionMode:this.selectionMode,mobile,
-        minTouchTarget:this.platform.minTarget,contentHtml:this.escape(this.display(item.logicalChar))
+        minTouchTarget:this.platform.minTarget,contentHtml:pieceHtml
       });
-      el.dataset.glyph=this.display(item.logicalChar);
       el.dataset.phonicsRole=item.phonicsRole||'';
       el.title=item.wordLabel||item.logicalChar;
       this.bindPiece(el,item);
