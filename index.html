@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f7fb" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="English Lab" />
+  <title>English Language Lab</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">English Language Lab</p>
+      <h1>Learn sounds. Build words. Spell with confidence.</h1>
+    </div>
+    <div class="progress-pill" aria-live="polite">
+      <span id="progressCount">0</span> completed
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Main sections">
+    <button class="tab is-active" data-view="learn">Letters</button>
+    <button class="tab" data-view="build">Word Builder</button>
+    <button class="tab" data-view="practice">Practice</button>
+  </nav>
+
+  <main>
+    <section id="learn" class="view is-active">
+      <div class="section-heading">
+        <div><p class="eyebrow">A–Z</p><h2>Letter & sound explorer</h2></div>
+        <label class="compact-control">Case
+          <select id="caseMode">
+            <option value="both">Aa</option>
+            <option value="upper">A</option>
+            <option value="lower">a</option>
+          </select>
+        </label>
+      </div>
+      <div id="letterGrid" class="letter-grid" aria-live="polite"></div>
+    </section>
+
+    <section id="build" class="view">
+      <div class="section-heading">
+        <div><p class="eyebrow">Manipulatives</p><h2>Build the word</h2></div>
+        <button id="newWordBtn" class="secondary-btn">New word</button>
+      </div>
+
+      <article class="builder-card">
+        <div class="prompt-row">
+          <div>
+            <span class="prompt-label">Target</span>
+            <h3 id="targetWord">CAT</h3>
+            <p id="targetHint">A small animal that says “meow”.</p>
+          </div>
+          <button id="speakWordBtn" class="round-btn" aria-label="Hear target word">🔊</button>
+        </div>
+
+        <div id="answerSlots" class="answer-slots" aria-label="Word answer slots"></div>
+        <div id="tileBank" class="tile-bank" aria-label="Letter tiles"></div>
+
+        <div class="builder-actions">
+          <button id="shuffleBtn" class="secondary-btn">Shuffle</button>
+          <button id="resetBtn" class="secondary-btn">Reset</button>
+          <button id="checkBtn" class="primary-btn">Check</button>
+        </div>
+        <p id="builderFeedback" class="feedback" aria-live="polite"></p>
+      </article>
+    </section>
+
+    <section id="practice" class="view">
+      <div class="section-heading">
+        <div><p class="eyebrow">Quick check</p><h2>Choose the beginning letter</h2></div>
+      </div>
+
+      <article class="practice-card">
+        <p class="prompt-label">Which letter does this word begin with?</p>
+        <h3 id="practiceWord">SUN</h3>
+        <button id="speakPracticeBtn" class="secondary-btn">Hear word</button>
+        <div id="practiceChoices" class="choice-grid"></div>
+        <p id="practiceFeedback" class="feedback" aria-live="polite"></p>
+        <button id="nextPracticeBtn" class="primary-btn">Next</button>
+      </article>
+    </section>
+  </main>
+
+  <dialog id="letterDialog" class="letter-dialog">
+    <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
+    <div id="dialogContent"></div>
+  </dialog>
+
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved.</p></footer>
+
+  <script src="src/data/content.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
