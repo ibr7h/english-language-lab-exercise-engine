@@ -1,4 +1,4 @@
-const CACHE = 'english-language-lab-v2';
+const CACHE = 'english-language-lab-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,8 @@ const ASSETS = [
   './app.js',
   './manifest.webmanifest',
   './src/data/content.js',
+  './src/data/exercises.json',
+  './src/engine/exercise-engine.js',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png'
 ];
