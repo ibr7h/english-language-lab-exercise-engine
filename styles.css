@@ -192,3 +192,192 @@ footer { padding: 20px 0 36px; color: var(--ink-soft); font-size: .85rem; }
   .bank-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
   .selection-status { text-align: left; }
 }
+
+
+/* v0.3 data-driven exercise engine */
+.engine-toolbar,
+.engine-set-meta,
+.engine-card-top,
+.engine-actions,
+.engine-bank-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.engine-toolbar {
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.engine-counter {
+  color: var(--ink-soft);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.engine-set-meta {
+  flex-wrap: wrap;
+  color: var(--ink-soft);
+  font-size: .88rem;
+  margin: 0 2px 14px;
+}
+
+.engine-set-meta strong { color: #30384a; }
+.engine-set-meta span:last-child {
+  margin-left: auto;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.engine-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  padding: clamp(18px, 4vw, 32px);
+  box-shadow: var(--shadow);
+}
+
+.engine-card-top {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.engine-card h3 {
+  margin: 5px 0 4px;
+  font-size: clamp(1.5rem, 4vw, 2.35rem);
+}
+
+.engine-instruction {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.engine-prompt {
+  min-height: 82px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0 8px;
+  padding: 16px;
+  border-radius: 18px;
+  background: #f7f8fc;
+}
+
+.engine-emoji { font-size: clamp(2rem, 8vw, 4.5rem); }
+.engine-display {
+  font-size: clamp(2rem, 7vw, 4rem);
+  letter-spacing: .08em;
+}
+.engine-clue,
+.engine-examples {
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+.engine-examples { width: 100%; font-size: .9rem; }
+
+.engine-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 86px;
+  padding: 18px 0 12px;
+}
+.engine-slot {
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  border: 2px dashed #bcc4d3;
+  border-radius: 16px;
+  background: #fafbfe;
+}
+.engine-slot.is-wide {
+  width: auto;
+  min-width: 92px;
+  padding-inline: 7px;
+}
+.engine-slot.drop-hover,
+.engine-bank.drop-hover {
+  border-color: var(--accent);
+  background: #eef0ff;
+}
+.engine-slot:focus-visible {
+  outline: 3px solid rgba(91, 103, 241, .24);
+  outline-offset: 2px;
+}
+
+.engine-bank-label {
+  justify-content: space-between;
+  margin: 6px 2px 8px;
+  color: var(--ink-soft);
+  font-size: .82rem;
+  font-weight: 800;
+}
+.engine-bank-label span:last-child { color: var(--accent); }
+
+.engine-bank {
+  min-height: 96px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border: 2px solid transparent;
+  border-radius: 18px;
+  background: #f1f3f9;
+}
+
+.engine-token.is-wide {
+  width: auto;
+  min-width: 82px;
+  padding-inline: 16px;
+}
+
+.engine-drag-ghost.is-wide {
+  width: auto;
+  min-width: 92px;
+  padding-inline: 18px;
+}
+
+.engine-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.engine-choice {
+  min-height: 76px;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  background: white;
+  font-size: clamp(1.25rem, 4vw, 2rem);
+  font-weight: 850;
+}
+.engine-choice.selected {
+  border-color: var(--accent);
+  background: var(--surface-2);
+  box-shadow: 0 8px 24px rgba(91, 103, 241, .12);
+}
+
+.engine-feedback-row { min-height: 48px; }
+.engine-actions {
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.engine-error {
+  color: var(--bad);
+}
+
+@media (max-width: 640px) {
+  .engine-toolbar { align-items: stretch; flex-direction: column; }
+  .engine-toolbar .compact-control { justify-content: space-between; }
+  .engine-set-meta span:last-child { margin-left: 0; width: 100%; }
+  .engine-choice-grid { grid-template-columns: repeat(3, 1fr); }
+  .engine-slot { width: 58px; height: 58px; }
+  .engine-slot.is-wide { min-width: 78px; width: auto; }
+  .engine-token.is-wide { min-width: 70px; padding-inline: 12px; }
+}
