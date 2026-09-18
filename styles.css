@@ -1681,3 +1681,113 @@ textarea {
 .font-family-comic-neue { font-family:"Comic Neue", cursive; }
 .font-family-patrick-hand { font-family:"Patrick Hand", cursive; }
 .font-family-schoolbell { font-family:"Schoolbell", cursive; }
+
+
+/* v0.10 semantic phonics colors + layered foam extrusion */
+.english-color-legend {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #d9d0bf;
+  border-radius: 14px;
+  background: rgba(255,255,255,.72);
+}
+.english-color-legend > strong {
+  display:block;
+  margin-bottom:8px;
+  font-size:.82rem;
+}
+.english-color-legend-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px 10px;
+  font-size:.76rem;
+  color:var(--ink-soft);
+}
+.english-color-legend-grid span {
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.legend-dot {
+  --foam-face:#7bc9f5;
+  width:14px;
+  height:14px;
+  border-radius:4px;
+  display:inline-block;
+  background:var(--foam-face);
+  box-shadow:2px 2px 0 var(--foam-edge,#4e9fce);
+}
+.legend-dot.foam-coral { --foam-face:#ff8f83; --foam-edge:#dc665b; }
+.legend-dot.foam-blue { --foam-face:#7bc9f5; --foam-edge:#4e9fce; }
+.legend-dot.foam-green { --foam-face:#8fd681; --foam-edge:#62ad58; }
+.legend-dot.foam-yellow { --foam-face:#ffd65a; --foam-edge:#d7aa2e; }
+.legend-dot.foam-purple { --foam-face:#bca1f4; --foam-edge:#8c70ce; }
+
+.foam-tray-letter,
+.free-foam-piece {
+  position:relative;
+  color:transparent !important;
+  -webkit-text-fill-color:transparent !important;
+  text-shadow:none !important;
+  overflow:visible !important;
+}
+
+.foam-tray-letter::before,
+.free-foam-piece::before,
+.foam-tray-letter::after,
+.free-foam-piece::after {
+  content:attr(data-glyph) !important;
+  display:grid !important;
+  place-items:center;
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  font:inherit;
+  line-height:1;
+}
+
+.foam-tray-letter::before,
+.free-foam-piece::before {
+  z-index:0;
+  color:var(--foam-edge) !important;
+  -webkit-text-fill-color:var(--foam-edge) !important;
+  -webkit-text-stroke:1.6px color-mix(in srgb,var(--foam-edge) 72%,#263241);
+  transform:translate(5px,7px);
+  text-shadow:
+    1px 1px 0 color-mix(in srgb,var(--foam-edge) 88%,#263241),
+    2px 2px 0 color-mix(in srgb,var(--foam-edge) 84%,#263241),
+    3px 3px 0 color-mix(in srgb,var(--foam-edge) 80%,#263241),
+    4px 4px 0 color-mix(in srgb,var(--foam-edge) 76%,#263241),
+    5px 5px 0 color-mix(in srgb,var(--foam-edge) 72%,#263241);
+  filter:drop-shadow(4px 6px 5px rgba(30,40,55,.20));
+}
+
+.foam-tray-letter::after,
+.free-foam-piece::after {
+  z-index:1;
+  color:var(--foam-face) !important;
+  -webkit-text-fill-color:var(--foam-face) !important;
+  -webkit-text-stroke:1.15px color-mix(in srgb,var(--foam-edge) 70%,#263241);
+  text-shadow:
+    -1px -1px 0 rgba(255,255,255,.50),
+    0 -2px 0 rgba(255,255,255,.12),
+    1px 1px 0 color-mix(in srgb,var(--foam-edge) 72%,var(--foam-face)),
+    2px 2px 0 color-mix(in srgb,var(--foam-edge) 82%,var(--foam-face));
+}
+
+.free-foam-piece.is-dragging::before {
+  transform:translate(7px,10px);
+  filter:drop-shadow(7px 10px 7px rgba(30,40,55,.25));
+}
+
+.foam-tray-letter:active::before {
+  transform:translate(3px,4px);
+}
+
+.foam-tray-letter:active::after {
+  transform:translate(1px,2px);
+}
+
+/* Semantic meanings:
+   coral = vowel, blue = consonant, green = digraph,
+   yellow = vowel team, purple = silent-e */
