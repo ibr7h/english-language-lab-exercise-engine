@@ -26,7 +26,8 @@
   <nav class="tabs" aria-label="Main sections">
     <button class="tab is-active" data-view="learn">Letters</button>
     <button class="tab" data-view="build">Word Builder</button>
-    <button class="tab" data-view="practice">Practice</button>\n    <button class="tab" data-view="exercises">Exercises</button>
+    <button class="tab" data-view="practice">Practice</button>
+    <button class="tab" data-view="exercises">Exercises</button>
   </nav>
 
   <main>
@@ -110,6 +111,18 @@
         <button id="nextPracticeBtn" class="primary-btn">Next</button>
       </article>
     </section>
+
+    <section id="exercises" class="view">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Data-driven</p>
+          <h2>Exercise Engine</h2>
+        </div>
+      </div>
+      <div id="exerciseEngineRoot" aria-live="polite">
+        <article class="engine-card"><p>Loading exercises…</p></article>
+      </div>
+    </section>
   </main>
 
   <dialog id="letterDialog" class="letter-dialog">
@@ -120,6 +133,7 @@
   <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved.</p></footer>
 
   <script src="src/data/content.js"></script>
+  <script src="src/engine/exercise-engine.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
