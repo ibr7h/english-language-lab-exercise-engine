@@ -9,6 +9,9 @@
   <meta name="apple-mobile-web-app-title" content="English Lab" />
   <title>English Language Lab</title>
   <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=ABeeZee:ital@0;1&family=Andika:wght@400;700&family=Atkinson+Hyperlegible:wght@400;700&family=Comic+Neue:wght@400;700&family=Fredoka:wght@400;600;700&family=Lexend:wght@400;600;700&family=Nunito:wght@400;700;900&family=Patrick+Hand&family=Schoolbell&family=Teachers:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -48,12 +51,30 @@
           </label>
           <label class="compact-control">Letter font
             <select id="letterFontPicker">
-              <option value="rounded">Rounded</option>
-              <option value="school">School Print</option>
-              <option value="clean">Clean Sans</option>
-              <option value="book">Book Serif</option>
-              <option value="mono">Mono</option>
-              <option value="system">System</option>
+              <optgroup label="Educational">
+                <option value="teachers">Teachers</option>
+                <option value="andika">Andika</option>
+                <option value="abeezee">ABeeZee</option>
+                <option value="lexend">Lexend</option>
+                <option value="atkinson">Atkinson Hyperlegible</option>
+              </optgroup>
+              <optgroup label="Friendly / Rounded">
+                <option value="fredoka">Fredoka</option>
+                <option value="nunito">Nunito</option>
+                <option value="comicNeue">Comic Neue</option>
+              </optgroup>
+              <optgroup label="Handwriting">
+                <option value="patrickHand">Patrick Hand</option>
+                <option value="schoolbell">Schoolbell</option>
+              </optgroup>
+              <optgroup label="Device fallbacks">
+                <option value="rounded">Rounded</option>
+                <option value="school">School Print</option>
+                <option value="clean">Clean Sans</option>
+                <option value="book">Book Serif</option>
+                <option value="mono">Mono</option>
+                <option value="system">System</option>
+              </optgroup>
             </select>
           </label>
           <label class="compact-control">App font
@@ -290,7 +311,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.8</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.9</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
