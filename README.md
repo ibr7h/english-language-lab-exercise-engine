@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.10 — semantic phonics colors + realistic foam depth
+## v0.11 — exact Arabic-project foam rendering
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -64,6 +64,17 @@ Colors now encode phonics information instead of being decorative:
 - Purple = silent-e
 
 On the free A–Z board, vowels are coral and consonants are blue. When a word is created in Build or Completed Word mode, the word is analyzed and the more specific digraph, vowel-team and silent-e colors are applied automatically. A visible legend is included beside the foam-letter tray.
+
+### Exact Arabic foam renderer
+
+v0.11 removes the English-only pseudo-element foam simulation and uses the same rendering pattern as the Arabic project:
+
+- transparent draggable holder;
+- nested `foam-glyph` element as the visible letter;
+- the same multi-layer EVA extrusion via `text-shadow`;
+- the same `glyph-red`, `glyph-blue`, `glyph-green`, and `glyph-purple` classes;
+- a matching `glyph-yellow` extrusion added only for English vowel teams;
+- saved v0.10 color classes are migrated automatically.
 
 ### Cut-foam letter rendering
 
@@ -136,7 +147,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v10` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v11` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -154,6 +165,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.10
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.11
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
