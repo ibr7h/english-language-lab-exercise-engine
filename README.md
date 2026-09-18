@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.8 — Arabic-project parity magnetic board
+## v0.9 — cut-foam letters + expanded educational fonts
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,23 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### Expanded educational fonts
+
+v0.9 adds educational typefaces intended for early literacy and classroom use:
+
+- Teachers
+- Andika
+- ABeeZee
+- Lexend
+- Atkinson Hyperlegible
+- Fredoka
+- Nunito
+- Comic Neue
+- Patrick Hand
+- Schoolbell
+
+The previous device fallbacks remain available. The selected teaching font applies to the foam-letter kit, board pieces, target words and movable exercise tokens. Google-hosted font files are cached by the service worker after first use so subsequent offline sessions can reuse them when available.
 
 ### Font support
 
@@ -35,6 +52,10 @@ The app separates the visual typeface used for learning letters from the typefac
 Both choices are saved locally and restored the next time the app opens. Teaching-font changes apply to foam pieces, the A–Z explorer, word targets and exercise tokens.
 
 The current profiles use local device font stacks so the PWA remains offline-first. A later release can bundle licensed open fonts when identical rendering across iOS, Android and desktop is required.
+
+### Cut-foam letter rendering
+
+Foam letters are no longer drawn inside colored rectangles. The visible object is the letter glyph itself, styled with a foam face, darker foam edge and depth shadow. The touch target remains larger and invisible for reliable dragging on phones and tablets.
 
 ### Board parity with the Arabic project
 
@@ -103,7 +124,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.8 service worker uses cache `english-language-lab-v8` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.8 service worker uses cache `english-language-lab-v9` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -121,6 +142,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.8
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.9
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
