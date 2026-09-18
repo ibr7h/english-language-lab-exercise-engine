@@ -259,8 +259,9 @@ class EnglishMagneticBoard {
     });
     const end=e=>{
       if(!this.drag||this.drag.pointerId!==e.pointerId)return;
-      const moved=this.drag.moved;
-      d.origins.forEach(o=>document.querySelector(`.free-foam-piece[data-piece-id="${CSS.escape(o.id)}"]`)?.classList.remove('is-dragging'));
+      const drag=this.drag;
+      const moved=drag.moved;
+      drag.origins.forEach(o=>document.querySelector(`.free-foam-piece[data-piece-id="${CSS.escape(o.id)}"]`)?.classList.remove('is-dragging'));
       this.drag=null;
       if(moved&&this.mode==='build'&&this.exercise)this.snapDraggedToNearestSlot(item.id);
       this.renderBoard();
