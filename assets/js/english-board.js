@@ -31,6 +31,16 @@ function colorFor(letter){
   const upper=String(letter||'').toUpperCase();
   return VOWELS.has(upper) ? PHONICS_COLORS.vowel : PHONICS_COLORS.consonant;
 }
+function normalizeLegacyColor(color, letter=''){
+  const map={
+    'foam-coral':'glyph-red',
+    'foam-blue':'glyph-blue',
+    'foam-green':'glyph-green',
+    'foam-yellow':'glyph-yellow',
+    'foam-purple':'glyph-purple'
+  };
+  return map[color] || color || colorFor(letter);
+}
 function analyzeWordPhonics(word){
   const text=String(word||'').toUpperCase().replace(/[^A-Z]/g,'');
   const result=[...text].map(letter=>({
@@ -84,7 +94,12 @@ class EnglishMagneticBoard {
   set items(value){this.state.replace(value);}
   init(){
     const restored=loadBoardState(localStorage,STORAGE_KEY);
-    if(restored?.items?.length)this.state.replace(restored.items);
+    if(restored?.items?.length){
+      restored.items.forEach(item=>{
+        item.color=normalizeLegacyColor(item.color,item.logicalChar||item.displayGlyph||'');
+      });
+      this.state.replace(restored.items);
+    }
     this.bindControls();
     this.renderTray();
     this.setMode('free',true);
