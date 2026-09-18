@@ -1115,3 +1115,42 @@ footer { padding: 20px 0 36px; color: var(--ink-soft); font-size: .85rem; }
     flex-direction: column;
   }
 }
+
+
+/* v0.6 font profiles */
+:root {
+  --ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --letter-font: "Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif;
+}
+
+body,
+button,
+select,
+input,
+textarea {
+  font-family: var(--ui-font);
+}
+
+.foam-tray-letter,
+.foam-board-piece,
+.foam-drag-ghost,
+.letter-glyph,
+.dialog-letter,
+.letter-tile,
+.drag-ghost,
+.engine-token,
+.engine-drag-ghost,
+.engine-display,
+.engine-choice,
+.choice-btn,
+.target-line h3,
+.practice-card h3,
+.foam-target-display strong,
+.foam-word-row input {
+  font-family: var(--letter-font);
+}
+
+.font-preview-note {
+  font-size: .74rem;
+  color: var(--ink-soft);
+}
