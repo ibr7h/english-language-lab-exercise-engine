@@ -506,15 +506,33 @@ renderLetters();
 loadWord(0);
 renderPractice();
 
-const exerciseEngineRoot = $('#exerciseEngineRoot');
-if (exerciseEngineRoot && window.EnglishExerciseEngine && window.ENGLISH_LAB_EXERCISES) {
-  const exerciseEngine = new window.EnglishExerciseEngine({
-    root: exerciseEngineRoot,
-    data: window.ENGLISH_LAB_EXERCISES,
-    onSolved: () => addProgress()
-  });
-  exerciseEngine.render();
+async function initExerciseEngine() {
+  const root = $('#exerciseEngineRoot');
+  if (!root || !window.EnglishExerciseEngine) return;
+
+  try {
+    const response = await fetch('./src/data/exercises.json', { cache: 'no-cache' });
+    if (!response.ok) throw new Error(`Exercise data request failed: ${response.status}`);
+
+    const data = await response.json();
+    const exerciseEngine = new window.EnglishExerciseEngine({
+      root,
+      data,
+      onSolved: () => addProgress()
+    });
+    exerciseEngine.render();
+  } catch (error) {
+    console.error(error);
+    root.innerHTML = `
+      <article class="engine-card engine-error">
+        <strong>Exercises could not be loaded.</strong>
+        <p>Reload the app while online once so the PWA can cache the v0.3 exercise data.</p>
+      </article>
+    `;
+  }
 }
+
+initExerciseEngine();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
