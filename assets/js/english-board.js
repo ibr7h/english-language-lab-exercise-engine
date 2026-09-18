@@ -253,12 +253,15 @@ class EnglishMagneticBoard {
         const target=this.state.find(o.id);if(!target)return;
         target.x=clamp(o.x+dx,4,Math.max(4,rect.width-72));
         target.y=clamp(o.y+dy,4,Math.max(4,rect.height-82));
+        const node=document.querySelector(`.free-foam-piece[data-piece-id="${CSS.escape(o.id)}"]`);
+        if(node){node.style.left=`${target.x}px`;node.style.top=`${target.y}px`;node.classList.add('is-dragging');}
       });
-      this.renderBoard();
     });
     const end=e=>{
       if(!this.drag||this.drag.pointerId!==e.pointerId)return;
-      const moved=this.drag.moved;this.drag=null;
+      const moved=this.drag.moved;
+      d.origins.forEach(o=>document.querySelector(`.free-foam-piece[data-piece-id="${CSS.escape(o.id)}"]`)?.classList.remove('is-dragging'));
+      this.drag=null;
       if(moved&&this.mode==='build'&&this.exercise)this.snapDraggedToNearestSlot(item.id);
       this.renderBoard();
     };
