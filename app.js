@@ -130,6 +130,7 @@ function loadWord(index = state.wordIndex) {
   state.answer = Array(currentEntry().word.length).fill(null);
   state.tiles = makeWordTiles(currentEntry().word);
   state.selected = null;
+  state.currentSolved = false;
   $('#builderFeedback').textContent = '';
   $('#builderFeedback').className = 'feedback';
   renderTarget();
@@ -426,7 +427,6 @@ function scrambleWord() {
   state.answer = Array(currentEntry().word.length).fill(null);
   state.tiles = shuffled(allTiles);
   state.selected = null;
-  state.currentSolved = false;
   $('#builderFeedback').textContent = '';
   $('#builderFeedback').className = 'feedback';
   renderBuilder();
@@ -505,6 +505,16 @@ renderProgress();
 renderLetters();
 loadWord(0);
 renderPractice();
+
+const exerciseEngineRoot = $('#exerciseEngineRoot');
+if (exerciseEngineRoot && window.EnglishExerciseEngine && window.ENGLISH_LAB_EXERCISES) {
+  const exerciseEngine = new window.EnglishExerciseEngine({
+    root: exerciseEngineRoot,
+    data: window.ENGLISH_LAB_EXERCISES,
+    onSolved: () => addProgress()
+  });
+  exerciseEngine.render();
+}
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
