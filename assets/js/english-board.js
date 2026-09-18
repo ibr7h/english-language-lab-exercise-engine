@@ -190,6 +190,7 @@ class EnglishMagneticBoard {
       const b=document.createElement('button');b.type='button';
       const freeRole=VOWELS.has(letter)?'vowel':'consonant';
       b.className=`foam-tray-letter ${colorFor(letter)}`;b.textContent=this.display(letter);
+      b.dataset.glyph=this.display(letter);
       b.dataset.phonicsRole=freeRole;
       b.title=`${letter} · ${freeRole}`;
       b.setAttribute('aria-label',`Add foam letter ${letter}, ${freeRole}`);
@@ -257,6 +258,8 @@ class EnglishMagneticBoard {
         item,selected:this.selectedIds.has(item.id),selectionMode:this.selectionMode,mobile,
         minTouchTarget:this.platform.minTarget,contentHtml:this.escape(this.display(item.logicalChar))
       });
+      el.dataset.glyph=this.display(item.logicalChar);
+      el.dataset.phonicsRole=item.phonicsRole||'';
       el.title=item.wordLabel||item.logicalChar;
       this.bindPiece(el,item);
       canvas.appendChild(el);
