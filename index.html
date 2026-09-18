@@ -35,13 +35,13 @@
     <section id="magnetic-board" class="view is-active">
       <div class="section-heading magnetic-heading">
         <div>
-          <p class="eyebrow">Hands-on phonics</p>
-          <h2>Magnetic Foam Letter Board</h2>
-          <p class="section-note">Drag foam letters from the tray onto the board, then move and arrange them freely.</p>
+          <p class="eyebrow">Original Foam Kit Experience</p>
+          <h2>Giant Magnetic Foam Board</h2>
+          <p class="section-note">Built on the same board model as the Arabic project: free pieces, grouped words, undo/redo, selection, resizing, scattering and word-building exercises.</p>
         </div>
         <div class="magnetic-toolbar compact-toolbar">
           <label class="compact-control">Case
-            <select id="foamCaseMode">
+            <select id="englishCase">
               <option value="upper">ABC</option>
               <option value="lower">abc</option>
             </select>
@@ -64,65 +64,131 @@
               <option value="book">Book Serif</option>
             </select>
           </label>
-          <button id="foamClearBtn" class="secondary-btn">Clear board</button>
         </div>
       </div>
 
-      <div class="magnetic-kit">
-        <aside class="foam-tray-panel" aria-label="Foam letter tray">
-          <div class="foam-tray-heading">
-            <div>
-              <span class="foam-tray-icon">🧺</span>
-              <strong>Foam Letter Tray</strong>
-            </div>
-            <small>Tap to add · drag to place</small>
+      <div class="english-engine-panel">
+        <div class="english-mode-row">
+          <div class="english-mode-buttons" role="group" aria-label="Board mode">
+            <button id="englishModeFree" class="english-mode-btn active">🧲 Free Board</button>
+            <button id="englishModeBuild" class="english-mode-btn">🧩 Build a Word</button>
+            <button id="englishModeCompleted" class="english-mode-btn">🔗 Completed Words</button>
           </div>
-          <div id="foamLetterTray" class="foam-letter-tray"></div>
+          <div id="englishPlatformBadge" class="english-platform-badge">Shared board core</div>
+        </div>
 
-          <div class="foam-word-lab">
-            <label for="foamTargetInput">Build a word</label>
-            <div class="foam-word-row">
-              <input id="foamTargetInput" type="text" inputmode="text" autocomplete="off" maxlength="14" value="CAT" aria-label="Target word" />
-              <button id="foamScatterWordBtn" class="primary-btn">Scatter</button>
-            </div>
-            <label class="foam-check">
-              <input id="foamShowTarget" type="checkbox" checked />
-              Show target word
-            </label>
+        <div id="englishBuildControls" class="english-build-controls hidden">
+          <div class="english-input-group">
+            <label for="englishBuildWord">Target word</label>
+            <input id="englishBuildWord" type="text" value="CAT" maxlength="14" autocomplete="off" />
+            <button id="englishStartBuild" class="primary-btn">🎲 Scatter word letters</button>
           </div>
-        </aside>
+          <div class="english-presets">
+            <button type="button" onclick="document.getElementById('englishBuildWord').value='CAT';document.getElementById('englishStartBuild').click()">CAT</button>
+            <button type="button" onclick="document.getElementById('englishBuildWord').value='SHIP';document.getElementById('englishStartBuild').click()">SHIP</button>
+            <button type="button" onclick="document.getElementById('englishBuildWord').value='RAIN';document.getElementById('englishStartBuild').click()">RAIN</button>
+            <button type="button" onclick="document.getElementById('englishBuildWord').value='MOON';document.getElementById('englishStartBuild').click()">MOON</button>
+            <button type="button" onclick="document.getElementById('englishBuildWord').value='FISH';document.getElementById('englishStartBuild').click()">FISH</button>
+          </div>
+          <div class="english-options">
+            <label><input id="englishShowTarget" type="checkbox" checked /> Show target word</label>
+          </div>
+          <div class="english-action-row">
+            <button id="englishReshuffle">🔀 Reshuffle</button>
+            <button id="englishCheck" class="exercise-check-btn">✓ Check order</button>
+            <button id="englishHintBtn">💡 Hint</button>
+          </div>
+          <div id="englishExerciseStatus" class="english-exercise-status">Type a word, then scatter its foam letters.</div>
+        </div>
 
-        <div class="magnetic-board-shell">
-          <div class="magnetic-board-topbar">
+        <div id="englishCompletedControls" class="english-completed-controls hidden">
+          <div class="english-input-group">
+            <label for="englishCompletedWord">Add a completed word</label>
+            <input id="englishCompletedWord" type="text" placeholder="e.g. SCHOOL" maxlength="20" autocomplete="off" />
+            <button id="englishAddCompleted" class="primary-btn">➕ Add word</button>
+          </div>
+          <div class="english-presets">
+            <button class="english-preset-word" data-word="CAT">CAT</button>
+            <button class="english-preset-word" data-word="DOG">DOG</button>
+            <button class="english-preset-word" data-word="BOOK">BOOK</button>
+            <button class="english-preset-word" data-word="SCHOOL">SCHOOL</button>
+            <button class="english-preset-word" data-word="I SEE A CAT">I SEE A CAT</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="english-board-tools">
+        <button id="englishUndo" class="board-selection-btn">↶ Undo</button>
+        <button id="englishRedo" class="board-selection-btn">↷ Redo</button>
+        <button id="englishSelectAll" class="board-selection-btn">☑ Select all</button>
+        <button id="englishClearSelection" class="board-selection-btn">Clear selection</button>
+        <button id="englishDetach" class="board-selection-btn word-edit">🔓 Detach word</button>
+        <button id="englishRegroup" class="board-selection-btn word-edit">🔗 Regroup</button>
+        <div class="board-scale-tools">
+          <button id="englishSmaller">A−</button>
+          <button id="englishScaleValue">100%</button>
+          <button id="englishLarger">A+</button>
+        </div>
+        <button id="englishDuplicate" class="board-selection-btn">⧉ Duplicate</button>
+        <button id="englishDelete" class="board-selection-btn danger">🗑 Selected</button>
+        <button id="englishAlign" class="board-selection-btn">📏 Align</button>
+        <button id="englishScatter" class="board-selection-btn">🎲 Scatter</button>
+        <button id="englishSpeak" class="board-selection-btn accent">📢 Speak</button>
+        <button id="englishClear" class="board-selection-btn danger-soft">🧹 Clear board</button>
+      </div>
+
+      <div class="english-board-layout">
+        <div class="english-board-frame">
+          <div class="english-board-header">
             <div>
               <span class="magnet-dot"></span>
-              <strong>Magnetic Whiteboard</strong>
+              <div>
+                <strong id="englishBoardModeTitle">Free magnetic board — every letter is independent</strong>
+                <small id="englishBoardHint">Pick a foam letter, move it anywhere, resize it, duplicate it, or build freely.</small>
+              </div>
             </div>
-            <div class="board-tool-row">
-              <button id="foamAlignBtn" class="board-mini-btn" title="Arrange letters in one row">Align</button>
-              <button id="foamScatterBtn" class="board-mini-btn" title="Scatter letters on the board">Scatter</button>
-              <button id="foamDuplicateBtn" class="board-mini-btn" title="Duplicate selected letter">Duplicate</button>
-              <button id="foamDeleteBtn" class="board-mini-btn danger" title="Delete selected letter">Delete</button>
+            <span id="englishPieceCount">0 pieces</span>
+          </div>
+
+          <div id="englishBoardCanvas" class="english-board-canvas" aria-label="Giant magnetic foam board">
+            <div class="english-board-gridline gridline-one"></div>
+            <div class="english-board-gridline gridline-two"></div>
+            <div class="english-board-empty">
+              <span>🧲</span>
+              <strong>The magnetic board is ready</strong>
+              <small>Add a foam letter from the kit or choose a board mode.</small>
+            </div>
+
+            <div id="englishAssemblyZone" class="english-assembly-zone hidden">
+              <div class="english-target-line">
+                <span>Build:</span>
+                <strong id="englishTargetBadge">CAT</strong>
+              </div>
+              <div id="englishAssemblySlots" class="english-assembly-slots"></div>
             </div>
           </div>
 
-          <div id="foamTargetDisplay" class="foam-target-display" aria-live="polite">
-            <span>Build:</span>
-            <strong>CAT</strong>
-          </div>
-
-          <div id="magneticFoamBoard" class="magnetic-foam-board" aria-label="Magnetic board for movable foam letters">
-            <div class="board-guide board-guide-1"></div>
-            <div class="board-guide board-guide-2"></div>
-            <div class="board-hint">Drop foam letters here</div>
-          </div>
-
-          <div class="magnetic-board-footer">
-            <span>Tip: tap a placed letter to select it. Double-tap to hear its name.</span>
-            <span id="foamBoardCount">0 pieces</span>
+          <div class="english-board-footer">
+            <span>Tap: select · Double tap: hear · Drag: move · Shift/Ctrl tap: multi-select</span>
+            <span>Delete key and arrow keys are supported.</span>
           </div>
         </div>
+
+        <aside class="english-kit-panel">
+          <div class="foam-tray-heading">
+            <div><span class="foam-tray-icon">🧺</span><strong>Original Foam Letter Kit</strong></div>
+            <small>26 reusable pieces</small>
+          </div>
+          <div id="englishLetterTray" class="english-letter-tray"></div>
+
+          <div class="english-kit-note">
+            <strong>How this matches the Arabic project</strong>
+            <span>Letters are independent board objects, not fixed answer buttons. Completed words can move as groups and can be detached back into individual letters.</span>
+          </div>
+        </aside>
       </div>
+
+      <div id="englishBoardToast" class="english-board-toast" role="status" aria-live="polite"></div>
     </section>
 
     <section id="learn" class="view">
@@ -224,10 +290,11 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.7</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.8</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
   <script src="app.js"></script>
+  <script type="module" src="assets/js/english-board.js"></script>
 </body>
 </html>
