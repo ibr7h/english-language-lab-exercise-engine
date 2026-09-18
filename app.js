@@ -537,3 +537,396 @@ initExerciseEngine();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
 }
+
+
+// ============================================================================
+// v0.5 Magnetic Foam Letter Board
+// ============================================================================
+const foamBoardState = {
+  caseMode: 'upper',
+  nextId: 1,
+  selectedId: null,
+  trayDrag: null
+};
+
+const FOAM_COLORS = ['foam-coral', 'foam-blue', 'foam-yellow', 'foam-green', 'foam-purple'];
+const VOWELS = new Set(['A', 'E', 'I', 'O', 'U']);
+
+function foamColorClass(letter) {
+  const upper = String(letter).toUpperCase();
+  if (VOWELS.has(upper)) return 'foam-coral';
+  const code = upper.charCodeAt(0) || 65;
+  return FOAM_COLORS[(code - 65) % FOAM_COLORS.length];
+}
+
+function foamGlyph(letter) {
+  return foamBoardState.caseMode === 'lower'
+    ? String(letter).toLowerCase()
+    : String(letter).toUpperCase();
+}
+
+function foamBoardElement() {
+  return $('#magneticFoamBoard');
+}
+
+function updateFoamBoardMeta() {
+  const board = foamBoardElement();
+  if (!board) return;
+  const count = board.querySelectorAll('.foam-board-piece').length;
+  $('#foamBoardCount').textContent = `${count} ${count === 1 ? 'piece' : 'pieces'}`;
+  board.classList.toggle('has-pieces', count > 0);
+}
+
+function selectFoamPiece(piece) {
+  $$('.foam-board-piece.is-selected').forEach(item => item.classList.remove('is-selected'));
+  foamBoardState.selectedId = piece?.dataset.pieceId || null;
+  piece?.classList.add('is-selected');
+}
+
+function clearFoamSelection() {
+  selectFoamPiece(null);
+}
+
+function clampFoamPosition(x, y, pieceWidth = 72, pieceHeight = 78) {
+  const board = foamBoardElement();
+  if (!board) return { x: 0, y: 0 };
+  const maxX = Math.max(8, board.clientWidth - pieceWidth - 8);
+  const maxY = Math.max(8, board.clientHeight - pieceHeight - 8);
+  return {
+    x: Math.max(8, Math.min(x, maxX)),
+    y: Math.max(8, Math.min(y, maxY))
+  };
+}
+
+function createFoamPiece(letter, x, y, options = {}) {
+  const board = foamBoardElement();
+  if (!board) return null;
+
+  const piece = document.createElement('button');
+  const pieceId = `foam-${foamBoardState.nextId++}`;
+  const rotation = options.rotation ?? (Math.random() * 8 - 4);
+  const position = clampFoamPosition(x, y);
+
+  piece.type = 'button';
+  piece.className = `foam-board-piece ${foamColorClass(letter)}`;
+  piece.dataset.pieceId = pieceId;
+  piece.dataset.letter = String(letter).toUpperCase();
+  piece.style.left = `${position.x}px`;
+  piece.style.top = `${position.y}px`;
+  piece.style.setProperty('--foam-rotation', `${rotation}deg`);
+  piece.textContent = foamGlyph(letter);
+  piece.setAttribute('aria-label', `Movable foam letter ${String(letter).toUpperCase()}`);
+
+  attachFoamPieceDrag(piece);
+  board.appendChild(piece);
+  updateFoamBoardMeta();
+  if (options.select !== false) selectFoamPiece(piece);
+  return piece;
+}
+
+function attachFoamPieceDrag(piece) {
+  piece.addEventListener('pointerdown', event => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    event.preventDefault();
+
+    const board = foamBoardElement();
+    const pieceRect = piece.getBoundingClientRect();
+    const boardRect = board.getBoundingClientRect();
+
+    const drag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false,
+      offsetX: event.clientX - pieceRect.left,
+      offsetY: event.clientY - pieceRect.top,
+      boardLeft: boardRect.left,
+      boardTop: boardRect.top
+    };
+
+    piece.dataset.dragging = 'true';
+    piece.setPointerCapture?.(event.pointerId);
+
+    const onMove = moveEvent => {
+      if (moveEvent.pointerId !== drag.pointerId) return;
+      const distance = Math.hypot(moveEvent.clientX - drag.startX, moveEvent.clientY - drag.startY);
+      if (!drag.moved && distance < 5) return;
+      drag.moved = true;
+      moveEvent.preventDefault();
+
+      const next = clampFoamPosition(
+        moveEvent.clientX - drag.boardLeft - drag.offsetX,
+        moveEvent.clientY - drag.boardTop - drag.offsetY,
+        piece.offsetWidth,
+        piece.offsetHeight
+      );
+
+      piece.style.left = `${next.x}px`;
+      piece.style.top = `${next.y}px`;
+      piece.classList.add('is-dragging');
+    };
+
+    const onEnd = endEvent => {
+      if (endEvent.pointerId !== drag.pointerId) return;
+      piece.removeEventListener('pointermove', onMove);
+      piece.removeEventListener('pointerup', onEnd);
+      piece.removeEventListener('pointercancel', onEnd);
+      piece.classList.remove('is-dragging');
+      delete piece.dataset.dragging;
+
+      if (!drag.moved) {
+        selectFoamPiece(piece);
+      }
+    };
+
+    piece.addEventListener('pointermove', onMove);
+    piece.addEventListener('pointerup', onEnd);
+    piece.addEventListener('pointercancel', onEnd);
+  });
+
+  piece.addEventListener('dblclick', () => speak(piece.dataset.letter));
+}
+
+function randomFoamPosition() {
+  const board = foamBoardElement();
+  if (!board) return { x: 20, y: 20 };
+  return {
+    x: 18 + Math.random() * Math.max(40, board.clientWidth - 110),
+    y: 24 + Math.random() * Math.max(50, board.clientHeight - 125)
+  };
+}
+
+function addFoamLetter(letter, coordinates = null) {
+  const pos = coordinates || randomFoamPosition();
+  return createFoamPiece(letter, pos.x, pos.y);
+}
+
+function renderFoamTray() {
+  const tray = $('#foamLetterTray');
+  if (!tray) return;
+  tray.innerHTML = '';
+
+  letters.forEach(item => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `foam-tray-letter ${foamColorClass(item.upper)}`;
+    button.dataset.letter = item.upper;
+    button.textContent = foamGlyph(item.upper);
+    button.setAttribute('aria-label', `Foam letter ${item.upper}`);
+
+    let drag = null;
+
+    button.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+      drag = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        moved: false,
+        ghost: null
+      };
+
+      button.setPointerCapture?.(event.pointerId);
+    });
+
+    button.addEventListener('pointermove', event => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+      if (!drag.moved && distance < 7) return;
+
+      if (!drag.moved) {
+        drag.moved = true;
+        drag.ghost = document.createElement('div');
+        drag.ghost.className = `foam-drag-ghost ${foamColorClass(item.upper)}`;
+        drag.ghost.textContent = foamGlyph(item.upper);
+        document.body.appendChild(drag.ghost);
+      }
+
+      event.preventDefault();
+      drag.ghost.style.left = `${event.clientX}px`;
+      drag.ghost.style.top = `${event.clientY}px`;
+    });
+
+    const finishTrayDrag = event => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+
+      const board = foamBoardElement();
+      const boardRect = board?.getBoundingClientRect();
+      const wasMoved = drag.moved;
+
+      drag.ghost?.remove();
+
+      if (
+        wasMoved &&
+        boardRect &&
+        event.clientX >= boardRect.left &&
+        event.clientX <= boardRect.right &&
+        event.clientY >= boardRect.top &&
+        event.clientY <= boardRect.bottom
+      ) {
+        addFoamLetter(item.upper, {
+          x: event.clientX - boardRect.left - 36,
+          y: event.clientY - boardRect.top - 38
+        });
+      } else if (!wasMoved) {
+        addFoamLetter(item.upper);
+      }
+
+      drag = null;
+    };
+
+    button.addEventListener('pointerup', finishTrayDrag);
+    button.addEventListener('pointercancel', event => {
+      drag?.ghost?.remove();
+      drag = null;
+    });
+
+    tray.appendChild(button);
+  });
+}
+
+function clearFoamBoard() {
+  const board = foamBoardElement();
+  if (!board) return;
+  board.querySelectorAll('.foam-board-piece').forEach(piece => piece.remove());
+  foamBoardState.selectedId = null;
+  updateFoamBoardMeta();
+}
+
+function scatterFoamPieces() {
+  $$('.foam-board-piece').forEach(piece => {
+    const pos = randomFoamPosition();
+    const next = clampFoamPosition(pos.x, pos.y, piece.offsetWidth, piece.offsetHeight);
+    piece.style.left = `${next.x}px`;
+    piece.style.top = `${next.y}px`;
+    piece.style.setProperty('--foam-rotation', `${Math.random() * 12 - 6}deg`);
+  });
+}
+
+function alignFoamPieces() {
+  const board = foamBoardElement();
+  if (!board) return;
+
+  const pieces = [...board.querySelectorAll('.foam-board-piece')];
+  if (!pieces.length) return;
+
+  const gap = 8;
+  const pieceWidth = 70;
+  const totalWidth = pieces.length * pieceWidth + (pieces.length - 1) * gap;
+  let startX = Math.max(14, (board.clientWidth - totalWidth) / 2);
+  const y = Math.max(36, board.clientHeight * 0.42);
+
+  pieces.forEach((piece, index) => {
+    const x = startX + index * (pieceWidth + gap);
+    const next = clampFoamPosition(x, y, piece.offsetWidth, piece.offsetHeight);
+    piece.style.left = `${next.x}px`;
+    piece.style.top = `${next.y}px`;
+    piece.style.setProperty('--foam-rotation', '0deg');
+  });
+}
+
+function deleteSelectedFoamPiece() {
+  if (!foamBoardState.selectedId) return;
+  const piece = document.querySelector(`.foam-board-piece[data-piece-id="${foamBoardState.selectedId}"]`);
+  piece?.remove();
+  foamBoardState.selectedId = null;
+  updateFoamBoardMeta();
+}
+
+function duplicateSelectedFoamPiece() {
+  if (!foamBoardState.selectedId) return;
+  const piece = document.querySelector(`.foam-board-piece[data-piece-id="${foamBoardState.selectedId}"]`);
+  if (!piece) return;
+  addFoamLetter(piece.dataset.letter, {
+    x: parseFloat(piece.style.left || '20') + 24,
+    y: parseFloat(piece.style.top || '20') + 24
+  });
+}
+
+function updateFoamTargetDisplay() {
+  const input = $('#foamTargetInput');
+  const display = $('#foamTargetDisplay');
+  const checkbox = $('#foamShowTarget');
+  if (!input || !display || !checkbox) return;
+
+  const word = input.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 14);
+  input.value = word;
+  display.querySelector('strong').textContent = word || '—';
+  display.hidden = !checkbox.checked;
+}
+
+function scatterTargetWord() {
+  const input = $('#foamTargetInput');
+  if (!input) return;
+
+  const word = input.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 14);
+  input.value = word;
+  if (!word) return;
+
+  clearFoamBoard();
+  [...word].forEach((letter, index) => {
+    const board = foamBoardElement();
+    const columns = Math.max(1, Math.min(word.length, 7));
+    const col = index % columns;
+    const row = Math.floor(index / columns);
+    const baseX = 30 + col * Math.max(72, (board.clientWidth - 100) / columns);
+    const baseY = 70 + row * 105;
+    createFoamPiece(
+      letter,
+      baseX + (Math.random() * 38 - 19),
+      baseY + (Math.random() * 45 - 22),
+      { select: false }
+    );
+  });
+  scatterFoamPieces();
+  updateFoamTargetDisplay();
+}
+
+function updateFoamCaseMode() {
+  foamBoardState.caseMode = $('#foamCaseMode')?.value || 'upper';
+  renderFoamTray();
+  $$('.foam-board-piece').forEach(piece => {
+    piece.textContent = foamGlyph(piece.dataset.letter);
+  });
+}
+
+function initFoamBoard() {
+  if (!foamBoardElement()) return;
+
+  renderFoamTray();
+  updateFoamTargetDisplay();
+  updateFoamBoardMeta();
+
+  $('#foamCaseMode')?.addEventListener('change', updateFoamCaseMode);
+  $('#foamClearBtn')?.addEventListener('click', clearFoamBoard);
+  $('#foamAlignBtn')?.addEventListener('click', alignFoamPieces);
+  $('#foamScatterBtn')?.addEventListener('click', scatterFoamPieces);
+  $('#foamDeleteBtn')?.addEventListener('click', deleteSelectedFoamPiece);
+  $('#foamDuplicateBtn')?.addEventListener('click', duplicateSelectedFoamPiece);
+  $('#foamScatterWordBtn')?.addEventListener('click', scatterTargetWord);
+  $('#foamTargetInput')?.addEventListener('input', updateFoamTargetDisplay);
+  $('#foamTargetInput')?.addEventListener('keydown', event => {
+    if (event.key === 'Enter') scatterTargetWord();
+  });
+  $('#foamShowTarget')?.addEventListener('change', updateFoamTargetDisplay);
+
+  foamBoardElement().addEventListener('pointerdown', event => {
+    if (event.target === foamBoardElement()) clearFoamSelection();
+  });
+
+  window.addEventListener('keydown', event => {
+    if ((event.key === 'Delete' || event.key === 'Backspace') && foamBoardState.selectedId) {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      deleteSelectedFoamPiece();
+    }
+  });
+
+  // Start with a small physical-kit demonstration instead of a blank digital canvas.
+  ['C', 'A', 'T'].forEach((letter, index) => {
+    createFoamPiece(letter, 82 + index * 95, 120 + (index % 2) * 34, { select: false });
+  });
+}
+
+initFoamBoard();
