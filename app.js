@@ -937,6 +937,16 @@ initFoamBoard();
 // ============================================================================
 const FONT_PROFILES = {
   letter: {
+    teachers: '"Teachers", "Avenir Next", Arial, sans-serif',
+    andika: '"Andika", "Trebuchet MS", Arial, sans-serif',
+    abeezee: '"ABeeZee", "Trebuchet MS", Arial, sans-serif',
+    lexend: '"Lexend", "Avenir Next", Arial, sans-serif',
+    atkinson: '"Atkinson Hyperlegible", "Arial", sans-serif',
+    fredoka: '"Fredoka", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif',
+    nunito: '"Nunito", "Avenir Next", Arial, sans-serif',
+    comicNeue: '"Comic Neue", "Comic Sans MS", "Chalkboard SE", cursive',
+    patrickHand: '"Patrick Hand", "Marker Felt", cursive',
+    schoolbell: '"Schoolbell", "Marker Felt", cursive',
     rounded: '"Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif',
     school: '"Comic Sans MS", "Chalkboard SE", "Marker Felt", cursive',
     clean: '"Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif',
@@ -954,7 +964,7 @@ const FONT_PROFILES = {
 
 function applyFontProfile(kind, key) {
   const table = FONT_PROFILES[kind];
-  const fallbackKey = kind === 'letter' ? 'rounded' : 'system';
+  const fallbackKey = kind === 'letter' ? 'teachers' : 'system';
   const resolvedKey = table[key] ? key : fallbackKey;
   const cssVar = kind === 'letter' ? '--letter-font' : '--ui-font';
 
@@ -966,7 +976,7 @@ function applyFontProfile(kind, key) {
 }
 
 function initFontProfiles() {
-  const savedLetter = localStorage.getItem('englishLab.letterFont') || 'rounded';
+  const savedLetter = localStorage.getItem('englishLab.letterFont') || 'teachers';
   const savedUi = localStorage.getItem('englishLab.uiFont') || 'system';
 
   applyFontProfile('letter', savedLetter);
