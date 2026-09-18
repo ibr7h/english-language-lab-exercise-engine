@@ -1,22 +1,41 @@
 # English Language Lab — Exercise Engine
 
-A fresh English-first learning application inspired by the educational concept of the Arabic Language Lab, but intentionally rebuilt from scratch for English phonics, spelling, letter manipulation and word building.
+A standalone English-first learning application for phonics, spelling, letter manipulation and word building.
 
-## Why a separate codebase?
+The codebase is deliberately separate from the Arabic Language Lab. English grapheme–phoneme relationships, CVC structures, blends, digraphs, word families and spelling patterns require their own instructional model.
 
-English learning requires a different instructional model from Arabic. This project therefore does **not** inherit the Arabic engine architecture. It treats English graphemes, phonemes, word families, blends, digraphs and spelling patterns as first-class concepts.
+## v0.2 — movable letter engine
 
-## v0.1 prototype
+The word builder is now a reusable manipulation engine rather than a fixed click-to-fill exercise.
+
+### Interaction model
+
+- Drag any individual letter from the bank to any answer slot.
+- Drag a placed letter to another slot.
+- Drag a placed letter back to the letter bank.
+- Swap two placed letters directly.
+- iPhone/iPad-friendly Pointer Events instead of relying on HTML5 drag-and-drop.
+- Touch fallback: tap a letter to select it, then tap the target slot.
+- Visual selected/drop states and keyboard-accessible slots.
+- A wrong full answer reports how many positions are correct without exposing the answer.
+
+### Exercise modes
+
+1. **Unscramble** — the target spelling is hidden; the learner uses the clue/image and rearranges the supplied letters.
+2. **Copy** — the full word remains visible for early learners.
+3. **Listen & Build** — the spelling is hidden and the learner builds from audio.
+
+Current prototype word metadata includes an emoji clue, phonics pattern and word family where applicable.
+
+## Other prototype features
 
 - A–Z uppercase/lowercase explorer
 - Common sound + example word per letter
-- Word builder with **individually movable letter tiles**
-- Shuffle, reset and answer validation
 - Beginning-letter practice
 - Device speech synthesis for prototype pronunciation
 - Offline PWA shell
-- Local progress counter
-- Mobile-first layout for iPhone / Android / web
+- Local completion counter
+- Mobile-first layout for iPhone, Android and web
 
 ## Planned learning architecture
 
@@ -33,13 +52,13 @@ English learning requires a different instructional model from Arabic. This proj
 11. Spelling from audio
 12. Sentence construction
 
-## Important audio note
+## Audio constraint
 
-`SpeechSynthesis` is included only as a prototype fallback. For production phonics instruction, use curated recorded phoneme audio. Isolated phoneme production must not depend on generic TTS.
+`SpeechSynthesis` is only a prototype fallback. Production phonics instruction should use curated recorded phoneme audio. Generic TTS is not reliable enough for isolated phoneme production.
 
 ## Local run
 
-Use any static web server. Service workers require HTTP(S), not `file://`.
+Service workers require HTTP(S), not `file://`.
 
 ```bash
 python3 -m http.server 8080
@@ -50,4 +69,5 @@ Then open `http://localhost:8080`.
 ## Copyright
 
 Copyright © 2026 Ibrahim Alneami — All Rights Reserved.
+
 No license is granted for resale, redistribution, or commercial reuse without written permission.
