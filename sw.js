@@ -1,4 +1,4 @@
-const CACHE = 'english-language-lab-v8';
+const CACHE = 'english-language-lab-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -38,6 +38,30 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
+
+  const isEducationalFontRequest =
+    url.hostname === 'fonts.googleapis.com' ||
+    url.hostname === 'fonts.gstatic.com';
+
+  if (isEducationalFontRequest) {
+    event.respondWith(
+      caches.open(CACHE).then(async cache => {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        try {
+          const response = await fetch(request);
+          if (response.ok || response.type === 'opaque') {
+            await cache.put(request, response.clone());
+          }
+          return response;
+        } catch (error) {
+          return cached || Response.error();
+        }
+      })
+    );
+    return;
+  }
+
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
