@@ -15,8 +15,8 @@
 <body>
   <header class="app-header">
     <div>
-      <p class="eyebrow">English Language Lab</p>
-      <h1>Learn sounds. Build words. Spell with confidence.</h1>
+      <p class="eyebrow">English Language Lab · Magnetic Foam Kit</p>
+      <h1>Move letters. Build words. Learn by doing.</h1>
     </div>
     <div class="progress-pill" aria-live="polite">
       <span id="progressCount">0</span> completed
@@ -24,14 +24,91 @@
   </header>
 
   <nav class="tabs" aria-label="Main sections">
-    <button class="tab is-active" data-view="learn">Letters</button>
+    <button class="tab is-active" data-view="magnetic-board">🧲 Magnetic Board</button>
+    <button class="tab" data-view="learn">Letters</button>
     <button class="tab" data-view="build">Word Builder</button>
     <button class="tab" data-view="practice">Practice</button>
     <button class="tab" data-view="exercises">Learning Path</button>
   </nav>
 
   <main>
-    <section id="learn" class="view is-active">
+
+    <section id="magnetic-board" class="view is-active">
+      <div class="section-heading magnetic-heading">
+        <div>
+          <p class="eyebrow">Hands-on phonics</p>
+          <h2>Magnetic Foam Letter Board</h2>
+          <p class="section-note">Drag foam letters from the tray onto the board, then move and arrange them freely.</p>
+        </div>
+        <div class="magnetic-toolbar compact-toolbar">
+          <label class="compact-control">Case
+            <select id="foamCaseMode">
+              <option value="upper">ABC</option>
+              <option value="lower">abc</option>
+            </select>
+          </label>
+          <button id="foamClearBtn" class="secondary-btn">Clear board</button>
+        </div>
+      </div>
+
+      <div class="magnetic-kit">
+        <aside class="foam-tray-panel" aria-label="Foam letter tray">
+          <div class="foam-tray-heading">
+            <div>
+              <span class="foam-tray-icon">🧺</span>
+              <strong>Foam Letter Tray</strong>
+            </div>
+            <small>Tap to add · drag to place</small>
+          </div>
+          <div id="foamLetterTray" class="foam-letter-tray"></div>
+
+          <div class="foam-word-lab">
+            <label for="foamTargetInput">Build a word</label>
+            <div class="foam-word-row">
+              <input id="foamTargetInput" type="text" inputmode="text" autocomplete="off" maxlength="14" value="CAT" aria-label="Target word" />
+              <button id="foamScatterWordBtn" class="primary-btn">Scatter</button>
+            </div>
+            <label class="foam-check">
+              <input id="foamShowTarget" type="checkbox" checked />
+              Show target word
+            </label>
+          </div>
+        </aside>
+
+        <div class="magnetic-board-shell">
+          <div class="magnetic-board-topbar">
+            <div>
+              <span class="magnet-dot"></span>
+              <strong>Magnetic Whiteboard</strong>
+            </div>
+            <div class="board-tool-row">
+              <button id="foamAlignBtn" class="board-mini-btn" title="Arrange letters in one row">Align</button>
+              <button id="foamScatterBtn" class="board-mini-btn" title="Scatter letters on the board">Scatter</button>
+              <button id="foamDuplicateBtn" class="board-mini-btn" title="Duplicate selected letter">Duplicate</button>
+              <button id="foamDeleteBtn" class="board-mini-btn danger" title="Delete selected letter">Delete</button>
+            </div>
+          </div>
+
+          <div id="foamTargetDisplay" class="foam-target-display" aria-live="polite">
+            <span>Build:</span>
+            <strong>CAT</strong>
+          </div>
+
+          <div id="magneticFoamBoard" class="magnetic-foam-board" aria-label="Magnetic board for movable foam letters">
+            <div class="board-guide board-guide-1"></div>
+            <div class="board-guide board-guide-2"></div>
+            <div class="board-hint">Drop foam letters here</div>
+          </div>
+
+          <div class="magnetic-board-footer">
+            <span>Tip: tap a placed letter to select it. Double-tap to hear its name.</span>
+            <span id="foamBoardCount">0 pieces</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="learn" class="view">
       <div class="section-heading">
         <div><p class="eyebrow">A–Z</p><h2>Letter & sound explorer</h2></div>
         <label class="compact-control">Case
@@ -115,8 +192,8 @@
     <section id="exercises" class="view">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">Data-driven</p>
-          <h2>Exercise Engine</h2>
+          <p class="eyebrow">Curriculum</p>
+          <h2>Learning Path</h2>
         </div>
       </div>
       <div id="exerciseEngineRoot" aria-live="polite">
@@ -130,7 +207,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.4</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.5</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
