@@ -1,204 +1,379 @@
 {
-  "schemaVersion": 1,
-  "appVersion": "0.3",
-  "sets": [
+  "schemaVersion": 2,
+  "appVersion": "0.4",
+  "levels": [
     {
-      "id": "starter-phonics",
-      "title": "Starter Phonics",
-      "description": "A mixed lesson generated entirely from exercise data.",
-      "exercises": [
+      "id": "level-1-foundations",
+      "title": "Level 1 · Foundations",
+      "description": "Build early decoding skills through short vowels, digraphs and simple sentences.",
+      "units": [
         {
-          "id": "build-cat",
-          "type": "word-build",
-          "title": "Build the word",
-          "instruction": "Use the clue and arrange the letters.",
-          "clue": "A small animal that says “meow”.",
-          "emoji": "🐱",
-          "answer": [
-            "C",
-            "A",
-            "T"
-          ],
-          "bank": [
-            "T",
-            "C",
-            "A"
-          ],
-          "audio": "CAT",
-          "tags": [
-            "CVC",
-            "short-a"
+          "id": "unit-1-short-vowels",
+          "title": "Unit 1 · Short Vowels",
+          "description": "Hear, identify and build simple CVC words.",
+          "lessons": [
+            {
+              "id": "lesson-1-short-a",
+              "title": "Lesson 1 · Short A",
+              "objective": "Recognize short /æ/ and build -AT words.",
+              "activities": [
+                {
+                  "id": "activity-1-notice-a",
+                  "title": "Hear & Notice",
+                  "exercises": [
+                    {
+                      "id": "l1a-phoneme-a",
+                      "type": "phoneme-match",
+                      "title": "Match the vowel sound",
+                      "instruction": "Which letter usually represents this short vowel sound?",
+                      "display": "/æ/",
+                      "answer": "A",
+                      "choices": [
+                        "A",
+                        "E",
+                        "I"
+                      ],
+                      "audio": "apple",
+                      "examples": [
+                        "CAT",
+                        "MAP"
+                      ],
+                      "tags": [
+                        "short-a",
+                        "phoneme"
+                      ]
+                    },
+                    {
+                      "id": "l1a-missing-cat",
+                      "type": "missing-letter",
+                      "title": "Complete CAT",
+                      "instruction": "Choose the missing vowel.",
+                      "display": "C _ T",
+                      "answer": "A",
+                      "choices": [
+                        "A",
+                        "E",
+                        "O"
+                      ],
+                      "audio": "CAT",
+                      "emoji": "🐱",
+                      "tags": [
+                        "CVC",
+                        "short-a"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "activity-2-build-a",
+                  "title": "Build & Read",
+                  "exercises": [
+                    {
+                      "id": "l1a-build-cat",
+                      "type": "word-build",
+                      "title": "Build CAT",
+                      "instruction": "Use the clue and arrange the letters.",
+                      "clue": "A small animal that says “meow”.",
+                      "emoji": "🐱",
+                      "answer": [
+                        "C",
+                        "A",
+                        "T"
+                      ],
+                      "bank": [
+                        "T",
+                        "C",
+                        "A"
+                      ],
+                      "audio": "CAT",
+                      "tags": [
+                        "CVC",
+                        "short-a"
+                      ]
+                    },
+                    {
+                      "id": "l1a-family-at",
+                      "type": "word-family",
+                      "title": "Find the -AT word",
+                      "instruction": "Which word belongs to the -AT family?",
+                      "display": "-AT",
+                      "answer": "CAT",
+                      "choices": [
+                        "CAT",
+                        "DOG",
+                        "SUN"
+                      ],
+                      "emoji": "🐱",
+                      "tags": [
+                        "word-family",
+                        "short-a"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "lesson-2-short-o",
+              "title": "Lesson 2 · Short O",
+              "objective": "Recognize short /ɒ/ and build a CVC word.",
+              "activities": [
+                {
+                  "id": "activity-1-notice-o",
+                  "title": "Hear & Notice",
+                  "exercises": [
+                    {
+                      "id": "l1o-missing-dog",
+                      "type": "missing-letter",
+                      "title": "Complete DOG",
+                      "instruction": "Choose the missing vowel.",
+                      "display": "D _ G",
+                      "answer": "O",
+                      "choices": [
+                        "A",
+                        "O",
+                        "U"
+                      ],
+                      "audio": "DOG",
+                      "emoji": "🐶",
+                      "tags": [
+                        "CVC",
+                        "short-o"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "activity-2-build-o",
+                  "title": "Build & Order",
+                  "exercises": [
+                    {
+                      "id": "l1o-build-dog",
+                      "type": "word-build",
+                      "title": "Build DOG",
+                      "instruction": "Arrange the letters to spell the word.",
+                      "clue": "A pet that can bark.",
+                      "emoji": "🐶",
+                      "answer": [
+                        "D",
+                        "O",
+                        "G"
+                      ],
+                      "bank": [
+                        "G",
+                        "D",
+                        "O"
+                      ],
+                      "audio": "DOG",
+                      "tags": [
+                        "CVC",
+                        "short-o"
+                      ]
+                    },
+                    {
+                      "id": "l1o-order-abcd",
+                      "type": "letter-order",
+                      "title": "Alphabet order",
+                      "instruction": "Arrange the letters in alphabetical order.",
+                      "answer": [
+                        "A",
+                        "B",
+                        "C",
+                        "D"
+                      ],
+                      "bank": [
+                        "C",
+                        "A",
+                        "D",
+                        "B"
+                      ],
+                      "tags": [
+                        "alphabet"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "lesson-3-short-u",
+              "title": "Lesson 3 · Short U",
+              "objective": "Recognize short /ʌ/ and build SUN.",
+              "activities": [
+                {
+                  "id": "activity-1-notice-u",
+                  "title": "Hear & Notice",
+                  "exercises": [
+                    {
+                      "id": "l1u-missing-sun",
+                      "type": "missing-letter",
+                      "title": "Complete SUN",
+                      "instruction": "Choose the missing vowel.",
+                      "display": "S _ N",
+                      "answer": "U",
+                      "choices": [
+                        "A",
+                        "U",
+                        "O"
+                      ],
+                      "audio": "SUN",
+                      "emoji": "☀️",
+                      "tags": [
+                        "CVC",
+                        "short-u"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "activity-2-build-u",
+                  "title": "Build & Read",
+                  "exercises": [
+                    {
+                      "id": "l1u-build-sun",
+                      "type": "word-build",
+                      "title": "Build SUN",
+                      "instruction": "Listen and arrange the letters.",
+                      "clue": "It shines in the sky during the day.",
+                      "emoji": "☀️",
+                      "answer": [
+                        "S",
+                        "U",
+                        "N"
+                      ],
+                      "bank": [
+                        "N",
+                        "S",
+                        "U"
+                      ],
+                      "audio": "SUN",
+                      "tags": [
+                        "CVC",
+                        "short-u"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
           ]
         },
         {
-          "id": "missing-sun",
-          "type": "missing-letter",
-          "title": "Missing letter",
-          "instruction": "Choose the missing letter.",
-          "display": "S _ N",
-          "answer": "U",
-          "choices": [
-            "A",
-            "U",
-            "O"
-          ],
-          "audio": "SUN",
-          "emoji": "☀️",
-          "tags": [
-            "CVC",
-            "short-u"
+          "id": "unit-2-digraphs",
+          "title": "Unit 2 · Digraphs",
+          "description": "Two letters working together to represent one sound.",
+          "lessons": [
+            {
+              "id": "lesson-4-sh",
+              "title": "Lesson 4 · SH",
+              "objective": "Recognize SH and use it in words.",
+              "activities": [
+                {
+                  "id": "activity-1-sh-sound",
+                  "title": "Sound Match",
+                  "exercises": [
+                    {
+                      "id": "l1sh-match",
+                      "type": "phoneme-match",
+                      "title": "Match /ʃ/",
+                      "instruction": "Which grapheme represents this sound?",
+                      "display": "/ʃ/",
+                      "answer": "SH",
+                      "choices": [
+                        "CH",
+                        "SH",
+                        "TH"
+                      ],
+                      "examples": [
+                        "SHIP",
+                        "FISH"
+                      ],
+                      "tags": [
+                        "digraph",
+                        "sh"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "activity-2-sh-build",
+                  "title": "Build a Word",
+                  "exercises": [
+                    {
+                      "id": "l1sh-build-ship",
+                      "type": "word-build",
+                      "title": "Build SHIP",
+                      "instruction": "Arrange the letters to spell the picture word.",
+                      "clue": "A large boat.",
+                      "emoji": "🚢",
+                      "answer": [
+                        "S",
+                        "H",
+                        "I",
+                        "P"
+                      ],
+                      "bank": [
+                        "P",
+                        "S",
+                        "I",
+                        "H"
+                      ],
+                      "audio": "SHIP",
+                      "tags": [
+                        "digraph",
+                        "CVC"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
           ]
         },
         {
-          "id": "phoneme-sh",
-          "type": "phoneme-match",
-          "title": "Match the sound",
-          "instruction": "Which grapheme represents this sound?",
-          "display": "/ʃ/",
-          "answer": "SH",
-          "choices": [
-            "CH",
-            "SH",
-            "TH"
-          ],
-          "examples": [
-            "SHIP",
-            "FISH"
-          ],
-          "tags": [
-            "digraph"
-          ]
-        },
-        {
-          "id": "family-at",
-          "type": "word-family",
-          "title": "Word family",
-          "instruction": "Which word belongs to the -AT family?",
-          "display": "-AT",
-          "answer": "CAT",
-          "choices": [
-            "CAT",
-            "DOG",
-            "SUN"
-          ],
-          "emoji": "🐱",
-          "tags": [
-            "rime",
-            "short-a"
-          ]
-        },
-        {
-          "id": "order-abc",
-          "type": "letter-order",
-          "title": "Put letters in order",
-          "instruction": "Arrange the letters in alphabetical order.",
-          "answer": [
-            "A",
-            "B",
-            "C",
-            "D"
-          ],
-          "bank": [
-            "C",
-            "A",
-            "D",
-            "B"
-          ],
-          "tags": [
-            "alphabet"
-          ]
-        },
-        {
-          "id": "sentence-cat",
-          "type": "sentence-build",
-          "title": "Build the sentence",
-          "instruction": "Arrange the words to make a correct sentence.",
-          "answer": [
-            "I",
-            "SEE",
-            "A",
-            "CAT",
-            "."
-          ],
-          "bank": [
-            "CAT",
-            "I",
-            ".",
-            "A",
-            "SEE"
-          ],
-          "audio": "I see a cat.",
-          "emoji": "🐱",
-          "tags": [
-            "sentence"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "short-vowels",
-      "title": "Short Vowels",
-      "description": "Data-only examples for CVC vowel discrimination.",
-      "exercises": [
-        {
-          "id": "missing-cat-a",
-          "type": "missing-letter",
-          "title": "Short A",
-          "instruction": "Complete the word.",
-          "display": "C _ T",
-          "answer": "A",
-          "choices": [
-            "A",
-            "E",
-            "I"
-          ],
-          "audio": "CAT",
-          "emoji": "🐱",
-          "tags": [
-            "CVC",
-            "short-a"
-          ]
-        },
-        {
-          "id": "missing-dog-o",
-          "type": "missing-letter",
-          "title": "Short O",
-          "instruction": "Complete the word.",
-          "display": "D _ G",
-          "answer": "O",
-          "choices": [
-            "A",
-            "O",
-            "U"
-          ],
-          "audio": "DOG",
-          "emoji": "🐶",
-          "tags": [
-            "CVC",
-            "short-o"
-          ]
-        },
-        {
-          "id": "build-sun",
-          "type": "word-build",
-          "title": "Build SUN",
-          "instruction": "Listen and build the word.",
-          "clue": "It shines in the sky.",
-          "emoji": "☀️",
-          "answer": [
-            "S",
-            "U",
-            "N"
-          ],
-          "bank": [
-            "N",
-            "S",
-            "U"
-          ],
-          "audio": "SUN",
-          "tags": [
-            "CVC",
-            "short-u"
+          "id": "unit-3-sentences",
+          "title": "Unit 3 · First Sentences",
+          "description": "Move from words to simple sentence structure.",
+          "lessons": [
+            {
+              "id": "lesson-5-first-sentence",
+              "title": "Lesson 5 · I see a cat.",
+              "objective": "Arrange familiar words into a complete sentence.",
+              "activities": [
+                {
+                  "id": "activity-1-sentence-build",
+                  "title": "Sentence Builder",
+                  "exercises": [
+                    {
+                      "id": "l1sentence-cat",
+                      "type": "sentence-build",
+                      "title": "Build the sentence",
+                      "instruction": "Arrange the words to make a correct sentence.",
+                      "answer": [
+                        "I",
+                        "SEE",
+                        "A",
+                        "CAT",
+                        "."
+                      ],
+                      "bank": [
+                        "CAT",
+                        "I",
+                        ".",
+                        "A",
+                        "SEE"
+                      ],
+                      "audio": "I see a cat.",
+                      "emoji": "🐱",
+                      "tags": [
+                        "sentence",
+                        "syntax"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
           ]
         }
       ]
