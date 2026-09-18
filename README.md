@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.6 — multi-font magnetic foam letter kit
+## v0.8 — Arabic-project parity magnetic board
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -35,6 +35,23 @@ The app separates the visual typeface used for learning letters from the typefac
 Both choices are saved locally and restored the next time the app opens. Teaching-font changes apply to foam pieces, the A–Z explorer, word targets and exercise tokens.
 
 The current profiles use local device font stacks so the PWA remains offline-first. A later release can bundle licensed open fonts when identical rendering across iOS, Android and desktop is required.
+
+### Board parity with the Arabic project
+
+v0.8 replaces the simplified English board with the same architectural pattern used by the Arabic project:
+
+- DOM-independent board state and persistence.
+- Undo/Redo history.
+- Command-based add, move, resize and delete operations.
+- Piece capabilities (selectable, movable, scalable, deletable).
+- Single-letter, whole-word and multi-selection states.
+- Completed words move as grouped foam letters.
+- Completed words can be detached into individual pieces and regrouped.
+- Free Board / Build a Word / Completed Words modes.
+- Select all, duplicate, delete, resize, align, scatter, speak and clear actions.
+- iOS, Android, desktop and webOS input profiles.
+- Saved board state in local storage.
+- Word-building exercises use the same board pieces rather than a separate tile widget.
 
 ### Magnetic foam board
 
@@ -86,7 +103,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.6 service worker uses cache `english-language-lab-v6` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.8 service worker uses cache `english-language-lab-v8` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -104,6 +121,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.6
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.8
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
