@@ -23,7 +23,7 @@ export function createLetterPiece(data={}) {
     scale:Math.max(.35,Number(data.scale)||1),
     rotation:Number(data.rotation)||0,
     zIndex:Number(data.zIndex)||0,
-    color:String(data.color||data.colorClass||'foam-blue'),
+    color:String(data.color||data.colorClass||'glyph-blue'),
     phonicsRole:data.phonicsRole==null?null:String(data.phonicsRole),
     wordId:data.wordId==null?null:String(data.wordId),
     wordLabel:data.wordLabel==null?null:String(data.wordLabel),
