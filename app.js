@@ -549,14 +549,13 @@ const foamBoardState = {
   trayDrag: null
 };
 
-const FOAM_COLORS = ['foam-coral', 'foam-blue', 'foam-yellow', 'foam-green', 'foam-purple'];
+const FOAM_COLORS = ['foam-blue'];
 const VOWELS = new Set(['A', 'E', 'I', 'O', 'U']);
 
 function foamColorClass(letter) {
   const upper = String(letter).toUpperCase();
   if (VOWELS.has(upper)) return 'foam-coral';
-  const code = upper.charCodeAt(0) || 65;
-  return FOAM_COLORS[(code - 65) % FOAM_COLORS.length];
+  return 'foam-blue';
 }
 
 function foamGlyph(letter) {
