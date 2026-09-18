@@ -45,26 +45,50 @@
     </section>
 
     <section id="build" class="view">
-      <div class="section-heading">
+      <div class="section-heading builder-heading">
         <div><p class="eyebrow">Manipulatives</p><h2>Build the word</h2></div>
-        <button id="newWordBtn" class="secondary-btn">New word</button>
+        <div class="builder-heading-actions">
+          <label class="compact-control">Mode
+            <select id="builderMode">
+              <option value="unscramble">Unscramble</option>
+              <option value="copy">Copy</option>
+              <option value="listen">Listen & Build</option>
+            </select>
+          </label>
+          <button id="newWordBtn" class="secondary-btn">New word</button>
+        </div>
       </div>
 
       <article class="builder-card">
         <div class="prompt-row">
-          <div>
-            <span class="prompt-label">Target</span>
-            <h3 id="targetWord">CAT</h3>
+          <div class="prompt-copy">
+            <span id="builderModeLabel" class="prompt-label">Unscramble the letters</span>
+            <div class="target-line">
+              <span id="targetEmoji" class="target-emoji" aria-hidden="true">🐱</span>
+              <h3 id="targetWord">3 letters</h3>
+            </div>
             <p id="targetHint">A small animal that says “meow”.</p>
+            <p id="patternHint" class="pattern-hint"></p>
           </div>
           <button id="speakWordBtn" class="round-btn" aria-label="Hear target word">🔊</button>
         </div>
 
+        <p id="builderInstruction" class="builder-instruction">
+          Drag each letter to a space. On touch devices, you can also tap a letter and then tap a space.
+        </p>
+
         <div id="answerSlots" class="answer-slots" aria-label="Word answer slots"></div>
-        <div id="tileBank" class="tile-bank" aria-label="Letter tiles"></div>
+
+        <div class="bank-wrap">
+          <div class="bank-heading">
+            <span>Letter bank</span>
+            <span id="selectionStatus" class="selection-status" aria-live="polite"></span>
+          </div>
+          <div id="tileBank" class="tile-bank" data-drop-zone="bank" aria-label="Letter bank"></div>
+        </div>
 
         <div class="builder-actions">
-          <button id="shuffleBtn" class="secondary-btn">Shuffle</button>
+          <button id="shuffleBtn" class="secondary-btn">Scramble</button>
           <button id="resetBtn" class="secondary-btn">Reset</button>
           <button id="checkBtn" class="primary-btn">Check</button>
         </div>
