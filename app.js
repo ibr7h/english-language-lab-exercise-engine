@@ -930,3 +930,55 @@ function initFoamBoard() {
 }
 
 initFoamBoard();
+
+
+// ============================================================================
+// v0.6 Font profiles
+// ============================================================================
+const FONT_PROFILES = {
+  letter: {
+    rounded: '"Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif',
+    school: '"Comic Sans MS", "Chalkboard SE", "Marker Felt", cursive',
+    clean: '"Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif',
+    book: 'Georgia, "Times New Roman", serif',
+    mono: '"Courier New", Courier, monospace',
+    system: '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif'
+  },
+  ui: {
+    system: '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
+    rounded: '"Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif',
+    clean: '"Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif',
+    book: 'Georgia, "Times New Roman", serif'
+  }
+};
+
+function applyFontProfile(kind, key) {
+  const table = FONT_PROFILES[kind];
+  const fallbackKey = kind === 'letter' ? 'rounded' : 'system';
+  const resolvedKey = table[key] ? key : fallbackKey;
+  const cssVar = kind === 'letter' ? '--letter-font' : '--ui-font';
+
+  document.documentElement.style.setProperty(cssVar, table[resolvedKey]);
+  localStorage.setItem(`englishLab.${kind}Font`, resolvedKey);
+
+  const picker = kind === 'letter' ? $('#letterFontPicker') : $('#uiFontPicker');
+  if (picker) picker.value = resolvedKey;
+}
+
+function initFontProfiles() {
+  const savedLetter = localStorage.getItem('englishLab.letterFont') || 'rounded';
+  const savedUi = localStorage.getItem('englishLab.uiFont') || 'system';
+
+  applyFontProfile('letter', savedLetter);
+  applyFontProfile('ui', savedUi);
+
+  $('#letterFontPicker')?.addEventListener('change', event => {
+    applyFontProfile('letter', event.target.value);
+  });
+
+  $('#uiFontPicker')?.addEventListener('change', event => {
+    applyFontProfile('ui', event.target.value);
+  });
+}
+
+initFontProfiles();
