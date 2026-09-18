@@ -526,7 +526,7 @@ async function initExerciseEngine() {
     root.innerHTML = `
       <article class="engine-card engine-error">
         <strong>Exercises could not be loaded.</strong>
-        <p>Reload the app while online once so the PWA can cache the v0.3 exercise data.</p>
+        <p>Reload the app while online once so the PWA can cache the current exercise data.</p>
       </article>
     `;
   }
