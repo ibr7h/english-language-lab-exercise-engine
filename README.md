@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.5 — magnetic foam letter kit + curriculum path
+## v0.6 — multi-font magnetic foam letter kit
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,28 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### Font support
+
+The app separates the visual typeface used for learning letters from the typeface used by the interface.
+
+**Teaching letter fonts**
+- Rounded
+- School Print
+- Clean Sans
+- Book Serif
+- Mono
+- System
+
+**Interface fonts**
+- System
+- Rounded
+- Clean Sans
+- Book Serif
+
+Both choices are saved locally and restored the next time the app opens. Teaching-font changes apply to foam pieces, the A–Z explorer, word targets and exercise tokens.
+
+The current profiles use local device font stacks so the PWA remains offline-first. A later release can bundle licensed open fonts when identical rendering across iOS, Android and desktop is required.
 
 ### Magnetic foam board
 
@@ -64,7 +86,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.5 service worker uses cache `english-language-lab-v5` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.6 service worker uses cache `english-language-lab-v6` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -82,6 +104,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.5
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.6
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
