@@ -1,4 +1,4 @@
-const CACHE = 'english-language-lab-v7';
+const CACHE = 'english-language-lab-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -7,44 +7,46 @@ const ASSETS = [
   './manifest.webmanifest',
   './src/data/content.js',
   './src/data/exercises.json',
-  './src/engine/exercise-engine.js'
+  './src/engine/exercise-engine.js',
+  './assets/js/english-board.js',
+  './assets/js/core/board-state.js',
+  './assets/js/core/board-history.js',
+  './assets/js/core/board-commands.js',
+  './assets/js/core/board-piece.js',
+  './assets/js/core/platform-profile.js',
+  './assets/js/core/platform-adapter.js',
+  './assets/js/ui/board-piece-view.js',
+  './assets/icon.svg'
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(ASSETS))
-  );
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE)
-          .map(key => caches.delete(key))
-      )
+      Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))
     )
   );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-
   const request = event.request;
-  const url = new URL(request.url);
-  const sameOrigin = url.origin === self.location.origin;
-  const isNavigation = request.mode === 'navigate';
+  if (request.method !== 'GET') return;
 
-  if (isNavigation) {
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request, { cache: 'no-store' })
-        .then(response => {
+        .then(async response => {
           if (response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE).then(cache => cache.put('./index.html', copy));
+            const cache = await caches.open(CACHE);
+            await cache.put('./index.html', response.clone());
           }
           return response;
         })
@@ -53,19 +55,34 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  event.respondWith(
-    caches.match(request).then(cached => {
-      const network = fetch(request)
-        .then(response => {
-          if (response.ok && sameOrigin) {
-            const copy = response.clone();
-            caches.open(CACHE).then(cache => cache.put(request, copy));
+  const networkFirst =
+    ['script', 'style', 'worker'].includes(request.destination) ||
+    /\.(?:json|webmanifest)$/i.test(url.pathname);
+
+  if (networkFirst) {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' })
+        .then(async response => {
+          if (response.ok) {
+            const cache = await caches.open(CACHE);
+            await cache.put(request, response.clone());
           }
           return response;
         })
-        .catch(() => cached);
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
-      return cached || network;
+  event.respondWith(
+    caches.match(request).then(async cached => {
+      if (cached) return cached;
+      const response = await fetch(request);
+      if (response.ok) {
+        const cache = await caches.open(CACHE);
+        await cache.put(request, response.clone());
+      }
+      return response;
     })
   );
 });
