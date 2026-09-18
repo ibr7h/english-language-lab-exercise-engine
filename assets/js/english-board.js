@@ -9,7 +9,15 @@ import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 const STORAGE_KEY='englishLab.board.v0.8';
 const ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const VOWELS=new Set(['A','E','I','O','U']);
-const COLORS=['foam-blue','foam-yellow','foam-green','foam-purple','foam-coral'];
+const PHONICS_COLORS=Object.freeze({
+  consonant:'foam-blue',
+  vowel:'foam-coral',
+  digraph:'foam-green',
+  vowelTeam:'foam-yellow',
+  silentE:'foam-purple'
+});
+const DIGRAPHS=['SH','CH','TH','WH','PH','CK','NG','QU'];
+const VOWEL_TEAMS=['IGH','AI','AY','EE','EA','OA','OE','OO','OU','OW','OI','OY','UE','UI','IE'];
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 
@@ -20,8 +28,41 @@ function speak(text){
   u.lang='en-US';u.rate=.82;speechSynthesis.speak(u);
 }
 function colorFor(letter){
-  if(VOWELS.has(letter)) return 'foam-coral';
-  return COLORS[(letter.charCodeAt(0)-65)%COLORS.length];
+  const upper=String(letter||'').toUpperCase();
+  return VOWELS.has(upper) ? PHONICS_COLORS.vowel : PHONICS_COLORS.consonant;
+}
+function analyzeWordPhonics(word){
+  const text=String(word||'').toUpperCase().replace(/[^A-Z]/g,'');
+  const result=[...text].map(letter=>({
+    letter,
+    role:VOWELS.has(letter)?'vowel':'consonant',
+    color:colorFor(letter)
+  }));
+
+  const markPattern=(pattern,role,color)=>{
+    let from=0;
+    while(from<=text.length-pattern.length){
+      const index=text.indexOf(pattern,from);
+      if(index<0)break;
+      for(let i=0;i<pattern.length;i++){
+        result[index+i]={...result[index+i],role,color};
+      }
+      from=index+pattern.length;
+    }
+  };
+
+  [...VOWEL_TEAMS].sort((a,b)=>b.length-a.length)
+    .forEach(pattern=>markPattern(pattern,'vowel-team',PHONICS_COLORS.vowelTeam));
+  DIGRAPHS.forEach(pattern=>markPattern(pattern,'digraph',PHONICS_COLORS.digraph));
+
+  if(text.length>=3 && text.endsWith('E')){
+    const last=text.length-1;
+    const previousRole=result[last]?.role;
+    if(previousRole!=='vowel-team'){
+      result[last]={...result[last],role:'silent-e',color:PHONICS_COLORS.silentE};
+    }
+  }
+  return result;
 }
 function clamp(n,min,max){return Math.max(min,Math.min(max,n));}
 
@@ -147,8 +188,11 @@ class EnglishMagneticBoard {
     tray.innerHTML='';
     ALPHABET.forEach(letter=>{
       const b=document.createElement('button');b.type='button';
+      const freeRole=VOWELS.has(letter)?'vowel':'consonant';
       b.className=`foam-tray-letter ${colorFor(letter)}`;b.textContent=this.display(letter);
-      b.setAttribute('aria-label',`Add foam letter ${letter}`);
+      b.dataset.phonicsRole=freeRole;
+      b.title=`${letter} · ${freeRole}`;
+      b.setAttribute('aria-label',`Add foam letter ${letter}, ${freeRole}`);
       b.addEventListener('click',()=>this.addLetter(letter));
       tray.appendChild(b);
     });
@@ -283,7 +327,7 @@ class EnglishMagneticBoard {
   duplicateSelected(){
     const src=this.items.find(i=>i.id===this.activeItemId);if(!src)return;
     this.checkpoint('DUPLICATE');
-    const p=this.createPiece(src.logicalChar,src.x+28,src.y+28,{scale:src.scale,rotation:src.rotation});
+    const p=this.createPiece(src.logicalChar,src.x+28,src.y+28,{scale:src.scale,rotation:src.rotation,color:src.color,phonicsRole:src.phonicsRole||null});
     applyBoardCommand(this.state,{type:BOARD_COMMANDS.ADD_PIECE,piece:p});
     this.setSelection([p.id],'letter',p.id);this.renderBoard();
   }
@@ -332,8 +376,10 @@ class EnglishMagneticBoard {
       const wordId=`word_${++this.wordCounter}_${Date.now()}`;
       const spacing=Math.min(80,Math.max(54,(rect.width-120)/Math.max(token.length,1)));
       const total=(token.length-1)*spacing;let x=Math.max(18,(rect.width-total-70)/2);
-      [...token].forEach(letter=>{
-        const p=this.createPiece(letter,x,rowY,{wordId,wordLabel:token,rotation:0});
+      const phonics=analyzeWordPhonics(token);
+      [...token].forEach((letter,index)=>{
+        const role=phonics[index]||{color:colorFor(letter),role:VOWELS.has(letter)?'vowel':'consonant'};
+        const p=this.createPiece(letter,x,rowY,{wordId,wordLabel:token,rotation:0,color:role.color,phonicsRole:role.role});
         applyBoardCommand(this.state,{type:BOARD_COMMANDS.ADD_PIECE,piece:p});x+=spacing;
       });rowY+=100;
     });
@@ -380,11 +426,13 @@ class EnglishMagneticBoard {
     const order=[...this.exercise.letters.keys()];
     for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
     const rect=this.canvasRect();
+    const phonics=analyzeWordPhonics(word);
     order.forEach((targetIndex,k)=>{
       const cols=Math.max(2,Math.min(word.length,Math.floor((rect.width-50)/90)));
       const col=k%cols,row=Math.floor(k/cols);
+      const role=phonics[targetIndex]||{color:colorFor(word[targetIndex]),role:VOWELS.has(word[targetIndex])?'vowel':'consonant'};
       const p=this.createPiece(word[targetIndex],35+col*90+(Math.random()*18-9),65+row*100+(Math.random()*18-9),{
-        exerciseId:this.exercise.id,exerciseTargetIndex:targetIndex
+        exerciseId:this.exercise.id,exerciseTargetIndex:targetIndex,color:role.color,phonicsRole:role.role
       });
       applyBoardCommand(this.state,{type:BOARD_COMMANDS.ADD_PIECE,piece:p});
     });
