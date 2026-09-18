@@ -130,7 +130,6 @@ function loadWord(index = state.wordIndex) {
   state.answer = Array(currentEntry().word.length).fill(null);
   state.tiles = makeWordTiles(currentEntry().word);
   state.selected = null;
-  state.currentSolved = false;
   $('#builderFeedback').textContent = '';
   $('#builderFeedback').className = 'feedback';
   renderTarget();
