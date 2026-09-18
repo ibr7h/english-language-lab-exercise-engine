@@ -68,6 +68,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved.
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.4
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
