@@ -1537,3 +1537,147 @@ textarea {
   .english-board-footer { flex-direction:column; }
   .english-answer-slot { width:56px; height:60px; font-size:1.5rem; }
 }
+
+
+/* v0.9 cut-foam glyphs: letters themselves are the foam pieces */
+.foam-tray-letter,
+.foam-board-piece,
+.foam-drag-ghost,
+.free-foam-piece {
+  --foam-face: #7bc9f5;
+  --foam-edge: #4e9fce;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--foam-face) !important;
+  -webkit-text-stroke: .8px color-mix(in srgb, var(--foam-edge) 82%, #263241);
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.55),
+    1px 1px 0 var(--foam-edge),
+    2px 2px 0 var(--foam-edge),
+    3px 3px 0 color-mix(in srgb, var(--foam-edge) 88%, #263241),
+    4px 4px 0 color-mix(in srgb, var(--foam-edge) 76%, #263241),
+    6px 8px 10px rgba(30,40,55,.20);
+}
+
+.foam-tray-letter.foam-coral,
+.foam-board-piece.foam-coral,
+.foam-drag-ghost.foam-coral,
+.free-foam-piece.foam-coral { --foam-face:#ff8f83; --foam-edge:#dc665b; }
+.foam-tray-letter.foam-blue,
+.foam-board-piece.foam-blue,
+.foam-drag-ghost.foam-blue,
+.free-foam-piece.foam-blue { --foam-face:#7bc9f5; --foam-edge:#4e9fce; }
+.foam-tray-letter.foam-yellow,
+.foam-board-piece.foam-yellow,
+.foam-drag-ghost.foam-yellow,
+.free-foam-piece.foam-yellow { --foam-face:#ffd65a; --foam-edge:#d7aa2e; }
+.foam-tray-letter.foam-green,
+.foam-board-piece.foam-green,
+.foam-drag-ghost.foam-green,
+.free-foam-piece.foam-green { --foam-face:#8fd681; --foam-edge:#62ad58; }
+.foam-tray-letter.foam-purple,
+.foam-board-piece.foam-purple,
+.foam-drag-ghost.foam-purple,
+.free-foam-piece.foam-purple { --foam-face:#bca1f4; --foam-edge:#8c70ce; }
+
+.foam-tray-letter {
+  min-height: 58px;
+  aspect-ratio: auto !important;
+  display:grid;
+  place-items:center;
+  padding: 2px 5px !important;
+  font-size: clamp(2rem, 4vw, 2.75rem) !important;
+  line-height:1;
+  touch-action:none;
+}
+
+.free-foam-piece,
+.foam-board-piece {
+  display:grid;
+  place-items:center;
+  width:70px;
+  height:78px;
+  padding:0 !important;
+  font-family:var(--letter-font) !important;
+  font-weight:950 !important;
+  line-height:1 !important;
+  cursor:grab;
+}
+
+.free-foam-piece.is-selected,
+.foam-board-piece.is-selected {
+  outline: none !important;
+  background: transparent !important;
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,.95))
+    drop-shadow(0 0 5px rgba(91,103,241,.78))
+    drop-shadow(0 0 9px rgba(91,103,241,.34));
+}
+.free-foam-piece.is-word-selected {
+  outline:none !important;
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,.95))
+    drop-shadow(0 0 5px rgba(124,58,237,.78))
+    drop-shadow(0 0 9px rgba(124,58,237,.34));
+}
+.free-foam-piece.is-letter-selected {
+  outline:none !important;
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,.95))
+    drop-shadow(0 0 5px rgba(245,158,11,.85))
+    drop-shadow(0 0 9px rgba(245,158,11,.34));
+}
+.free-foam-piece.is-multi-selected {
+  outline:none !important;
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,.95))
+    drop-shadow(0 0 5px rgba(15,118,110,.82))
+    drop-shadow(0 0 9px rgba(15,118,110,.34));
+}
+.free-foam-piece.is-dragging,
+.foam-board-piece.is-dragging,
+.foam-drag-ghost {
+  filter:saturate(1.08) drop-shadow(5px 8px 6px rgba(30,40,55,.24));
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.6),
+    1px 1px 0 var(--foam-edge),
+    2px 2px 0 var(--foam-edge),
+    3px 3px 0 var(--foam-edge),
+    4px 4px 0 color-mix(in srgb, var(--foam-edge) 85%, #263241),
+    5px 5px 0 color-mix(in srgb, var(--foam-edge) 74%, #263241);
+}
+.free-foam-piece::before,
+.free-foam-piece::after {
+  content:none !important;
+  display:none !important;
+}
+
+.letter-tile,
+.engine-token {
+  background:transparent !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  color:#7bc9f5 !important;
+  -webkit-text-stroke:.7px #4e9fce;
+  text-shadow:
+    1px 1px 0 #4e9fce,
+    2px 2px 0 #4e9fce,
+    3px 3px 0 #3f83ad,
+    5px 7px 9px rgba(30,40,55,.18);
+}
+
+
+/* v0.9 educational webfont profiles */
+.font-family-teachers { font-family:"Teachers", sans-serif; }
+.font-family-andika { font-family:"Andika", sans-serif; }
+.font-family-abeezee { font-family:"ABeeZee", sans-serif; }
+.font-family-lexend { font-family:"Lexend", sans-serif; }
+.font-family-atkinson { font-family:"Atkinson Hyperlegible", sans-serif; }
+.font-family-fredoka { font-family:"Fredoka", sans-serif; }
+.font-family-nunito { font-family:"Nunito", sans-serif; }
+.font-family-comic-neue { font-family:"Comic Neue", cursive; }
+.font-family-patrick-hand { font-family:"Patrick Hand", cursive; }
+.font-family-schoolbell { font-family:"Schoolbell", cursive; }
