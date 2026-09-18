@@ -1791,3 +1791,178 @@ textarea {
 /* Semantic meanings:
    coral = vowel, blue = consonant, green = digraph,
    yellow = vowel team, purple = silent-e */
+
+
+/* v0.11 exact Arabic-project foam renderer */
+.foam-glyph {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  font-family:var(--letter-font);
+  font-weight:800;
+  line-height:1.1;
+  cursor:grab;
+  user-select:none;
+  position:relative;
+  transition:transform .12s ease, filter .12s ease;
+  margin:0 -1px;
+  color:inherit;
+  -webkit-text-fill-color:currentColor !important;
+  -webkit-text-stroke:0 !important;
+}
+.foam-glyph:active {
+  transform:translateY(3px) scale(.97);
+  cursor:grabbing;
+}
+
+/* Same EVA extrusion model used by the Arabic project */
+.glyph-purple {
+  color:#8b5cf6 !important;
+  text-shadow:
+    0 1px 0 #7c3aed,
+    0 2px 0 #6d28d9,
+    0 3px 0 #5b21b6,
+    0 4px 0 #4c1d95,
+    0 5px 0 #2e1065,
+    0 8px 10px rgba(0,0,0,.28) !important;
+  filter:drop-shadow(0 4px 3px rgba(0,0,0,.18));
+}
+.glyph-green {
+  color:#10b981 !important;
+  text-shadow:
+    0 1px 0 #059669,
+    0 2px 0 #047857,
+    0 3px 0 #065f46,
+    0 4px 0 #064e3b,
+    0 5px 0 #022c22,
+    0 8px 10px rgba(0,0,0,.28) !important;
+  filter:drop-shadow(0 4px 3px rgba(0,0,0,.18));
+}
+.glyph-blue {
+  color:#3b82f6 !important;
+  text-shadow:
+    0 1px 0 #2563eb,
+    0 2px 0 #1d4ed8,
+    0 3px 0 #1e40af,
+    0 4px 0 #1e3a8a,
+    0 5px 0 #172554,
+    0 8px 10px rgba(0,0,0,.28) !important;
+  filter:drop-shadow(0 4px 3px rgba(0,0,0,.18));
+}
+.glyph-red {
+  color:#ef4444 !important;
+  text-shadow:
+    0 1px 0 #dc2626,
+    0 2px 0 #b91c1c,
+    0 3px 0 #991b1b,
+    0 4px 0 #7f1d1d,
+    0 5px 0 #450a0a,
+    0 8px 10px rgba(0,0,0,.28) !important;
+  filter:drop-shadow(0 4px 3px rgba(0,0,0,.18));
+}
+/* Added only for English vowel teams, using the same extrusion technique. */
+.glyph-yellow {
+  color:#facc15 !important;
+  text-shadow:
+    0 1px 0 #eab308,
+    0 2px 0 #ca8a04,
+    0 3px 0 #a16207,
+    0 4px 0 #854d0e,
+    0 5px 0 #713f12,
+    0 8px 10px rgba(0,0,0,.28) !important;
+  filter:drop-shadow(0 4px 3px rgba(0,0,0,.18));
+}
+
+/* Transparent draggable hit-area; visible glyph remains foam-shaped. */
+.free-foam-piece {
+  position:absolute;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+  z-index:10;
+  transition:transform .08s ease, filter .08s ease;
+  will-change:transform,left,top;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  padding:.08em .12em;
+  color:inherit !important;
+  -webkit-text-fill-color:currentColor !important;
+  -webkit-text-stroke:0 !important;
+  text-shadow:none !important;
+  overflow:visible !important;
+}
+.free-foam-piece::before,
+.free-foam-piece::after,
+.foam-tray-letter::before,
+.foam-tray-letter::after {
+  content:none !important;
+  display:none !important;
+}
+.free-foam-piece.is-dragging {
+  cursor:grabbing;
+  z-index:100 !important;
+  transform:scale(1.12) rotate(-2deg);
+  filter:drop-shadow(0 14px 18px rgba(0,0,0,.35)) !important;
+}
+.free-foam-piece .foam-piece-glyph {
+  position:relative;
+  display:inline-block;
+  min-width:.72em;
+  pointer-events:none;
+}
+
+/* Selection belongs to the transparent hit-area, as in the Arabic board. */
+.free-foam-piece.is-selected {
+  outline:3px solid #0f766e !important;
+  outline-offset:5px;
+  background:rgba(240,253,250,.45) !important;
+}
+.free-foam-piece.is-word-selected {
+  outline-color:#7c3aed !important;
+  background:rgba(245,243,255,.5) !important;
+}
+.free-foam-piece.is-letter-selected {
+  outline-color:#f59e0b !important;
+  outline-width:4px !important;
+  background:rgba(255,251,235,.56) !important;
+}
+.free-foam-piece.is-multi-selected {
+  outline-color:#0f766e !important;
+}
+
+/* Tray buttons are transparent holders; the nested .foam-glyph is the visible piece. */
+.foam-tray-letter {
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  min-height:58px;
+  padding:2px 5px !important;
+  color:inherit !important;
+  -webkit-text-fill-color:currentColor !important;
+  -webkit-text-stroke:0 !important;
+  text-shadow:none !important;
+}
+.foam-tray-letter > .foam-glyph {
+  font-size:clamp(2rem,4vw,2.75rem);
+}
+
+/* Remove the v0.10 pseudo-glyph simulation entirely. */
+.foam-tray-letter::before,
+.foam-tray-letter::after,
+.free-foam-piece::before,
+.free-foam-piece::after {
+  content:none !important;
+}
+
+/* Legend uses the same semantic colors without affecting foam rendering. */
+.legend-dot.glyph-red { background:#ef4444; box-shadow:2px 2px 0 #b91c1c; }
+.legend-dot.glyph-blue { background:#3b82f6; box-shadow:2px 2px 0 #1d4ed8; }
+.legend-dot.glyph-green { background:#10b981; box-shadow:2px 2px 0 #047857; }
+.legend-dot.glyph-yellow { background:#facc15; box-shadow:2px 2px 0 #ca8a04; }
+.legend-dot.glyph-purple { background:#8b5cf6; box-shadow:2px 2px 0 #6d28d9; }
