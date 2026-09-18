@@ -4,9 +4,14 @@ const $$ = (selector) => [...document.querySelectorAll(selector)];
 
 const state = {
   caseMode: 'both',
+  builderMode: 'unscramble',
   wordIndex: 0,
   tiles: [],
   answer: [],
+  selected: null,
+  drag: null,
+  ignoreClickUntil: 0,
+  currentSolved: false,
   practiceIndex: 0,
   completed: Number(localStorage.getItem('englishLab.completed') || 0)
 };
@@ -36,7 +41,12 @@ function renderLetters() {
   letters.forEach((item) => {
     const button = document.createElement('button');
     button.className = 'letter-card';
-    const glyph = state.caseMode === 'upper' ? item.upper : state.caseMode === 'lower' ? item.lower : `${item.upper}${item.lower}`;
+    const glyph = state.caseMode === 'upper'
+      ? item.upper
+      : state.caseMode === 'lower'
+        ? item.lower
+        : `${item.upper}${item.lower}`;
+
     button.innerHTML = `
       <div class="letter-glyph">${glyph}</div>
       <div class="letter-phoneme">${item.phoneme}</div>
@@ -55,7 +65,7 @@ function openLetter(item) {
     <p class="dialog-example"><strong>Example:</strong> ${item.example}</p>
     <button id="dialogSpeakLetter" class="secondary-btn">Hear letter name</button>
     <button id="dialogSpeakWord" class="primary-btn">Hear example word</button>
-    <p style="color:#657087;font-size:.9rem">The current prototype uses device speech synthesis for letter names and example words. Recorded phoneme audio should replace it for production phonics instruction.</p>
+    <p class="dialog-note">Device speech synthesis is a temporary fallback for names and words. Production phonics should use curated recorded phoneme audio.</p>
   `;
   $('#dialogSpeakLetter').addEventListener('click', () => speak(item.upper));
   $('#dialogSpeakWord').addEventListener('click', () => speak(item.example));
@@ -63,41 +73,273 @@ function openLetter(item) {
 }
 
 function shuffled(array) {
-  return [...array].sort(() => Math.random() - 0.5);
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function tileId(index, letter) {
+  if (window.crypto?.randomUUID) return crypto.randomUUID();
+  return `${Date.now()}-${index}-${letter}-${Math.random().toString(16).slice(2)}`;
+}
+
+function makeWordTiles(word) {
+  const ordered = word.split('').map((letter, index) => ({
+    id: tileId(index, letter),
+    letter
+  }));
+
+  let mixed = shuffled(ordered);
+  if (word.length > 2 && mixed.map(tile => tile.letter).join('') === word) {
+    mixed = [...mixed.slice(1), mixed[0]];
+  }
+  return mixed;
+}
+
+function currentEntry() {
+  return words[state.wordIndex];
+}
+
+function renderTarget() {
+  const entry = currentEntry();
+  $('#targetEmoji').textContent = entry.emoji || '🔤';
+  $('#patternHint').textContent = entry.pattern
+    ? `Pattern: ${entry.pattern}${entry.family ? ` · Family: ${entry.family}` : ''}`
+    : '';
+
+  if (state.builderMode === 'copy') {
+    $('#builderModeLabel').textContent = 'Copy the word';
+    $('#targetWord').textContent = entry.word;
+    $('#targetHint').textContent = entry.hint;
+  } else if (state.builderMode === 'listen') {
+    $('#builderModeLabel').textContent = 'Listen, then build';
+    $('#targetWord').textContent = `${entry.word.length} letters`;
+    $('#targetHint').textContent = 'Use the sound button. Build the word you hear.';
+  } else {
+    $('#builderModeLabel').textContent = 'Unscramble the letters';
+    $('#targetWord').textContent = `${entry.word.length} letters`;
+    $('#targetHint').textContent = entry.hint;
+  }
 }
 
 function loadWord(index = state.wordIndex) {
   state.wordIndex = (index + words.length) % words.length;
-  const entry = words[state.wordIndex];
-  state.answer = Array(entry.word.length).fill(null);
-  state.tiles = shuffled(entry.word.split('').map((letter, i) => ({ id: `${Date.now()}-${i}-${letter}`, letter })));
-  $('#targetWord').textContent = entry.word;
-  $('#targetHint').textContent = entry.hint;
+  state.answer = Array(currentEntry().word.length).fill(null);
+  state.tiles = makeWordTiles(currentEntry().word);
+  state.selected = null;
+  state.currentSolved = false;
+  $('#builderFeedback').textContent = '';
+  $('#builderFeedback').className = 'feedback';
+  renderTarget();
+  renderBuilder();
+}
+
+function originEquals(a, b) {
+  if (!a || !b || a.kind !== b.kind) return false;
+  if (a.kind === 'bank') return a.tileId === b.tileId;
+  return a.index === b.index && a.tileId === b.tileId;
+}
+
+function getTileAtOrigin(origin) {
+  if (!origin) return null;
+  if (origin.kind === 'bank') {
+    return state.tiles.find(tile => tile.id === origin.tileId) || null;
+  }
+  return state.answer[origin.index]?.id === origin.tileId
+    ? state.answer[origin.index]
+    : null;
+}
+
+function extractTile(origin) {
+  if (origin.kind === 'bank') {
+    const index = state.tiles.findIndex(tile => tile.id === origin.tileId);
+    if (index < 0) return null;
+    return state.tiles.splice(index, 1)[0];
+  }
+
+  const tile = state.answer[origin.index];
+  if (!tile || tile.id !== origin.tileId) return null;
+  state.answer[origin.index] = null;
+  return tile;
+}
+
+function putInBank(tile) {
+  if (!tile) return;
+  if (!state.tiles.some(item => item.id === tile.id)) state.tiles.push(tile);
+}
+
+function moveTile(origin, destination) {
+  if (!origin || !destination) return;
+  if (destination.kind === 'slot' && origin.kind === 'slot' && destination.index === origin.index) {
+    state.selected = null;
+    renderBuilder();
+    return;
+  }
+
+  const tile = extractTile(origin);
+  if (!tile) {
+    state.selected = null;
+    renderBuilder();
+    return;
+  }
+
+  if (destination.kind === 'bank') {
+    putInBank(tile);
+  } else {
+    const displaced = state.answer[destination.index];
+    state.answer[destination.index] = tile;
+
+    if (displaced) {
+      if (origin.kind === 'slot' && state.answer[origin.index] === null) {
+        state.answer[origin.index] = displaced;
+      } else {
+        putInBank(displaced);
+      }
+    }
+  }
+
+  state.selected = null;
   $('#builderFeedback').textContent = '';
   $('#builderFeedback').className = 'feedback';
   renderBuilder();
 }
 
-function firstEmptySlot() {
-  return state.answer.findIndex(v => v === null);
-}
+function selectTile(origin) {
+  if (performance.now() < state.ignoreClickUntil) return;
 
-function placeTile(tileId) {
-  const tileIndex = state.tiles.findIndex(t => t.id === tileId);
-  if (tileIndex < 0) return;
-  const slot = firstEmptySlot();
-  if (slot < 0) return;
-  const [tile] = state.tiles.splice(tileIndex, 1);
-  state.answer[slot] = tile;
+  if (!state.selected) {
+    state.selected = origin;
+    renderBuilder();
+    return;
+  }
+
+  if (originEquals(state.selected, origin)) {
+    state.selected = null;
+    renderBuilder();
+    return;
+  }
+
+  if (origin.kind === 'slot') {
+    moveTile(state.selected, { kind: 'slot', index: origin.index });
+    return;
+  }
+
+  state.selected = origin;
   renderBuilder();
 }
 
-function returnTile(slotIndex) {
-  const tile = state.answer[slotIndex];
-  if (!tile) return;
-  state.answer[slotIndex] = null;
-  state.tiles.push(tile);
-  renderBuilder();
+function slotActivate(index) {
+  if (!state.selected) return;
+  moveTile(state.selected, { kind: 'slot', index });
+}
+
+function parseDropTarget(element) {
+  const zone = element?.closest?.('[data-drop-zone]');
+  if (!zone) return null;
+  if (zone.dataset.dropZone === 'bank') return { kind: 'bank' };
+  if (zone.dataset.dropZone === 'slot') {
+    return { kind: 'slot', index: Number(zone.dataset.slotIndex) };
+  }
+  return null;
+}
+
+function clearDragVisuals() {
+  if (!state.drag) return;
+  state.drag.ghost?.remove();
+  state.drag.hoverZone?.classList.remove('drop-hover');
+  document.body.classList.remove('is-dragging');
+}
+
+function finishDrag(event, cancelled = false) {
+  const drag = state.drag;
+  if (!drag || drag.pointerId !== event.pointerId) return;
+
+  let destination = null;
+  if (drag.moved && !cancelled) {
+    const hit = document.elementFromPoint(event.clientX, event.clientY);
+    destination = parseDropTarget(hit);
+    state.ignoreClickUntil = performance.now() + 350;
+  }
+
+  clearDragVisuals();
+  state.drag = null;
+
+  if (drag.moved && destination) {
+    moveTile(drag.origin, destination);
+  }
+}
+
+function attachPointerDrag(button, origin, letter) {
+  button.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+    state.drag = {
+      pointerId: event.pointerId,
+      origin,
+      letter,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false,
+      ghost: null,
+      hoverZone: null
+    };
+
+    button.setPointerCapture?.(event.pointerId);
+  });
+
+  button.addEventListener('pointermove', (event) => {
+    const drag = state.drag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+    if (!drag.moved && distance < 7) return;
+
+    if (!drag.moved) {
+      drag.moved = true;
+      drag.ghost = document.createElement('div');
+      drag.ghost.className = 'drag-ghost';
+      drag.ghost.textContent = drag.letter;
+      document.body.appendChild(drag.ghost);
+      document.body.classList.add('is-dragging');
+    }
+
+    event.preventDefault();
+    drag.ghost.style.left = `${event.clientX}px`;
+    drag.ghost.style.top = `${event.clientY}px`;
+
+    const hit = document.elementFromPoint(event.clientX, event.clientY);
+    const zone = hit?.closest?.('[data-drop-zone]') || null;
+    if (zone !== drag.hoverZone) {
+      drag.hoverZone?.classList.remove('drop-hover');
+      zone?.classList.add('drop-hover');
+      drag.hoverZone = zone;
+    }
+  });
+
+  button.addEventListener('pointerup', event => finishDrag(event));
+  button.addEventListener('pointercancel', event => finishDrag(event, true));
+}
+
+function makeTileButton(tile, origin) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'letter-tile';
+  button.textContent = tile.letter;
+  button.dataset.tileId = tile.id;
+  button.dataset.source = origin.kind;
+  if (origin.kind === 'slot') button.dataset.slotIndex = String(origin.index);
+
+  const isSelected = originEquals(state.selected, origin);
+  button.classList.toggle('selected', isSelected);
+  button.setAttribute('aria-pressed', String(isSelected));
+  button.setAttribute('aria-label', `${isSelected ? 'Selected' : 'Select'} letter ${tile.letter}`);
+
+  button.addEventListener('click', () => selectTile(origin));
+  attachPointerDrag(button, origin, tile.letter);
+  return button;
 }
 
 function renderBuilder() {
@@ -107,45 +349,87 @@ function renderBuilder() {
   bank.innerHTML = '';
 
   state.answer.forEach((tile, index) => {
-    const slot = document.createElement('button');
+    const slot = document.createElement('div');
     slot.className = 'answer-slot';
-    slot.setAttribute('aria-label', tile ? `Remove ${tile.letter} from position ${index + 1}` : `Empty position ${index + 1}`);
+    slot.dataset.dropZone = 'slot';
+    slot.dataset.slotIndex = String(index);
+    slot.tabIndex = 0;
+    slot.setAttribute('role', 'button');
+    slot.setAttribute('aria-label', tile
+      ? `Position ${index + 1}, letter ${tile.letter}`
+      : `Empty position ${index + 1}`);
+
     if (tile) {
-      slot.innerHTML = `<span class="letter-tile">${tile.letter}</span>`;
-      slot.addEventListener('click', () => returnTile(index));
+      slot.appendChild(makeTileButton(tile, { kind: 'slot', index, tileId: tile.id }));
+    } else {
+      const marker = document.createElement('span');
+      marker.className = 'slot-marker';
+      marker.textContent = String(index + 1);
+      slot.appendChild(marker);
     }
+
+    slot.addEventListener('click', (event) => {
+      if (event.target.closest('.letter-tile')) return;
+      slotActivate(index);
+    });
+
+    slot.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      slotActivate(index);
+    });
+
     slots.appendChild(slot);
   });
 
   state.tiles.forEach(tile => {
-    const button = document.createElement('button');
-    button.className = 'letter-tile';
-    button.textContent = tile.letter;
-    button.setAttribute('aria-label', `Place letter ${tile.letter}`);
-    button.addEventListener('click', () => placeTile(tile.id));
-    bank.appendChild(button);
+    bank.appendChild(makeTileButton(tile, { kind: 'bank', tileId: tile.id }));
   });
+
+  const selectedTile = getTileAtOrigin(state.selected);
+  $('#selectionStatus').textContent = selectedTile
+    ? `Selected ${selectedTile.letter} — choose a space.`
+    : '';
 }
 
 function checkWord() {
-  const current = state.answer.map(x => x?.letter || '').join('');
-  const target = words[state.wordIndex].word;
+  const entry = currentEntry();
+  const current = state.answer.map(tile => tile?.letter || '').join('');
   const feedback = $('#builderFeedback');
-  if (current === target) {
-    feedback.textContent = `Correct — ${target}!`;
+
+  if (current === entry.word) {
+    feedback.textContent = `Correct — ${entry.word}!`;
     feedback.className = 'feedback good';
-    speak(target);
-    addProgress();
-  } else {
-    feedback.textContent = current.length < target.length ? 'Complete every space first.' : 'Not yet. Move one letter at a time and try again.';
-    feedback.className = 'feedback bad';
+    speak(entry.word);
+    if (!state.currentSolved) {
+      state.currentSolved = true;
+      addProgress();
+    }
+    return;
   }
+
+  if (state.answer.some(tile => tile === null)) {
+    feedback.textContent = 'Complete every space first.';
+    feedback.className = 'feedback bad';
+    return;
+  }
+
+  const correctPositions = state.answer.reduce(
+    (total, tile, index) => total + Number(tile?.letter === entry.word[index]),
+    0
+  );
+  feedback.textContent = `Not yet. ${correctPositions} of ${entry.word.length} letters are in the correct place.`;
+  feedback.className = 'feedback bad';
 }
 
-function resetWord() {
+function scrambleWord() {
   const allTiles = [...state.tiles, ...state.answer.filter(Boolean)];
-  state.tiles = allTiles;
-  state.answer = Array(words[state.wordIndex].word.length).fill(null);
+  state.answer = Array(currentEntry().word.length).fill(null);
+  state.tiles = shuffled(allTiles);
+  state.selected = null;
+  state.currentSolved = false;
+  $('#builderFeedback').textContent = '';
+  $('#builderFeedback').className = 'feedback';
   renderBuilder();
 }
 
@@ -154,47 +438,69 @@ function renderPractice() {
   $('#practiceWord').textContent = entry.word;
   $('#practiceFeedback').textContent = '';
   $('#practiceFeedback').className = 'feedback';
+
   const correct = entry.word[0];
-  const distractors = letters.map(l => l.upper).filter(l => l !== correct);
+  const distractors = letters.map(letter => letter.upper).filter(letter => letter !== correct);
   const choices = shuffled([correct, ...shuffled(distractors).slice(0, 2)]);
   const wrap = $('#practiceChoices');
   wrap.innerHTML = '';
+
   choices.forEach(letter => {
-    const btn = document.createElement('button');
-    btn.className = 'choice-btn';
-    btn.textContent = letter;
-    btn.addEventListener('click', () => {
-      $$('.choice-btn').forEach(b => b.disabled = true);
+    const button = document.createElement('button');
+    button.className = 'choice-btn';
+    button.textContent = letter;
+
+    button.addEventListener('click', () => {
+      $$('.choice-btn').forEach(choice => { choice.disabled = true; });
+
       if (letter === correct) {
-        btn.classList.add('correct');
+        button.classList.add('correct');
         $('#practiceFeedback').textContent = `Yes. ${entry.word} begins with ${correct}.`;
         $('#practiceFeedback').className = 'feedback good';
         addProgress();
       } else {
-        btn.classList.add('wrong');
-        const correctBtn = $$('.choice-btn').find(b => b.textContent === correct);
-        correctBtn?.classList.add('correct');
+        button.classList.add('wrong');
+        const correctButton = $$('.choice-btn').find(choice => choice.textContent === correct);
+        correctButton?.classList.add('correct');
         $('#practiceFeedback').textContent = `This word begins with ${correct}.`;
         $('#practiceFeedback').className = 'feedback bad';
       }
     });
-    wrap.appendChild(btn);
+
+    wrap.appendChild(button);
   });
 }
 
 $$('.tab').forEach(tab => tab.addEventListener('click', () => {
-  $$('.tab').forEach(t => t.classList.toggle('is-active', t === tab));
-  $$('.view').forEach(v => v.classList.toggle('is-active', v.id === tab.dataset.view));
+  $$('.tab').forEach(item => item.classList.toggle('is-active', item === tab));
+  $$('.view').forEach(view => view.classList.toggle('is-active', view.id === tab.dataset.view));
 }));
 
-$('#caseMode').addEventListener('change', e => { state.caseMode = e.target.value; renderLetters(); });
+$('#caseMode').addEventListener('change', event => {
+  state.caseMode = event.target.value;
+  renderLetters();
+});
+
+$('#builderMode').addEventListener('change', event => {
+  state.builderMode = event.target.value;
+  loadWord(state.wordIndex);
+});
+
 $('#newWordBtn').addEventListener('click', () => loadWord(state.wordIndex + 1));
-$('#shuffleBtn').addEventListener('click', () => { state.tiles = shuffled(state.tiles); renderBuilder(); });
-$('#resetBtn').addEventListener('click', resetWord);
+$('#shuffleBtn').addEventListener('click', scrambleWord);
+$('#resetBtn').addEventListener('click', scrambleWord);
 $('#checkBtn').addEventListener('click', checkWord);
-$('#speakWordBtn').addEventListener('click', () => speak(words[state.wordIndex].word));
+$('#speakWordBtn').addEventListener('click', () => speak(currentEntry().word));
 $('#speakPracticeBtn').addEventListener('click', () => speak(words[state.practiceIndex % words.length].word));
-$('#nextPracticeBtn').addEventListener('click', () => { state.practiceIndex = (state.practiceIndex + 1) % words.length; renderPractice(); });
+$('#nextPracticeBtn').addEventListener('click', () => {
+  state.practiceIndex = (state.practiceIndex + 1) % words.length;
+  renderPractice();
+});
+
+$('#tileBank').addEventListener('click', event => {
+  if (event.target.closest('.letter-tile') || !state.selected) return;
+  moveTile(state.selected, { kind: 'bank' });
+});
 
 renderProgress();
 renderLetters();
