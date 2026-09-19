@@ -55,8 +55,8 @@
               <option value="classic">Classic single color</option>
             </select>
           </label>
-          <label class="compact-control teacher-only">Case
-            <select id="englishCase">
+          <label class="compact-control teacher-only">New letters
+            <select id="englishCase" aria-label="Case for new foam letters">
               <option value="upper">ABC</option>
               <option value="lower">abc</option>
             </select>
@@ -198,6 +198,18 @@
         <button id="englishDiagnosticsBtn" class="board-selection-btn">🩺 Diagnostics</button>
       </div>
 
+      <div id="englishInlineInteraction" class="english-inline-interaction" aria-label="Board interaction mode">
+        <div class="english-inline-interaction-label">
+          <strong>Interaction</strong>
+          <small>Available on the normal board and in Full Board.</small>
+        </div>
+        <div class="workspace-segmented english-inline-interaction-buttons">
+          <button type="button" data-workspace-tool="move">👆 Move</button>
+          <button type="button" data-workspace-tool="pen">✏ Pen</button>
+          <button type="button" data-workspace-tool="eraser">⌫ Eraser</button>
+        </div>
+      </div>
+
       <div class="english-board-layout">
         <div class="english-board-frame">
           <div class="english-board-header">
@@ -325,11 +337,12 @@
           </div>
 
           <div class="workspace-tool-group">
-            <strong>Letter case</strong>
+            <strong>New letters</strong>
             <div class="workspace-segmented">
               <button type="button" data-workspace-case="upper">ABC</button>
               <button type="button" data-workspace-case="lower">abc</button>
             </div>
+            <small class="workspace-case-note">Changes the tray only. Letters already on the board keep their own case.</small>
           </div>
 
           <div class="workspace-tool-group">
@@ -387,7 +400,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.16</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.17</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -501,7 +514,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.16</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.17</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>

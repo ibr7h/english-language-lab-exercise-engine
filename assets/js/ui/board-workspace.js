@@ -336,16 +336,7 @@ export class BoardWorkspace {
   }
 
   setCase(mode){
-    const next=mode==='lower'?'lower':'upper';
-    this.board.caseMode=next;
-    const select=document.querySelector('#englishCase');
-    if(select)select.value=next;
-    this.board.renderTray();
-    this.board.renderGraphemeTrays();
-    this.board.renderBoard();
-    this.renderStrip();
-    this.syncCaseButtons();
-    this.board.persist();
+    this.board.setTrayCase(mode);
   }
 
   syncCaseButtons(){

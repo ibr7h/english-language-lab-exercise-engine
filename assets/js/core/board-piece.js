@@ -18,6 +18,7 @@ export function createLetterPiece(data={}) {
     type:'letter',
     logicalChar,
     displayGlyph:String(data.displayGlyph??logicalChar),
+    letterCase:data.letterCase==='lower'?'lower':'upper',
     x:Number(data.x)||0,
     y:Number(data.y)||0,
     scale:Math.max(.35,Number(data.scale)||1),

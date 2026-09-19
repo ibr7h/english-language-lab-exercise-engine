@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.16 — Vector Ink Objects
+## v0.17 — Mixed Case Board + Normal Interaction
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,18 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.17 Mixed Case Board + Normal Interaction
+
+- Interaction (Move / Pen / Eraser) is now available on the normal board as well as Full Board.
+- The normal Interaction bar hides automatically in Full Board to avoid duplicate controls.
+- Letter case is now a property of each foam piece instead of a global display switch.
+- ABC / abc now changes the tray and future pieces only; existing board letters keep their current case.
+- Mixed-case constructions such as Cat, iPhone-style patterns, capital/lowercase matching and sentence capitalization can coexist on one board.
+- Duplicating a foam piece preserves its own case.
+- Completed Words now preserve the capitalization typed into the input.
+- Existing saved boards migrate automatically: legacy pieces receive a per-piece case based on their stored glyph/current tray state.
+- Board persistence schema metadata advances to v3 while keeping the same stable storage key.
 
 ### v0.16 Vector Ink Objects
 
@@ -235,7 +247,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v16` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v17` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -253,6 +265,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.16
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.17
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.

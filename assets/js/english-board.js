@@ -7,9 +7,9 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.16';
+const APP_VERSION='0.17';
 const STORAGE_KEY='englishLab.board';
-const STORAGE_SCHEMA_VERSION=2;
+const STORAGE_SCHEMA_VERSION=3;
 const LEGACY_STORAGE_KEYS=['englishLab.board.v0.13','englishLab.board.v0.8'];
 const ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const VOWELS=new Set(['A','E','I','O','U']);
@@ -159,17 +159,27 @@ class EnglishMagneticBoard {
       }
     }
 
-    if(restored?.items?.length){
-      restored.items.forEach(item=>{
-        item.color=normalizeLegacyColor(item.color,item.logicalChar||item.displayGlyph||'');
-      });
-      this.state.replace(restored.items);
-
+    if(restored){
       const meta=restored.meta||{};
       if(['upper','lower'].includes(meta.caseMode))this.caseMode=meta.caseMode;
       if(['phonics','classic'].includes(meta.colorMode))this.colorMode=meta.colorMode;
       if(['student','teacher'].includes(meta.interfaceMode))this.interfaceMode=meta.interfaceMode;
       if(['free','build','completed','segment'].includes(meta.mode))this.mode=meta.mode;
+
+      if(restored.items?.length){
+        restored.items.forEach(item=>{
+          item.color=normalizeLegacyColor(item.color,item.logicalChar||item.displayGlyph||'');
+          if(!['upper','lower'].includes(item.letterCase)){
+            const glyph=String(item.displayGlyph||'');
+            const hasLetter=/[A-Za-z]/.test(glyph);
+            item.letterCase=hasLetter&&glyph===glyph.toLowerCase()&&glyph!==glyph.toUpperCase()
+              ?'lower'
+              :this.caseMode;
+          }
+          item.displayGlyph=this.display(item.logicalChar,item.letterCase);
+        });
+        this.state.replace(restored.items);
+      }
     }
 
     this.bindControls();
@@ -269,13 +279,7 @@ class EnglishMagneticBoard {
     $('#englishScatter')?.addEventListener('click',()=>this.scatterPieces());
     $('#englishSpeak')?.addEventListener('click',()=>this.pronounceBoard());
     $('#englishClear')?.addEventListener('click',()=>this.clearBoard());
-    $('#englishCase')?.addEventListener('change',e=>{
-      this.caseMode=e.target.value;
-      this.renderTray();this.renderGraphemeTrays();this.renderBoard();
-      this.workspace?.renderStrip();
-      this.workspace?.syncCaseButtons();
-      this.persist();
-    });
+    $('#englishCase')?.addEventListener('change',e=>this.setTrayCase(e.target.value));
     $('#englishColorMode')?.addEventListener('change',e=>{
       this.colorMode=e.target.value==='classic'?'classic':'phonics';
       localStorage.setItem('englishLab.colorMode',this.colorMode);
@@ -333,7 +337,25 @@ class EnglishMagneticBoard {
       this.renderBoard();
     }
   }
-  display(letter){return this.caseMode==='lower'?String(letter).toLowerCase():String(letter).toUpperCase();}
+  display(letter,caseMode=this.caseMode){
+    return caseMode==='lower'?String(letter).toLowerCase():String(letter).toUpperCase();
+  }
+  displayPiece(item){
+    if(!item)return '';
+    const letterCase=item.letterCase==='lower'?'lower':'upper';
+    return this.display(item.logicalChar,letterCase);
+  }
+  setTrayCase(mode,{silent=false}={}){
+    this.caseMode=mode==='lower'?'lower':'upper';
+    const select=$('#englishCase');
+    if(select)select.value=this.caseMode;
+    this.renderTray();
+    this.renderGraphemeTrays();
+    this.workspace?.renderStrip();
+    this.workspace?.syncCaseButtons();
+    this.persist();
+    if(!silent)this.toast(this.caseMode==='lower'?'New letters: lowercase':'New letters: uppercase');
+  }
   colorForToken(token,role=null){
     if(this.colorMode==='classic')return PHONICS_COLORS.consonant;
     if(role==='digraph')return PHONICS_COLORS.digraph;
@@ -388,8 +410,13 @@ class EnglishMagneticBoard {
   }
   canvasRect(){return $('#englishBoardCanvas')?.getBoundingClientRect()||{width:700,height:500,left:0,top:0};}
   createPiece(letter,x,y,extra={}){
+    const letterCase=extra.letterCase==='lower'||extra.letterCase==='upper'
+      ?extra.letterCase
+      :this.caseMode;
     return createLetterPiece({
-      logicalChar:letter,displayGlyph:this.display(letter),
+      logicalChar:letter,
+      displayGlyph:this.display(letter,letterCase),
+      letterCase,
       color:extra.color||this.colorForToken(letter,extra.phonicsRole||null),
       x,y,rotation:(Math.random()*6-3),...extra
     });
@@ -454,7 +481,8 @@ class EnglishMagneticBoard {
     const mobile=rect.width<640;
     this.items.forEach(item=>{
       if(item.type!=='letter')return;
-      item.displayGlyph=this.display(item.logicalChar);
+      if(!['upper','lower'].includes(item.letterCase))item.letterCase=this.caseMode;
+      item.displayGlyph=this.displayPiece(item);
       item.x=clamp(Number(item.x)||0,4,Math.max(4,rect.width-72));
       item.y=clamp(Number(item.y)||0,4,Math.max(4,rect.height-82));
       const el=document.createElement('button');
@@ -463,7 +491,7 @@ class EnglishMagneticBoard {
         ? PHONICS_COLORS.consonant
         : (item.phonicsRole ? this.colorForToken(item.logicalChar,item.phonicsRole) : legacyColor);
       const visibleColor=item.color;
-      const pieceHtml=`<span class="foam-piece-glyph foam-glyph ${visibleColor} pointer-events-none">${this.escape(this.display(item.logicalChar))}</span>`;
+      const pieceHtml=`<span class="foam-piece-glyph foam-glyph ${visibleColor} pointer-events-none">${this.escape(item.displayGlyph)}</span>`;
       decorateBoardPieceElement(el,{
         item,selected:this.selectedIds.has(item.id),selectionMode:this.selectionMode,mobile,
         minTouchTarget:this.platform.minTarget,contentHtml:pieceHtml
@@ -555,7 +583,7 @@ class EnglishMagneticBoard {
   duplicateSelected(){
     const src=this.items.find(i=>i.id===this.activeItemId);if(!src)return;
     this.checkpoint('DUPLICATE');
-    const p=this.createPiece(src.logicalChar,src.x+28,src.y+28,{scale:src.scale,rotation:src.rotation,color:src.color,phonicsRole:src.phonicsRole||null});
+    const p=this.createPiece(src.logicalChar,src.x+28,src.y+28,{scale:src.scale,rotation:src.rotation,color:src.color,phonicsRole:src.phonicsRole||null,letterCase:src.letterCase||'upper'});
     applyBoardCommand(this.state,{type:BOARD_COMMANDS.ADD_PIECE,piece:p});
     this.setSelection([p.id],'letter',p.id);this.renderBoard();
   }
@@ -596,18 +624,23 @@ class EnglishMagneticBoard {
     this.addCompletedWord(value);if(input)input.value='';
   }
   addCompletedWord(word){
-    const clean=String(word||'').toUpperCase().replace(/[^A-Z\s]/g,'').trim().replace(/\s+/g,' ');
+    const clean=String(word||'').replace(/[^A-Za-z\s]/g,'').trim().replace(/\s+/g,' ');
     if(!clean)return;
     this.checkpoint('ADD_WORD');const rect=this.canvasRect();
     const words=clean.split(' ');let rowY=45+new Set(this.items.filter(i=>i.wordId).map(i=>i.wordId)).size*100;
     words.forEach(token=>{
+      const logicalToken=token.toUpperCase();
       const wordId=`word_${++this.wordCounter}_${Date.now()}`;
       const spacing=Math.min(80,Math.max(54,(rect.width-120)/Math.max(token.length,1)));
       const total=(token.length-1)*spacing;let x=Math.max(18,(rect.width-total-70)/2);
-      const phonics=analyzeWordPhonics(token);
-      [...token].forEach((letter,index)=>{
-        const role=phonics[index]||{color:colorFor(letter),role:VOWELS.has(letter)?'vowel':'consonant'};
-        const p=this.createPiece(letter,x,rowY,{wordId,wordLabel:token,rotation:0,color:role.color,phonicsRole:role.role});
+      const phonics=analyzeWordPhonics(logicalToken);
+      [...token].forEach((sourceLetter,index)=>{
+        const logicalLetter=sourceLetter.toUpperCase();
+        const letterCase=sourceLetter===sourceLetter.toLowerCase()?'lower':'upper';
+        const role=phonics[index]||{color:colorFor(logicalLetter),role:VOWELS.has(logicalLetter)?'vowel':'consonant'};
+        const p=this.createPiece(logicalLetter,x,rowY,{
+          wordId,wordLabel:token,rotation:0,color:role.color,phonicsRole:role.role,letterCase
+        });
         applyBoardCommand(this.state,{type:BOARD_COMMANDS.ADD_PIECE,piece:p});x+=spacing;
       });rowY+=100;
     });
@@ -634,7 +667,7 @@ class EnglishMagneticBoard {
     if(members.length<2){this.toast('Select at least two letters');return;}
     this.checkpoint('REGROUP');
     members.sort((a,b)=>a.x-b.x);
-    const label=members[0].detachedLabel||members.map(i=>i.logicalChar).join('');
+    const label=members[0].detachedLabel||members.map(i=>this.displayPiece(i)).join('');
     const wordId=key||`word_${++this.wordCounter}_${Date.now()}`;
     members.forEach(i=>{i.wordId=wordId;i.wordLabel=label;delete i.detachedFrom;delete i.detachedLabel;});
     this.setSelection(members.map(i=>i.id),'word',members[0].id);this.renderBoard();this.toast('Letters regrouped as one word');
@@ -780,7 +813,7 @@ class EnglishMagneticBoard {
     this.exercise.word.split('').forEach((letter,index)=>{
       const el=document.createElement('div');el.className='english-answer-slot';el.dataset.slot=String(index);
       const pieceId=this.exercise.slots[index],item=pieceId?this.state.find(pieceId):null;
-      if(item){el.classList.add('filled');el.textContent=this.display(item.logicalChar);}
+      if(item){el.classList.add('filled');el.textContent=this.displayPiece(item);}
       else el.innerHTML='<span>'+String(index+1)+'</span>';
       slots.appendChild(el);
     });
@@ -820,6 +853,7 @@ class EnglishMagneticBoard {
     add('Build mode controls',Boolean($('#englishBuildControls')),'Shared board builder');
     add('Segment & Blend controls',Boolean($('#englishSegmentControls')),'Phonics manipulative');
     add('Student / Teacher switch',Boolean($('#studentModeBtn')&&$('#teacherModeBtn')),'Experience modes');
+    add('Normal-board Interaction',Boolean($('#englishInlineInteraction')),'Move / Pen / Eraser outside Full Board');
     add('Main navigation',document.documentElement.dataset.mainNavReady==='true','Magnetic Board / Letters / Word Builder / Practice / Learning Path');
     add('Classroom Whiteboard workspace',Boolean(this.workspace&&$('#englishFullscreenBoard')),'Full screen + toolbox + letter strip');
     add('Full-board topbar tools',Boolean(
@@ -837,8 +871,8 @@ class EnglishMagneticBoard {
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
 
     try{
-      const a=createLetterPiece({logicalChar:'A'});
-      add('Single-letter board model',a.logicalChar==='A','createLetterPiece(A)');
+      const a=createLetterPiece({logicalChar:'A',letterCase:'lower',displayGlyph:'a'});
+      add('Per-piece letter case',a.logicalChar==='A'&&a.letterCase==='lower'&&a.displayGlyph==='a','Mixed upper/lower board pieces');
     }catch(error){add('Single-letter board model',false,error.message);}
 
     try{

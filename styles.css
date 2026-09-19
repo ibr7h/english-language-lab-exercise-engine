@@ -2949,3 +2949,57 @@ body.board-workspace-active > .tabs {
 .english-board-canvas[data-workspace-tool="pen"] .ink-object {
   pointer-events:none;
 }
+
+
+/* v0.17 Mixed Case + Normal Interaction */
+.english-inline-interaction {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 12px;
+  padding:9px 11px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:#fff;
+  box-shadow:0 7px 18px rgba(38,47,77,.045);
+}
+.english-inline-interaction-label {
+  min-width:0;
+}
+.english-inline-interaction-label strong {
+  display:block;
+  font-size:.78rem;
+}
+.english-inline-interaction-label small {
+  display:block;
+  margin-top:2px;
+  color:var(--ink-soft);
+  font-size:.68rem;
+}
+.english-inline-interaction-buttons {
+  flex:0 0 min(330px,52%);
+}
+.english-inline-interaction-buttons button {
+  min-height:34px;
+}
+.workspace-case-note {
+  display:block;
+  margin-top:6px;
+  color:#76838c;
+  font-size:.64rem;
+  line-height:1.35;
+}
+#magnetic-board.is-board-workspace .english-inline-interaction {
+  display:none !important;
+}
+@media(max-width:700px){
+  .english-inline-interaction {
+    align-items:stretch;
+    flex-direction:column;
+  }
+  .english-inline-interaction-buttons {
+    width:100%;
+    flex-basis:auto;
+  }
+}
