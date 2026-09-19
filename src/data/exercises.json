@@ -1,11 +1,271 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "appVersion": "0.25.1",
   "levels": [
     {
+      "id": "level-0-getting-ready",
+      "title": "Level 0 · Getting Ready",
+      "description": "Start from zero: understand uppercase and lowercase letters and learn how the path works.",
+      "units": [
+        {
+          "id": "unit-0-meet-letters",
+          "title": "Unit 1 · Meet Letters",
+          "description": "Discover that English letters can have uppercase and lowercase forms.",
+          "lessons": [
+            {
+              "id": "lesson-0-big-small",
+              "title": "Big & small letters",
+              "objective": "Understand that uppercase and lowercase forms can represent the same letter.",
+              "difficulty": "starter",
+              "estimatedMinutes": 3,
+              "masteryThreshold": 1,
+              "phonicsFocus": [
+                "alphabet-concept",
+                "uppercase-lowercase"
+              ],
+              "prerequisites": [],
+              "activities": [
+                {
+                  "id": "activity-0-learn-cases",
+                  "title": "Learn",
+                  "exercises": [
+                    {
+                      "id": "l0-cases-intro",
+                      "type": "letter-intro",
+                      "title": "Letters can look two ways",
+                      "instruction": "English letters have uppercase and lowercase forms. A and a are the same letter.",
+                      "uppercase": "A",
+                      "lowercase": "a",
+                      "letterName": "A",
+                      "sound": "/æ/",
+                      "keyword": "apple",
+                      "emoji": "🍎",
+                      "clue": "Look at the big A and the small a.",
+                      "nameAudio": "A",
+                      "soundAudio": "apple",
+                      "tags": [
+                        "alphabet",
+                        "uppercase",
+                        "lowercase"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "activity-0-match-cases",
+                  "title": "Match",
+                  "exercises": [
+                    {
+                      "id": "l0-cases-match-a",
+                      "type": "case-match",
+                      "title": "Find the matching small letter",
+                      "instruction": "Which lowercase letter matches uppercase A?",
+                      "display": "A",
+                      "answer": "a",
+                      "choices": [
+                        "a",
+                        "m",
+                        "t"
+                      ],
+                      "tags": [
+                        "alphabet",
+                        "case-match"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "level-1-letters-sounds",
+      "title": "Level 1 · Letters & Sounds",
+      "description": "Learn each letter from the beginning: shape, uppercase/lowercase form, name, first phonics sound and an example word.",
+      "units": [
+        {
+          "id": "unit-1-first-letters",
+          "title": "Unit 1 · First Letters",
+          "description": "Meet one letter at a time, hear it, recognize it and match its two forms.",
+          "lessons": [
+            {
+              "id": "lesson-letter-a",
+              "title": "Letter A/a",
+              "objective": "Recognize A and a, know the letter name A, and connect it with short /æ/ as in apple.",
+              "difficulty": "starter",
+              "estimatedMinutes": 6,
+              "masteryThreshold": 0.8,
+              "phonicsFocus": [
+                "A",
+                "a",
+                "short-a"
+              ],
+              "graphemes": [
+                "A",
+                "a"
+              ],
+              "prerequisites": [
+                "lesson-0-big-small"
+              ],
+              "activities": [
+                {
+                  "id": "activity-a-learn",
+                  "title": "Learn",
+                  "exercises": [
+                    {
+                      "id": "alpha-a-intro",
+                      "type": "letter-intro",
+                      "title": "Meet A and a",
+                      "instruction": "Look at both forms. They are the same letter.",
+                      "uppercase": "A",
+                      "lowercase": "a",
+                      "letterName": "A",
+                      "sound": "/æ/",
+                      "keyword": "apple",
+                      "emoji": "🍎",
+                      "clue": "A is uppercase. a is lowercase.",
+                      "nameAudio": "A",
+                      "soundAudio": "apple",
+                      "tags": [
+                        "alphabet",
+                        "letter-a",
+                        "short-a"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "activity-a-hear",
+                  "title": "Hear",
+                  "exercises": [
+                    {
+                      "id": "alpha-a-sound",
+                      "type": "phoneme-match",
+                      "title": "Hear short A",
+                      "instruction": "Which letter can represent the first sound in apple?",
+                      "display": "/æ/",
+                      "answer": "A",
+                      "choices": [
+                        "A",
+                        "E",
+                        "O"
+                      ],
+                      "audio": "apple",
+                      "emoji": "🍎",
+                      "examples": [
+                        "apple",
+                        "ant"
+                      ],
+                      "tags": [
+                        "letter-a",
+                        "short-a",
+                        "phoneme"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "activity-a-identify",
+                  "title": "Identify",
+                  "exercises": [
+                    {
+                      "id": "alpha-a-find-upper",
+                      "type": "letter-recognition",
+                      "title": "Find uppercase A",
+                      "instruction": "Tap uppercase A.",
+                      "display": "A",
+                      "answer": "A",
+                      "choices": [
+                        "M",
+                        "A",
+                        "T"
+                      ],
+                      "tags": [
+                        "letter-a",
+                        "uppercase",
+                        "recognition"
+                      ]
+                    },
+                    {
+                      "id": "alpha-a-find-lower",
+                      "type": "letter-recognition",
+                      "title": "Find lowercase a",
+                      "instruction": "Tap lowercase a.",
+                      "display": "a",
+                      "answer": "a",
+                      "choices": [
+                        "e",
+                        "a",
+                        "o"
+                      ],
+                      "tags": [
+                        "letter-a",
+                        "lowercase",
+                        "recognition"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "activity-a-match",
+                  "title": "Match",
+                  "exercises": [
+                    {
+                      "id": "alpha-a-case-match",
+                      "type": "case-match",
+                      "title": "Match A to a",
+                      "instruction": "Which lowercase letter is the partner of A?",
+                      "display": "A → ?",
+                      "answer": "a",
+                      "choices": [
+                        "d",
+                        "a",
+                        "o"
+                      ],
+                      "tags": [
+                        "letter-a",
+                        "case-match"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "activity-a-check",
+                  "title": "Quick Check",
+                  "exercises": [
+                    {
+                      "id": "alpha-a-beginning-sound",
+                      "type": "beginning-sound",
+                      "title": "Apple starts with…",
+                      "instruction": "Which letter matches the beginning sound in apple?",
+                      "display": "🍎 apple",
+                      "answer": "A",
+                      "choices": [
+                        "S",
+                        "A",
+                        "M"
+                      ],
+                      "audio": "apple",
+                      "tags": [
+                        "letter-a",
+                        "beginning-sound",
+                        "mastery-check"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "level-1-foundations",
-      "title": "Level 1 · Foundations",
-      "description": "Build early decoding skills through short vowels, digraphs and simple sentences.",
+      "title": "Level 2 · First Words (Preview)",
+      "description": "Current CVC, digraph and sentence activities retained while the new alphabet-first pathway is expanded.",
       "units": [
         {
           "id": "unit-1-short-vowels",
@@ -111,6 +371,9 @@
                     }
                   ]
                 }
+              ],
+              "prerequisites": [
+                "lesson-letter-a"
               ]
             },
             {
