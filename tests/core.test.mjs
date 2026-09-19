@@ -79,5 +79,6 @@ test('v0.25.1 hardening UI contracts stay present', () => {
   assert.ok(js.includes('placeSelectedBuildPieceInSlot'));
   assert.ok(sw.includes("english-language-lab-v25-1"));
   assert.ok(css.includes(':not(.workspace-student-nav):not(.workspace-build-actions)'));
+  assert.match(css,/#englishBuildWord\s*\{[^}]*text-transform\s*:\s*none;/s);
   assert.equal(curriculum.appVersion,'0.25.1');
 });
