@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.20 — Upright Letters & Tongue Toolbox
+## v0.20.1 — Side Toolbox Restored
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,14 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.20.1 Side Toolbox Restored
+
+- Reverts the Full Board tongue/tab interface introduced in v0.20.
+- Restores the previous scrollable side toolbox with Interaction, Boards, New letters, Writing guides and Pen sections.
+- Keeps the upright-letter fix from v0.20: new, scattered and previously saved foam letters remain straight.
+- Keeps all v0.19.x multi-board, surface, ink and empty-state fixes.
+- Refreshes the PWA cache so the restored toolbox replaces the tabbed UI.
 
 ### v0.20 Upright Letters & Tongue Toolbox
 
@@ -353,7 +361,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v20` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v20-1` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -371,6 +379,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.20
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.20.1
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
