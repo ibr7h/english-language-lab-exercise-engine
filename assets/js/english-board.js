@@ -6,8 +6,10 @@ import { detectPlatformProfile } from './core/platform-profile.js';
 import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 
-const STORAGE_KEY='englishLab.board.v0.13';
-const LEGACY_STORAGE_KEYS=['englishLab.board.v0.8'];
+const APP_VERSION='0.14';
+const STORAGE_KEY='englishLab.board';
+const STORAGE_SCHEMA_VERSION=2;
+const LEGACY_STORAGE_KEYS=['englishLab.board.v0.13','englishLab.board.v0.8'];
 const ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const VOWELS=new Set(['A','E','I','O','U']);
 const PHONICS_COLORS=Object.freeze({
@@ -143,31 +145,61 @@ class EnglishMagneticBoard {
   set items(value){this.state.replace(value);}
   init(){
     let restored=loadBoardState(localStorage,STORAGE_KEY);
+    let migratedFrom=null;
+
     if(!restored?.items?.length){
       for(const legacyKey of LEGACY_STORAGE_KEYS){
         const legacy=loadBoardState(localStorage,legacyKey);
-        if(legacy?.items?.length){restored=legacy;break;}
+        if(legacy?.items?.length){
+          restored=legacy;
+          migratedFrom=legacyKey;
+          break;
+        }
       }
     }
+
     if(restored?.items?.length){
       restored.items.forEach(item=>{
         item.color=normalizeLegacyColor(item.color,item.logicalChar||item.displayGlyph||'');
       });
       this.state.replace(restored.items);
+
+      const meta=restored.meta||{};
+      if(['upper','lower'].includes(meta.caseMode))this.caseMode=meta.caseMode;
+      if(['phonics','classic'].includes(meta.colorMode))this.colorMode=meta.colorMode;
+      if(['student','teacher'].includes(meta.interfaceMode))this.interfaceMode=meta.interfaceMode;
+      if(['free','build','completed','segment'].includes(meta.mode))this.mode=meta.mode;
     }
+
     this.bindControls();
     this.renderTray();
     this.renderGraphemeTrays();
     this.applyInterfaceMode(this.interfaceMode,true);
+
+    const caseSelect=$('#englishCase'); if(caseSelect)caseSelect.value=this.caseMode;
     const colorSelect=$('#englishColorMode'); if(colorSelect)colorSelect.value=this.colorMode;
-    this.setMode('free',true);
+
+    this.setMode(this.mode||'free',true);
     this.renderBoard();
     this.updatePlatformBadge();
-    this.persist();
+
+    const saved=this.persist();
+    if(saved&&migratedFrom){
+      try{localStorage.removeItem(migratedFrom);}catch(_){}
+    }
+
+    this.runDiagnostics(false);
     window.addEventListener('resize',()=>this.renderBoard());
   }
   persist(){
-    saveBoardState(localStorage,STORAGE_KEY,this.state,{mode:this.mode,caseMode:this.caseMode,colorMode:this.colorMode,interfaceMode:this.interfaceMode});
+    return saveBoardState(localStorage,STORAGE_KEY,this.state,{
+      schemaVersion:STORAGE_SCHEMA_VERSION,
+      appVersion:APP_VERSION,
+      mode:this.mode,
+      caseMode:this.caseMode,
+      colorMode:this.colorMode,
+      interfaceMode:this.interfaceMode
+    });
   }
   checkpoint(label){this.history.checkpoint(this.state.snapshot(),label);}
   undo(){
@@ -260,6 +292,10 @@ class EnglishMagneticBoard {
     $('#englishPlayName')?.addEventListener('click',()=>this.playSelectedAudio('name'));
     $('#englishPlaySound')?.addEventListener('click',()=>this.playSelectedAudio('sound'));
     $('#englishPlayExample')?.addEventListener('click',()=>this.playSelectedAudio('example'));
+    $('#englishDiagnosticsBtn')?.addEventListener('click',()=>this.runDiagnostics(true));
+    $('#englishRunDiagnostics')?.addEventListener('click',()=>this.runDiagnostics(true));
+    $('#englishCloseDiagnostics')?.addEventListener('click',()=>$('#englishDiagnosticsPanel')?.classList.add('hidden'));
+    $('#englishResetAppData')?.addEventListener('click',()=>this.resetAppData());
     $('#englishBoardCanvas')?.addEventListener('pointerdown',e=>{
       if(e.target.closest('.free-foam-piece'))return;
       if(this.selectedIds.size){this.clearSelection();}
@@ -754,6 +790,108 @@ class EnglishMagneticBoard {
   setExerciseStatus(message,type='info'){
     const el=$('#englishExerciseStatus');if(!el)return;
     el.textContent=message;el.dataset.type=type;
+  }
+  async runDiagnostics(showPanel=true){
+    const checks=[];
+    const add=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail||'')});
+
+    add('Magnetic board canvas',Boolean($('#englishBoardCanvas')),'Required UI');
+    add('Letter tray',Boolean($('#englishLetterTray')),'A–Z source');
+    add('Digraph tray',Boolean($('#englishDigraphTray')),'SH / CH / TH…');
+    add('Vowel-team tray',Boolean($('#englishVowelTeamTray')),'AI / EE / OA…');
+    add('Build mode controls',Boolean($('#englishBuildControls')),'Shared board builder');
+    add('Segment & Blend controls',Boolean($('#englishSegmentControls')),'Phonics manipulative');
+    add('Student / Teacher switch',Boolean($('#studentModeBtn')&&$('#teacherModeBtn')),'Experience modes');
+
+    try{
+      const a=createLetterPiece({logicalChar:'A'});
+      add('Single-letter board model',a.logicalChar==='A','createLetterPiece(A)');
+    }catch(error){add('Single-letter board model',false,error.message);}
+
+    try{
+      const sh=createLetterPiece({logicalChar:'SH'});
+      add('Multi-letter grapheme model',sh.logicalChar==='SH','createLetterPiece(SH)');
+    }catch(error){add('Multi-letter grapheme model',false,error.message);}
+
+    try{
+      const segments=this.segmentGraphemes('SHIP');
+      add('Segment tokenizer',segments.join('|')==='SH|I|P',segments.join(' · '));
+    }catch(error){add('Segment tokenizer',false,error.message);}
+
+    try{
+      const probe='englishLab.__diagnostic__';
+      localStorage.setItem(probe,'ok');
+      const ok=localStorage.getItem(probe)==='ok';
+      localStorage.removeItem(probe);
+      add('Local storage',ok,ok?'Read/write available':'Unavailable');
+    }catch(error){add('Local storage',false,error.message);}
+
+    add('Stable board storage',STORAGE_KEY==='englishLab.board',STORAGE_KEY);
+    add('Undo / Redo engine',Boolean(this.history&&typeof this.undo==='function'&&typeof this.redo==='function'),'BoardHistory');
+    add('Pointer board interactions',typeof PointerEvent!=='undefined','Pointer Events');
+
+    let swDetail='Not supported';
+    let swOk=false;
+    if('serviceWorker'in navigator){
+      try{
+        const registration=await navigator.serviceWorker.getRegistration();
+        swOk=Boolean(registration);
+        swDetail=registration?(navigator.serviceWorker.controller?'registered + controlling':'registered, activation pending'):'not registered';
+      }catch(error){swDetail=error.message;}
+    }
+    add('Service Worker',swOk,swDetail);
+
+    let cacheDetail='Cache API unavailable';
+    let cacheOk=false;
+    if('caches'in window){
+      try{
+        const names=await caches.keys();
+        const current=names.find(name=>name.includes('english-language-lab-v14'));
+        cacheOk=Boolean(current);
+        cacheDetail=current||names.join(', ')||'no cache yet';
+      }catch(error){cacheDetail=error.message;}
+    }
+    add('Current PWA cache',cacheOk,cacheDetail);
+
+    this.lastDiagnostics=checks;
+    const passed=checks.filter(check=>check.ok).length;
+    const list=$('#englishDiagnosticsList');
+    if(list){
+      list.innerHTML=checks.map(check=>`
+        <div class="diagnostic-row ${check.ok?'pass':'fail'}">
+          <span class="diagnostic-icon">${check.ok?'✓':'!'}</span>
+          <div><strong>${this.escape(check.name)}</strong><small>${this.escape(check.detail)}</small></div>
+        </div>`).join('');
+    }
+
+    const version=$('#englishDiagVersion');if(version)version.textContent=`v${APP_VERSION}`;
+    const platform=$('#englishDiagPlatform');if(platform)platform.textContent=this.platform.profile.label;
+    const pieces=$('#englishDiagPieces');if(pieces)pieces.textContent=String(this.items.length);
+
+    const panel=$('#englishDiagnosticsPanel');
+    if(panel){
+      panel.dataset.status=passed===checks.length?'pass':'attention';
+      if(showPanel)panel.classList.remove('hidden');
+    }
+    return {passed,total:checks.length,checks};
+  }
+  async resetAppData(){
+    const confirmed=window.confirm('Reset English Language Lab data on this device? This clears the board, progress, settings and cached app files.');
+    if(!confirmed)return;
+
+    try{
+      Object.keys(localStorage).filter(key=>key.startsWith('englishLab.')).forEach(key=>localStorage.removeItem(key));
+    }catch(_){}
+
+    if('caches'in window){
+      try{
+        const names=await caches.keys();
+        await Promise.all(names.filter(name=>name.startsWith('english-language-lab-')).map(name=>caches.delete(name)));
+      }catch(_){}
+    }
+
+    this.toast('App data reset');
+    setTimeout(()=>window.location.reload(),350);
   }
   escape(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   toast(message){

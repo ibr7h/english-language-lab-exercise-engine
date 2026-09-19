@@ -32,9 +32,9 @@
   </header>
 
   <nav class="tabs" aria-label="Main sections">
-    <button class="tab is-active" data-view="magnetic-board">🧲 Magnetic Board</button>
+    <button class="tab is-active" data-view="magnetic-board" data-board-mode="free">🧲 Magnetic Board</button>
     <button class="tab" data-view="learn">Letters</button>
-    <button class="tab" data-view="build">Word Builder</button>
+    <button class="tab" data-view="magnetic-board" data-board-mode="build">🧩 Word Builder</button>
     <button class="tab" data-view="practice">Practice</button>
     <button class="tab" data-view="exercises">Learning Path</button>
   </nav>
@@ -195,6 +195,7 @@
         <button id="englishScatter" class="board-selection-btn">🎲 Scatter</button>
         <button id="englishSpeak" class="board-selection-btn accent">📢 Speak</button>
         <button id="englishClear" class="board-selection-btn danger-soft">🧹 Clear board</button>
+        <button id="englishDiagnosticsBtn" class="board-selection-btn">🩺 Diagnostics</button>
       </div>
 
       <div class="english-board-layout">
@@ -279,6 +280,28 @@
           </div>
         </aside>
       </div>
+
+      <section id="englishDiagnosticsPanel" class="diagnostics-panel teacher-only hidden" aria-live="polite">
+        <div class="diagnostics-head">
+          <div>
+            <p class="eyebrow">Teacher tools</p>
+            <h3>App Diagnostics</h3>
+            <p>Checks the board engine, storage, PWA and critical controls without changing student work.</p>
+          </div>
+          <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
+        </div>
+        <div class="diagnostics-summary">
+          <span>App <strong id="englishDiagVersion">v0.14</strong></span>
+          <span>Platform <strong id="englishDiagPlatform">—</strong></span>
+          <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
+        </div>
+        <div id="englishDiagnosticsList" class="diagnostics-list"></div>
+        <div class="diagnostics-actions">
+          <button id="englishRunDiagnostics" type="button" class="secondary-btn">Run checks again</button>
+          <button id="englishResetAppData" type="button" class="board-selection-btn danger">Reset app data</button>
+        </div>
+        <p class="diagnostics-warning">Reset app data clears local board state, progress and cached app files on this device.</p>
+      </section>
 
       <div id="englishBoardToast" class="english-board-toast" role="status" aria-live="polite"></div>
     </section>
@@ -382,7 +405,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.13.1</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.14</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>

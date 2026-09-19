@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.13.1 — regression repair
+## v0.14 — unified board engine + stability
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,16 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.14 stability architecture
+
+- The Word Builder navigation now opens Build mode inside the magnetic-board engine instead of exposing the legacy builder as a second interaction system.
+- The obsolete v0.5 magnetic foam-board implementation was removed from `app.js`.
+- Board persistence now uses the stable key `englishLab.board`; old `englishLab.board.v0.13` and `englishLab.board.v0.8` data are migrated automatically.
+- Saved board metadata restores mode, case, color mode and Student/Teacher mode.
+- Teacher Diagnostics checks required UI, A and SH board models, Segment & Blend tokenization, local storage, Undo/Redo, Pointer Events, Service Worker and current PWA cache.
+- Reset App Data clears English Lab local data and app caches only after explicit confirmation.
+- The runtime diagnostics run once silently at startup and can be opened from Teacher tools.
 
 ### v0.13.1 regression repair
 
@@ -166,7 +176,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v13-1` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v14` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -184,6 +194,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.13.1
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.14
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.

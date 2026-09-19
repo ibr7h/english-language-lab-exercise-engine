@@ -2221,3 +2221,105 @@ body[data-interface-mode="student"] .student-mode-notice {
     flex-direction:column;
   }
 }
+
+
+/* v0.14 stability + diagnostics */
+.diagnostics-panel {
+  margin-top:14px;
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:#fff;
+  box-shadow:var(--shadow);
+}
+.diagnostics-panel[data-status="pass"] {
+  border-color:#bbdfc8;
+}
+.diagnostics-panel[data-status="attention"] {
+  border-color:#efd0a5;
+}
+.diagnostics-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+}
+.diagnostics-head h3 {
+  margin:.1rem 0 .35rem;
+}
+.diagnostics-head p:last-child {
+  margin:0;
+  color:var(--ink-soft);
+  font-size:.8rem;
+  line-height:1.45;
+}
+.diagnostics-summary {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin:13px 0;
+}
+.diagnostics-summary span {
+  padding:9px 10px;
+  border-radius:11px;
+  background:#f7f8fb;
+  color:var(--ink-soft);
+  font-size:.72rem;
+}
+.diagnostics-summary strong {
+  display:block;
+  margin-top:3px;
+  color:var(--ink);
+  font-size:.84rem;
+}
+.diagnostics-list {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+}
+.diagnostic-row {
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  padding:9px;
+  border-radius:11px;
+  border:1px solid #e4e7ee;
+  background:#fafbfc;
+}
+.diagnostic-row.pass { border-color:#cbe7d5; background:#f3fbf6; }
+.diagnostic-row.fail { border-color:#f0d2b4; background:#fff8ef; }
+.diagnostic-icon {
+  display:grid;
+  place-items:center;
+  width:22px;
+  height:22px;
+  flex:0 0 22px;
+  border-radius:50%;
+  font-weight:950;
+}
+.diagnostic-row.pass .diagnostic-icon { background:#d8f2e1; color:#177044; }
+.diagnostic-row.fail .diagnostic-icon { background:#fee7c8; color:#9a5600; }
+.diagnostic-row strong { display:block; font-size:.77rem; }
+.diagnostic-row small {
+  display:block;
+  margin-top:2px;
+  color:var(--ink-soft);
+  font-size:.68rem;
+  line-height:1.35;
+}
+.diagnostics-actions {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:13px;
+}
+.diagnostics-warning {
+  margin:9px 0 0;
+  color:#9f5d36;
+  font-size:.7rem;
+}
+@media(max-width:640px){
+  .diagnostics-head { flex-direction:column; }
+  .diagnostics-summary,
+  .diagnostics-list { grid-template-columns:1fr; }
+}
