@@ -226,6 +226,16 @@ export class BoardWorkspace {
     document.querySelector('#englishWorkspaceExit')?.addEventListener('click',()=>this.exit());
     document.querySelector('#englishWorkspaceToolboxToggle')?.addEventListener('click',()=>this.setToolboxOpen(!this.settings.toolboxOpen));
 
+    document.querySelectorAll('[data-board-action]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        if(btn.dataset.boardAction==='add')this.board.addBoard();
+        if(btn.dataset.boardAction==='delete')this.board.deleteActiveBoard();
+      });
+    });
+    document.querySelectorAll('[data-board-surface]').forEach(btn=>{
+      btn.addEventListener('click',()=>this.board.setBoardSurface(btn.dataset.boardSurface));
+    });
+
     document.querySelectorAll('[data-workspace-tool]').forEach(btn=>{
       btn.addEventListener('click',()=>this.setTool(btn.dataset.workspaceTool));
     });
@@ -302,6 +312,24 @@ export class BoardWorkspace {
         this.deleteSelectedInk();
       }
     });
+  }
+
+  exportInkState(){
+    return clone(this.strokes);
+  }
+
+  importInkState(strokes=[]){
+    this.strokes=Array.isArray(strokes)?clone(strokes).map(stroke=>this.normalizeStroke(stroke)).filter(Boolean):[];
+    this.selectedStrokeId=null;
+    this.selectedStrokeIds.clear();
+    this.activeStroke=null;
+    this.activeLasso=null;
+    this.strokeDrag=null;
+    this.inkPast=[];
+    this.inkFuture=[];
+    this.persistInk();
+    this.renderInk();
+    this.updateFoamToolState();
   }
 
   persistSettings(){

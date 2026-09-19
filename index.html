@@ -213,6 +213,24 @@
         </div>
       </div>
 
+      <div id="englishBoardManagerBar" class="english-board-manager-bar teacher-only">
+        <div class="english-board-manager-group">
+          <strong>Boards</strong>
+          <div id="englishBoardTabs" class="english-board-tabs" aria-label="Boards"></div>
+          <button type="button" data-board-action="add" class="board-manager-icon" title="Add board" aria-label="Add board">＋</button>
+          <button type="button" data-board-action="delete" class="board-manager-icon danger-soft" title="Delete active board" aria-label="Delete active board">🗑</button>
+        </div>
+        <div class="english-board-manager-group surface-group">
+          <strong>Surface</strong>
+          <div class="board-surface-options" role="group" aria-label="Board surface">
+            <button type="button" data-board-surface="current">Current</button>
+            <button type="button" data-board-surface="squares">Squares</button>
+            <button type="button" data-board-surface="notebook">Notebook</button>
+            <button type="button" data-board-surface="english">English</button>
+          </div>
+        </div>
+      </div>
+
       <div class="english-board-layout">
         <div class="english-board-frame">
           <div class="english-board-header">
@@ -346,6 +364,21 @@
           </div>
 
           <div class="workspace-tool-group">
+            <strong>Boards</strong>
+            <div id="englishWorkspaceBoardTabs" class="workspace-board-tabs" aria-label="Boards"></div>
+            <div class="workspace-board-actions">
+              <button type="button" data-board-action="add">＋ Board</button>
+              <button type="button" data-board-action="delete">🗑 Delete</button>
+            </div>
+            <div class="workspace-surface-grid" role="group" aria-label="Board surface">
+              <button type="button" data-board-surface="current">Current</button>
+              <button type="button" data-board-surface="squares">Squares</button>
+              <button type="button" data-board-surface="notebook">Notebook</button>
+              <button type="button" data-board-surface="english">English</button>
+            </div>
+          </div>
+
+          <div class="workspace-tool-group">
             <strong>New letters</strong>
             <div class="workspace-segmented">
               <button type="button" data-workspace-case="upper">ABC</button>
@@ -409,7 +442,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.18.3</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.19</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -523,7 +556,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.18.3</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.19</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>

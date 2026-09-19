@@ -3079,3 +3079,178 @@ body.board-workspace-active > .tabs {
     drop-shadow(0 0 2px rgba(255,255,255,.95))
     drop-shadow(0 0 6px rgba(245,158,11,.95));
 }
+
+
+/* v0.19 Multiple Boards + Surfaces */
+.english-board-manager-bar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 12px;
+  padding:9px 11px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:#fff;
+  box-shadow:0 7px 18px rgba(38,47,77,.045);
+}
+.english-board-manager-group {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+}
+.english-board-manager-group > strong {
+  font-size:.72rem;
+  color:var(--ink-soft);
+}
+.english-board-tabs,
+.workspace-board-tabs {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.english-board-tabs::-webkit-scrollbar,
+.workspace-board-tabs::-webkit-scrollbar { display:none; }
+.board-tab-btn {
+  flex:0 0 auto;
+  border:1px solid #d8dee2;
+  background:#f7f9fa;
+  color:#43515a;
+  border-radius:9px;
+  padding:6px 9px;
+  font-size:.7rem;
+  font-weight:850;
+}
+.board-tab-btn.active {
+  background:#26323a;
+  border-color:#26323a;
+  color:#fff;
+}
+.board-manager-icon {
+  width:32px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  border:1px solid #d8dee2;
+  border-radius:9px;
+  background:#fff;
+  font-weight:900;
+}
+.board-manager-icon:disabled { opacity:.35; }
+.board-surface-options {
+  display:flex;
+  gap:4px;
+}
+.board-surface-options button,
+.workspace-surface-grid button,
+.workspace-board-actions button {
+  border:1px solid #d8dee2;
+  background:#fff;
+  border-radius:8px;
+  padding:6px 8px;
+  font-size:.66rem;
+  font-weight:800;
+  color:#43515a;
+}
+.board-surface-options button.active,
+.workspace-surface-grid button.active {
+  background:#26323a;
+  color:#fff;
+  border-color:#26323a;
+}
+.workspace-board-tabs {
+  margin-bottom:7px;
+}
+.workspace-board-actions,
+.workspace-surface-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+}
+.workspace-board-actions { margin-bottom:7px; }
+.workspace-board-actions button:disabled { opacity:.35; }
+
+/* Current magnetic surface */
+.english-board-canvas[data-surface="current"] {
+  background:
+    radial-gradient(circle at 50% -10%,rgba(255,255,255,.95),rgba(255,255,255,.45) 34%,transparent 58%),
+    linear-gradient(180deg,#f8fcfb,#edf4f2);
+}
+.english-board-canvas[data-surface="current"]::before {
+  opacity:.22;
+  background-image:
+    linear-gradient(rgba(75,118,111,.07) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(75,118,111,.05) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+
+/* Square graph-paper board */
+.english-board-canvas[data-surface="squares"] {
+  background:#fbfdfd;
+}
+.english-board-canvas[data-surface="squares"]::before {
+  opacity:1;
+  background-image:
+    linear-gradient(rgba(94,135,165,.18) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(94,135,165,.18) 1px,transparent 1px);
+  background-size:28px 28px;
+}
+
+/* Notebook board */
+.english-board-canvas[data-surface="notebook"] {
+  background:#fffef9;
+}
+.english-board-canvas[data-surface="notebook"]::before {
+  opacity:1;
+  background-image:
+    linear-gradient(90deg,transparent 0 54px,rgba(227,90,90,.38) 54px 56px,transparent 56px),
+    repeating-linear-gradient(180deg,transparent 0 31px,rgba(92,142,184,.24) 31px 32px);
+  background-size:100% 100%,100% 32px;
+}
+
+/* English handwriting notebook: repeated four-line writing bands */
+.english-board-canvas[data-surface="english"] {
+  background:#fffefb;
+}
+.english-board-canvas[data-surface="english"]::before {
+  opacity:1;
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      rgba(83,131,177,.24) 0 1px,
+      transparent 1px 23px,
+      rgba(83,131,177,.15) 23px 24px,
+      transparent 24px 47px,
+      rgba(220,76,76,.38) 47px 49px,
+      transparent 49px 72px,
+      rgba(83,131,177,.20) 72px 73px,
+      transparent 73px 96px
+    );
+  background-size:100% 96px;
+}
+.english-board-canvas[data-surface="squares"] .english-board-gridline,
+.english-board-canvas[data-surface="notebook"] .english-board-gridline,
+.english-board-canvas[data-surface="english"] .english-board-gridline {
+  display:none;
+}
+#magnetic-board.is-board-workspace .english-board-manager-bar {
+  display:none !important;
+}
+@media(max-width:900px){
+  .english-board-manager-bar {
+    align-items:stretch;
+    flex-direction:column;
+  }
+  .english-board-manager-group {
+    width:100%;
+  }
+  .surface-group {
+    flex-wrap:wrap;
+  }
+  .board-surface-options {
+    overflow-x:auto;
+  }
+}

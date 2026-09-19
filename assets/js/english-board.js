@@ -7,9 +7,11 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.18.3';
+const APP_VERSION='0.19';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
+const BOARDS_STORAGE_KEY='englishLab.boards.v1';
+const BOARD_SURFACES=new Set(['current','squares','notebook','english']);
 const LEGACY_STORAGE_KEYS=['englishLab.board.v0.13','englishLab.board.v0.8'];
 const ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const VOWELS=new Set(['A','E','I','O','U']);
@@ -142,6 +144,10 @@ class EnglishMagneticBoard {
     this.platform=createPlatformAdapter(detectPlatformProfile());
     this.drag=null;
     this.workspace=null;
+    this.boards=[];
+    this.activeBoardId=null;
+    this.boardSurface='current';
+    this.boardsReady=false;
   }
   get items(){return this.state.items;}
   set items(value){this.state.replace(value);}
@@ -165,6 +171,7 @@ class EnglishMagneticBoard {
       if(['phonics','classic'].includes(meta.colorMode))this.colorMode=meta.colorMode;
       if(['student','teacher'].includes(meta.interfaceMode))this.interfaceMode=meta.interfaceMode;
       if(['free','build','completed','segment'].includes(meta.mode))this.mode=meta.mode;
+      if(BOARD_SURFACES.has(meta.boardSurface))this.boardSurface=meta.boardSurface;
 
       if(restored.items?.length){
         restored.items.forEach(item=>{
@@ -192,6 +199,7 @@ class EnglishMagneticBoard {
       vowelTeams:KIT_VOWEL_TEAMS
     });
     this.workspace.init();
+    this.initBoards();
 
     const caseSelect=$('#englishCase'); if(caseSelect)caseSelect.value=this.caseMode;
     const colorSelect=$('#englishColorMode'); if(colorSelect)colorSelect.value=this.colorMode;
@@ -210,13 +218,201 @@ class EnglishMagneticBoard {
     window.addEventListener('resize',()=>this.renderBoard());
   }
   persist(){
-    return saveBoardState(localStorage,STORAGE_KEY,this.state,{
+    const saved=saveBoardState(localStorage,STORAGE_KEY,this.state,{
       schemaVersion:STORAGE_SCHEMA_VERSION,
       appVersion:APP_VERSION,
       mode:this.mode,
       caseMode:this.caseMode,
       colorMode:this.colorMode,
-      interfaceMode:this.interfaceMode
+      interfaceMode:this.interfaceMode,
+      boardSurface:this.boardSurface
+    });
+    if(this.boardsReady)this.persistBoards();
+    return saved;
+  }
+
+  boardId(){
+    if(globalThis.crypto?.randomUUID)return `board_${crypto.randomUUID()}`;
+    return `board_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+  }
+
+  normalizeBoardRecord(record,index=0){
+    return {
+      id:String(record?.id||this.boardId()),
+      name:String(record?.name||`Board ${index+1}`).slice(0,40),
+      surface:BOARD_SURFACES.has(record?.surface)?record.surface:'current',
+      items:Array.isArray(record?.items)?structuredClone(record.items):[],
+      ink:Array.isArray(record?.ink)?structuredClone(record.ink):[],
+      mode:['free','build','completed','segment'].includes(record?.mode)?record.mode:'free',
+      caseMode:record?.caseMode==='lower'?'lower':'upper',
+      exercise:record?.exercise?structuredClone(record.exercise):null,
+      segmentState:record?.segmentState?structuredClone(record.segmentState):null
+    };
+  }
+
+  initBoards(){
+    let parsed=null;
+    try{parsed=JSON.parse(localStorage.getItem(BOARDS_STORAGE_KEY)||'null');}catch(_){}
+
+    if(parsed?.version===1&&Array.isArray(parsed.boards)&&parsed.boards.length){
+      this.boards=parsed.boards.map((record,index)=>this.normalizeBoardRecord(record,index));
+      const wanted=this.boards.find(board=>board.id===parsed.activeBoardId)||this.boards[0];
+      this.activeBoardId=wanted.id;
+      this.loadBoardRecord(wanted,{persist:false,toast:false});
+    }else{
+      const first=this.normalizeBoardRecord({
+        id:this.boardId(),
+        name:'Board 1',
+        surface:'current',
+        items:this.state.snapshot(),
+        ink:this.workspace?.exportInkState?.()||[],
+        mode:this.mode,
+        caseMode:this.caseMode,
+        exercise:this.exercise,
+        segmentState:this.segmentState||null
+      },0);
+      this.boards=[first];
+      this.activeBoardId=first.id;
+      this.boardSurface=first.surface;
+      this.applyBoardSurface();
+    }
+
+    this.boardsReady=true;
+    this.renderBoardManager();
+    this.persistBoards();
+  }
+
+  activeBoardRecord(){
+    return this.boards.find(board=>board.id===this.activeBoardId)||null;
+  }
+
+  captureActiveBoard(){
+    if(!this.boardsReady)return;
+    const record=this.activeBoardRecord();
+    if(!record)return;
+    record.items=this.state.snapshot();
+    record.ink=this.workspace?.exportInkState?.()||[];
+    record.surface=this.boardSurface;
+    record.mode=this.mode;
+    record.caseMode=this.caseMode;
+    record.exercise=this.exercise?structuredClone(this.exercise):null;
+    record.segmentState=this.segmentState?structuredClone(this.segmentState):null;
+  }
+
+  persistBoards(){
+    if(!this.boardsReady)return false;
+    this.captureActiveBoard();
+    try{
+      localStorage.setItem(BOARDS_STORAGE_KEY,JSON.stringify({
+        version:1,
+        savedAt:Date.now(),
+        activeBoardId:this.activeBoardId,
+        boards:this.boards
+      }));
+      return true;
+    }catch(_){return false;}
+  }
+
+  loadBoardRecord(record,{persist=true,toast=true}={}){
+    if(!record)return;
+    this.state.replace(structuredClone(record.items||[]));
+    this.workspace?.importInkState?.(record.ink||[]);
+    this.boardSurface=BOARD_SURFACES.has(record.surface)?record.surface:'current';
+    this.caseMode=record.caseMode==='lower'?'lower':'upper';
+    this.exercise=record.exercise?structuredClone(record.exercise):null;
+    this.segmentState=record.segmentState?structuredClone(record.segmentState):null;
+    this.mode=['free','build','completed','segment'].includes(record.mode)?record.mode:'free';
+    this.history=new BoardHistory(80);
+    this.clearSelection(false);
+    this.applyBoardSurface();
+    this.setMode(this.mode,true);
+    this.renderTray();
+    this.renderGraphemeTrays();
+    this.workspace?.renderStrip();
+    this.workspace?.syncCaseButtons();
+    const caseSelect=$('#englishCase');if(caseSelect)caseSelect.value=this.caseMode;
+    this.renderBoard();
+    this.renderBoardManager();
+    if(persist)this.persistBoards();
+    if(toast)this.toast(record.name);
+  }
+
+  switchBoard(id){
+    if(id===this.activeBoardId)return;
+    const next=this.boards.find(board=>board.id===id);
+    if(!next)return;
+    this.captureActiveBoard();
+    this.activeBoardId=next.id;
+    this.loadBoardRecord(next);
+  }
+
+  addBoard(){
+    this.captureActiveBoard();
+    const record=this.normalizeBoardRecord({
+      id:this.boardId(),
+      name:`Board ${this.boards.length+1}`,
+      surface:this.boardSurface,
+      items:[],
+      ink:[],
+      mode:'free',
+      caseMode:this.caseMode,
+      exercise:null,
+      segmentState:null
+    },this.boards.length);
+    this.boards.push(record);
+    this.activeBoardId=record.id;
+    this.loadBoardRecord(record);
+  }
+
+  deleteActiveBoard(){
+    if(this.boards.length<=1){
+      this.toast('Keep at least one board');
+      return;
+    }
+    const index=this.boards.findIndex(board=>board.id===this.activeBoardId);
+    if(index<0)return;
+    this.boards.splice(index,1);
+    const next=this.boards[Math.max(0,index-1)]||this.boards[0];
+    this.activeBoardId=next.id;
+    this.loadBoardRecord(next);
+  }
+
+  setBoardSurface(surface){
+    const next=BOARD_SURFACES.has(surface)?surface:'current';
+    this.boardSurface=next;
+    this.applyBoardSurface();
+    this.renderBoardManager();
+    this.persistBoards();
+  }
+
+  applyBoardSurface(){
+    const canvas=$('#englishBoardCanvas');
+    if(canvas)canvas.dataset.surface=this.boardSurface;
+  }
+
+  renderBoardManager(){
+    const renderTabs=selector=>{
+      const host=$(selector);if(!host)return;
+      host.innerHTML='';
+      this.boards.forEach((record,index)=>{
+        const button=document.createElement('button');
+        button.type='button';
+        button.className='board-tab-btn';
+        button.classList.toggle('active',record.id===this.activeBoardId);
+        button.textContent=record.name||`Board ${index+1}`;
+        button.title=`Open ${button.textContent}`;
+        button.addEventListener('click',()=>this.switchBoard(record.id));
+        host.appendChild(button);
+      });
+    };
+    renderTabs('#englishBoardTabs');
+    renderTabs('#englishWorkspaceBoardTabs');
+
+    document.querySelectorAll('[data-board-surface]').forEach(button=>{
+      button.classList.toggle('active',button.dataset.boardSurface===this.boardSurface);
+    });
+    document.querySelectorAll('[data-board-action="delete"]').forEach(button=>{
+      button.disabled=this.boards.length<=1;
     });
   }
   checkpoint(label){this.history.checkpoint(this.state.snapshot(),label);}
@@ -248,7 +444,7 @@ class EnglishMagneticBoard {
       if(hint)hint.textContent='Pick a foam letter, move it anywhere, resize it, duplicate it, or build freely.';
     }else if(next==='build'){
       if(title)title.textContent='Build a word — scattered foam letters + answer slots';
-      if(hint)hint.textContent='Scatter the target word, then drag each foam letter into the correct slot.';
+      if(hint)hint.textContent='Move letters freely anywhere. A letter snaps only when you drop it inside an answer slot.';
     }else if(next==='completed'){
       if(title)title.textContent='Completed words — move the word or detach its letters';
       if(hint)hint.textContent='First tap selects the whole word. Detach lets you move each letter separately.';
@@ -917,18 +1113,31 @@ class EnglishMagneticBoard {
   snapDraggedToNearestSlot(pieceId){
     if(!this.exercise)return;
     const item=this.state.find(pieceId);if(!item)return;
-    const slots=this.slotGeometry();if(!slots.length)return;
+    const slots=this.slotGeometry();if(!slots.length){this.renderBoard();return;}
+
+    // Build mode remains free: first release any old slot assignment.
+    this.exercise.slots=this.exercise.slots.map(id=>id===pieceId?null:id);
+    item.exerciseSlot=null;
+
     const px=item.x+35,py=item.y+38;
-    let best=null,dist=Infinity;
-    slots.forEach(s=>{const d=Math.hypot(px-s.cx,py-s.cy);if(d<dist){dist=d;best=s;}});
-    if(best&&dist<105){
-      this.exercise.slots=this.exercise.slots.map(id=>id===pieceId?null:id);
-      const displaced=this.exercise.slots[best.index];
-      if(displaced){const old=this.state.find(displaced);if(old)old.exerciseSlot=null;}
-      this.exercise.slots[best.index]=pieceId;item.exerciseSlot=best.index;
-      item.x=best.left+(best.width-70)/2;item.y=best.top+(best.height-76)/2;
-      this.renderBoard();
+    const target=slots.find(slot=>
+      px>=slot.left&&px<=slot.left+slot.width&&
+      py>=slot.top&&py<=slot.top+slot.height
+    );
+
+    if(target){
+      const displaced=this.exercise.slots[target.index];
+      if(displaced){
+        const old=this.state.find(displaced);
+        if(old)old.exerciseSlot=null;
+      }
+      this.exercise.slots[target.index]=pieceId;
+      item.exerciseSlot=target.index;
+      item.x=target.left+(target.width-70)/2;
+      item.y=target.top+(target.height-76)/2;
     }
+
+    this.renderBoard();
   }
   renderAssemblySlots(){
     const zone=$('#englishAssemblyZone'),slots=$('#englishAssemblySlots'),target=$('#englishTargetBadge');
@@ -1006,6 +1215,9 @@ class EnglishMagneticBoard {
     ),'Topbar: resize / duplicate / delete / align / scatter / undo / redo');
     add('Vector ink layer',Boolean($('#englishInkSvg')&&$('#englishInkObjects')),'Stable board-space SVG objects across Normal / Full Board');
     add('Smooth foam drag pipeline',typeof requestAnimationFrame==='function','RAF + translate3d + single commit on pointer release');
+    add('Multiple boards',Boolean($('#englishBoardTabs')&&$('#englishWorkspaceBoardTabs')),'Independent board pages + per-board ink/surface');
+    add('Board surfaces',document.querySelectorAll('[data-board-surface]').length>=8,'Current / Squares / Notebook / English');
+    add('Build free movement',true,'Slot capture only when dropped inside a slot');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
 
     try{
