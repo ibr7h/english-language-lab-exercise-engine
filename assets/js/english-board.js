@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.17.1';
+const APP_VERSION='0.18';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const LEGACY_STORAGE_KEYS=['englishLab.board.v0.13','englishLab.board.v0.8'];
@@ -264,17 +264,41 @@ class EnglishMagneticBoard {
     $('#englishModeBuild')?.addEventListener('click',()=>this.setMode('build'));
     $('#englishModeCompleted')?.addEventListener('click',()=>this.setMode('completed'));
     $('#englishModeSegment')?.addEventListener('click',()=>this.setMode('segment'));
-    $('#englishUndo')?.addEventListener('click',()=>this.undo());
-    $('#englishRedo')?.addEventListener('click',()=>this.redo());
+    $('#englishUndo')?.addEventListener('click',()=>{
+      if(this.workspace)this.workspace.undoSelectedDomain();
+      else this.undo();
+    });
+    $('#englishRedo')?.addEventListener('click',()=>{
+      if(this.workspace)this.workspace.redoSelectedDomain();
+      else this.redo();
+    });
     $('#englishSelectAll')?.addEventListener('click',()=>this.selectAll());
-    $('#englishClearSelection')?.addEventListener('click',()=>this.clearSelection());
+    $('#englishClearSelection')?.addEventListener('click',()=>{
+      this.clearSelection();
+      this.workspace?.clearInkSelection();
+    });
     $('#englishDetach')?.addEventListener('click',()=>this.detachSelectedWord());
     $('#englishRegroup')?.addEventListener('click',()=>this.regroupSelection());
-    $('#englishSmaller')?.addEventListener('click',()=>this.resizeSelected(-.1));
-    $('#englishResetSize')?.addEventListener('click',()=>this.resetSelectedSize());
-    $('#englishLarger')?.addEventListener('click',()=>this.resizeSelected(.1));
-    $('#englishDuplicate')?.addEventListener('click',()=>this.duplicateSelected());
-    $('#englishDelete')?.addEventListener('click',()=>this.deleteSelected());
+    $('#englishSmaller')?.addEventListener('click',()=>{
+      if(this.workspace)this.workspace.resizeSelected(-.1);
+      else this.resizeSelected(-.1);
+    });
+    $('#englishResetSize')?.addEventListener('click',()=>{
+      if(this.workspace)this.workspace.resetSelectedSize();
+      else this.resetSelectedSize();
+    });
+    $('#englishLarger')?.addEventListener('click',()=>{
+      if(this.workspace)this.workspace.resizeSelected(.1);
+      else this.resizeSelected(.1);
+    });
+    $('#englishDuplicate')?.addEventListener('click',()=>{
+      if(this.workspace)this.workspace.duplicateSelected();
+      else this.duplicateSelected();
+    });
+    $('#englishDelete')?.addEventListener('click',()=>{
+      if(this.workspace)this.workspace.deleteSelected();
+      else this.deleteSelected();
+    });
     $('#englishAlign')?.addEventListener('click',()=>this.autoAlignRows());
     $('#englishScatter')?.addEventListener('click',()=>this.scatterPieces());
     $('#englishSpeak')?.addEventListener('click',()=>this.pronounceBoard());
@@ -853,7 +877,14 @@ class EnglishMagneticBoard {
     add('Build mode controls',Boolean($('#englishBuildControls')),'Shared board builder');
     add('Segment & Blend controls',Boolean($('#englishSegmentControls')),'Phonics manipulative');
     add('Student / Teacher switch',Boolean($('#studentModeBtn')&&$('#teacherModeBtn')),'Experience modes');
-    add('Normal-board Interaction',Boolean($('#englishInlineInteraction')),'Move / Pen / Eraser outside Full Board');
+    add('Normal-board Interaction',Boolean($('#englishInlineInteraction')),'Move / Pen / Eraser / Lasso outside Full Board');
+    add('Ink Lasso & Group',Boolean(
+      $('#englishInkLasso')&&
+      $('#englishInkGroup')&&
+      $('#englishInkUngroup')&&
+      $('#englishWorkspaceInkGroup')&&
+      $('#englishWorkspaceInkUngroup')
+    ),'Multi-stroke selection + Group/Ungroup');
     add('Main navigation',document.documentElement.dataset.mainNavReady==='true','Magnetic Board / Letters / Word Builder / Practice / Learning Path');
     add('Classroom Whiteboard workspace',Boolean(this.workspace&&$('#englishFullscreenBoard')),'Full screen + toolbox + letter strip');
     add('Full-board topbar tools',Boolean(

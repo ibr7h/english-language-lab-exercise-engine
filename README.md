@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.17.1 — Aspect-Ratio-Safe Vector Ink
+## v0.18 — Lasso & Group Ink
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,22 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.18 Lasso & Group Ink
+
+- Adds Lasso as a fourth Interaction tool on both the normal board and Full Board.
+- Draw a freehand loop around multiple vector strokes to select them.
+- Lasso selection expands automatically to include all members of any existing ink group it touches.
+- After a lasso selection completes, Interaction returns to Move so the selected strokes can be dragged immediately.
+- Multi-stroke selection renders one shared bounding box and count label.
+- Group Ink assigns selected strokes one persistent group identity; selecting one grouped stroke later selects the entire drawing.
+- Ungroup Ink restores independent strokes without changing their geometry.
+- Move, resize, reset size, duplicate and delete operate on the whole selected ink set/group.
+- Group resizing scales both each stroke and the spacing between strokes around the shared selection center.
+- Duplicating a multi-stroke selection creates a new independent group.
+- Erasing any member of a grouped ink object removes the whole grouped drawing.
+- Normal-board Undo/Redo, resize, duplicate and delete now route to Ink when ink is selected, rather than always targeting foam pieces.
+- Group identity is persisted as an optional `groupId` in the existing v3 vector-ink store.
 
 ### v0.17.1 Aspect-Ratio-Safe Vector Ink
 
@@ -256,7 +272,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v17-1` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v18` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -274,6 +290,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.17.1
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.18
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.

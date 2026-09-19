@@ -3009,3 +3009,45 @@ body.board-workspace-active > .tabs {
 .board-ink-svg {
   shape-rendering:geometricPrecision;
 }
+
+
+/* v0.18 Lasso + Ink Groups */
+.workspace-interaction-grid {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+.ink-group-btn:disabled {
+  opacity:.42;
+  cursor:not-allowed;
+}
+.ink-lasso-path {
+  fill:rgba(37,99,235,.08);
+  stroke:#2563eb;
+  stroke-width:1.8;
+  stroke-dasharray:7 5;
+  vector-effect:non-scaling-stroke;
+  pointer-events:none;
+}
+.ink-selection-label {
+  fill:#b45309;
+  font-size:11px;
+  font-weight:800;
+  paint-order:stroke;
+  stroke:rgba(255,255,255,.96);
+  stroke-width:3px;
+  stroke-linejoin:round;
+  pointer-events:none;
+}
+.english-board-canvas[data-workspace-tool="lasso"] .board-ink-svg {
+  z-index:40;
+  pointer-events:auto;
+  cursor:crosshair;
+}
+.english-board-canvas[data-workspace-tool="lasso"] .ink-object {
+  pointer-events:none;
+}
+@media(max-width:700px){
+  .workspace-interaction-grid button {
+    font-size:.62rem;
+    padding-inline:3px;
+  }
+}

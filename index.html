@@ -184,6 +184,8 @@
         <button id="englishClearSelection" class="board-selection-btn">Clear selection</button>
         <button id="englishDetach" class="board-selection-btn word-edit">🔓 Detach word</button>
         <button id="englishRegroup" class="board-selection-btn word-edit">🔗 Regroup</button>
+        <button id="englishInkGroup" class="board-selection-btn ink-group-btn" disabled>🔗 Group Ink</button>
+        <button id="englishInkUngroup" class="board-selection-btn ink-group-btn" disabled>🔓 Ungroup Ink</button>
         <div class="board-scale-tools">
           <button id="englishSmaller" title="Smaller">A−</button>
           <button id="englishResetSize" title="Reset size"><span id="englishScaleValue">100%</span></button>
@@ -203,10 +205,11 @@
           <strong>Interaction</strong>
           <small>Available on the normal board and in Full Board.</small>
         </div>
-        <div class="workspace-segmented english-inline-interaction-buttons">
+        <div class="workspace-segmented workspace-interaction-grid english-inline-interaction-buttons">
           <button type="button" data-workspace-tool="move">👆 Move</button>
           <button type="button" data-workspace-tool="pen">✏ Pen</button>
           <button type="button" data-workspace-tool="eraser">⌫ Eraser</button>
+          <button type="button" data-workspace-tool="lasso">➰ Lasso</button>
         </div>
       </div>
 
@@ -233,6 +236,7 @@
             <svg id="englishInkSvg" class="board-ink-svg" aria-label="Vector drawing layer" role="img">
               <g id="englishInkObjects"></g>
               <g id="englishInkSelection" aria-hidden="true"></g>
+              <g id="englishInkLasso" aria-hidden="true"></g>
             </svg>
             <div class="english-board-empty">
               <span>🧲</span>
@@ -305,7 +309,7 @@
         <div class="workspace-topbar">
           <button id="englishWorkspaceToolboxToggle" type="button" class="workspace-topbar-btn workspace-menu-btn" aria-expanded="true" title="Show or hide tools">☰</button>
 
-          <div class="workspace-topbar-tools" role="toolbar" aria-label="Foam letter tools">
+          <div class="workspace-topbar-tools" role="toolbar" aria-label="Board selection tools">
             <button id="englishWorkspaceBoardUndo" type="button" class="workspace-icon-btn" title="Undo" aria-label="Undo">↶</button>
             <button id="englishWorkspaceBoardRedo" type="button" class="workspace-icon-btn" title="Redo" aria-label="Redo">↷</button>
             <span class="workspace-topbar-separator" aria-hidden="true"></span>
@@ -319,6 +323,10 @@
             <button id="englishWorkspaceDelete" type="button" class="workspace-icon-btn workspace-delete-btn" title="Delete selected letter" aria-label="Delete selected letter">🗑</button>
             <span class="workspace-topbar-separator" aria-hidden="true"></span>
 
+            <button id="englishWorkspaceInkGroup" type="button" class="workspace-icon-btn" title="Group selected ink strokes" aria-label="Group selected ink strokes" disabled>🔗</button>
+            <button id="englishWorkspaceInkUngroup" type="button" class="workspace-icon-btn" title="Ungroup selected ink drawing" aria-label="Ungroup selected ink drawing" disabled>🔓</button>
+            <span class="workspace-topbar-separator" aria-hidden="true"></span>
+
             <button id="englishWorkspaceAlign" type="button" class="workspace-icon-btn" title="Align foam pieces" aria-label="Align foam pieces">📏</button>
             <button id="englishWorkspaceScatter" type="button" class="workspace-icon-btn" title="Scatter foam pieces" aria-label="Scatter foam pieces">🎲</button>
           </div>
@@ -329,10 +337,11 @@
         <aside id="englishWorkspaceToolbox" class="workspace-toolbox" aria-label="Whiteboard tools">
           <div class="workspace-tool-group">
             <strong>Interaction</strong>
-            <div class="workspace-segmented">
+            <div class="workspace-segmented workspace-interaction-grid">
               <button type="button" data-workspace-tool="move">👆 Move</button>
               <button type="button" data-workspace-tool="pen">✏ Pen</button>
               <button type="button" data-workspace-tool="eraser">⌫ Eraser</button>
+              <button type="button" data-workspace-tool="lasso">➰ Lasso</button>
             </div>
           </div>
 
@@ -400,7 +409,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.17.1</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.18</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -514,7 +523,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.17.1</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.18</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
