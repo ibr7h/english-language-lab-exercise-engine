@@ -950,7 +950,9 @@ class EnglishMagneticBoard {
     $('#englishScatter')?.addEventListener('click',()=>this.scatterPieces());
     $('#englishSpeak')?.addEventListener('click',()=>this.pronounceBoard());
     $('#englishClear')?.addEventListener('click',()=>this.clearBoard());
-    $('#englishCase')?.addEventListener('change',e=>this.setTrayCase(e.target.value));
+    document.querySelectorAll('[data-tray-case]').forEach(button=>{
+      button.addEventListener('click',()=>this.setTrayCase(button.dataset.trayCase));
+    });
     $('#englishColorMode')?.addEventListener('change',e=>{
       this.colorMode=e.target.value==='classic'?'classic':'phonics';
       localStorage.setItem('englishLab.colorMode',this.colorMode);
@@ -1105,16 +1107,31 @@ class EnglishMagneticBoard {
     const letterCase=item.letterCase==='lower'?'lower':'upper';
     return this.display(item.logicalChar,letterCase);
   }
+  syncTrayCaseControls(){
+    const mode=['upper','lower','both'].includes(this.trayCaseMode)?this.trayCaseMode:'upper';
+    document.querySelectorAll('[data-tray-case]').forEach(button=>{
+      const active=button.dataset.trayCase===mode;
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-pressed',String(active));
+    });
+    const count=$('#englishTrayPieceCount');
+    if(count)count.textContent=mode==='both'?'52 reusable pieces':'26 reusable pieces';
+    this.workspace?.syncCaseButtons();
+  }
+
   setTrayCase(mode,{silent=false}={}){
-    this.caseMode=mode==='lower'?'lower':'upper';
-    const select=$('#englishCase');
-    if(select)select.value=this.caseMode;
+    const next=['upper','lower','both'].includes(mode)?mode:'upper';
+    this.trayCaseMode=next;
+    if(next!=='both')this.caseMode=next;
     this.renderTray();
     this.renderGraphemeTrays();
     this.workspace?.renderStrip();
-    this.workspace?.syncCaseButtons();
+    this.syncTrayCaseControls();
     this.persist();
-    if(!silent)this.toast(this.caseMode==='lower'?'New letters: lowercase':'New letters: uppercase');
+    if(!silent){
+      const label=next==='both'?'uppercase + lowercase':next==='lower'?'lowercase':'uppercase';
+      this.toast(`Foam letters: ${label}`);
+    }
   }
   colorForToken(token,role=null){
     if(this.colorMode==='classic')return PHONICS_COLORS.consonant;
@@ -1126,18 +1143,28 @@ class EnglishMagneticBoard {
   renderTray(){
     const tray=$('#englishLetterTray');if(!tray)return;
     tray.innerHTML='';
+    tray.dataset.caseMode=this.trayCaseMode;
+    const cases=this.trayCaseMode==='both'
+      ?['upper','lower']
+      :[this.trayCaseMode==='lower'?'lower':'upper'];
+
     ALPHABET.forEach(letter=>{
-      const b=document.createElement('button');b.type='button';
-      const freeRole=VOWELS.has(letter)?'vowel':'consonant';
-      b.className='foam-tray-letter';
-      b.innerHTML=`<span class="foam-glyph ${this.colorForToken(letter,freeRole)}">${this.escape(this.display(letter))}</span>`;
-      b.dataset.phonicsRole=freeRole;
-      b.title=`${letter} · ${freeRole}`;
-      b.setAttribute('aria-label',`Add foam letter ${letter}, ${freeRole}`);
-      b.addEventListener('click',()=>this.addLetter(letter));
-      this.bindTrayDirectDrag(b,letter,'letter');
-      tray.appendChild(b);
+      cases.forEach(letterCase=>{
+        const b=document.createElement('button');b.type='button';
+        const freeRole=VOWELS.has(letter)?'vowel':'consonant';
+        const glyph=this.display(letter,letterCase);
+        b.className='foam-tray-letter';
+        b.dataset.letterCase=letterCase;
+        b.innerHTML=`<span class="foam-glyph ${this.colorForToken(letter,freeRole)}">${this.escape(glyph)}</span>`;
+        b.dataset.phonicsRole=freeRole;
+        b.title=`${glyph} · ${freeRole}`;
+        b.setAttribute('aria-label',`Add foam letter ${glyph}, ${freeRole}`);
+        b.addEventListener('click',()=>this.addLetter(letter,letterCase));
+        this.bindTrayDirectDrag(b,letter,'letter',{letterCase});
+        tray.appendChild(b);
+      });
     });
+    this.syncTrayCaseControls();
   }
   renderGraphemeTrays(){
     const render=(selector,tokens,role)=>{
@@ -1240,7 +1267,7 @@ class EnglishMagneticBoard {
       x,y,rotation:0,...extra
     });
   }
-  addTokenAtPosition(token,role,x,y){
+  addTokenAtPosition(token,role,x,y,options={}){
     if(this.mode==='build'&&this.exercise){
       this.toast('Finish the build activity first');
       return false;
@@ -1257,6 +1284,7 @@ class EnglishMagneticBoard {
     const piece=this.createPiece(token,px,py,{
       phonicsRole:resolvedRole,
       color:this.colorForToken(token,resolvedRole),
+      letterCase:options.letterCase,
       locked:false
     });
     applyBoardCommand(this.state,{type:BOARD_COMMANDS.ADD_PIECE,piece});
@@ -1266,7 +1294,7 @@ class EnglishMagneticBoard {
     return true;
   }
 
-  bindTrayDirectDrag(button,token,role='letter'){
+  bindTrayDirectDrag(button,token,role='letter',options={}){
     if(!button)return;
     button.style.touchAction='none';
 
@@ -1302,7 +1330,10 @@ class EnglishMagneticBoard {
         drag.ghost=document.createElement('div');
         drag.ghost.className='tray-drag-ghost';
         const resolvedRole=role==='letter'?(VOWELS.has(token)?'vowel':'consonant'):role;
-        drag.ghost.innerHTML=`<span class="foam-glyph ${this.colorForToken(token,resolvedRole)}">${this.escape(this.display(token))}</span>`;
+        const letterCase=options.letterCase==='lower'||options.letterCase==='upper'
+          ?options.letterCase
+          :this.caseMode;
+        drag.ghost.innerHTML=`<span class="foam-glyph ${this.colorForToken(token,resolvedRole)}">${this.escape(this.display(token,letterCase))}</span>`;
         const ghostHost=this.workspace?.isWorkspace?$('#magnetic-board'):document.body;
         ghostHost?.appendChild(drag.ghost);
       }
@@ -1329,7 +1360,7 @@ class EnglishMagneticBoard {
         const rect=this.canvasRect();
         const inside=x>=rect.left&&x<=rect.left+rect.width&&y>=rect.top&&y<=rect.top+rect.height;
         if(inside){
-          this.addTokenAtPosition(token,role,x-rect.left-35,y-rect.top-38);
+          this.addTokenAtPosition(token,role,x-rect.left-35,y-rect.top-38,options);
         }
         setTimeout(()=>{suppressClick=false;},0);
       }
@@ -1360,7 +1391,7 @@ class EnglishMagneticBoard {
     this.setSelection([p.id],'letter',p.id);this.renderBoard();
     this.updateSelectedAudio();
   }
-  addLetter(letter){
+  addLetter(letter,letterCase=this.caseMode){
     if(this.mode==='build'&&this.exercise){this.toast('Use the scattered exercise letters in Build mode');return;}
     const rect=this.canvasRect();
     const count=this.items.length;
@@ -1368,9 +1399,14 @@ class EnglishMagneticBoard {
     const y=50+((Math.floor(count/7)*92)%Math.max(120,rect.height-130));
     this.checkpoint('ADD_PIECE');
     const role=VOWELS.has(letter)?'vowel':'consonant';
-    const p=this.createPiece(letter,x,y,{phonicsRole:role,color:this.colorForToken(letter,role)});
+    const resolvedCase=letterCase==='lower'?'lower':'upper';
+    const p=this.createPiece(letter,x,y,{
+      phonicsRole:role,
+      color:this.colorForToken(letter,role),
+      letterCase:resolvedCase
+    });
     applyBoardCommand(this.state,{type:BOARD_COMMANDS.ADD_PIECE,piece:p});
-    this.setSelection([p.id],'letter',p.id);this.renderBoard();speak(letter);
+    this.setSelection([p.id],'letter',p.id);this.renderBoard();speak(this.display(letter,resolvedCase));
   }
   setSelection(ids,mode='multi',activeId=null){
     const cleanIds=(ids||[]).filter(Boolean);
