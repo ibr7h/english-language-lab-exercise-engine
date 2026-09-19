@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.22 — Lesson Save & Transfer
+## v0.23 — Classroom Activity Mode
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,22 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.23 Classroom Activity Mode
+
+- Adds a per-Board Start State that captures foam objects, vector ink/groups, lock states, board surface, mode, letter case, Build exercise and Segment state.
+- Adds Set Start, Reset Board, Reset Lesson and Student Play controls in normal and Full Board teacher interfaces.
+- Reset Board restores the active Board exactly to its prepared Start State and clears its foam/ink undo histories through the normal board-load path.
+- Reset Lesson restores every Board that has a prepared Start State while leaving unprepared Boards unchanged.
+- Board tabs display a green prepared-state marker when a Start State exists.
+- Student Play hides teacher Board, Lesson, Lock, layout and authoring controls while keeping board interaction available.
+- In Student Play, Build setup inputs/presets are hidden but student Check/Hint/status controls remain available.
+- Segment setup inputs/presets are hidden while the active segment interaction remains available.
+- Student Play includes Previous / Start over / Next navigation between Boards in normal mode and Full Board.
+- Locked foam and ink objects function as teacher/template objects; unlocked objects remain student-manipulable.
+- Start States are part of each Board record, so Duplicate Board and v0.22 lesson Export/Import carry prepared activities automatically.
+- Existing lessons without Start States remain valid and load normally.
+- The stable `reference-v0.20.1` branch remains unchanged.
 
 ### v0.22 Lesson Save & Transfer
 
@@ -388,7 +404,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v22` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v23` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -406,6 +422,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.22
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.23
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
