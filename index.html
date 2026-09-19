@@ -224,41 +224,56 @@
       </div>
 
       <div id="englishBoardManagerBar" class="english-board-manager-bar teacher-only">
-        <div class="english-board-manager-group">
-          <strong>Boards</strong>
-          <div id="englishBoardTabs" class="english-board-tabs" aria-label="Boards"></div>
-          <button type="button" data-board-action="add" class="board-manager-icon" title="Add board" aria-label="Add board">＋</button>
-          <button type="button" data-board-action="rename" class="board-manager-icon" title="Rename active board" aria-label="Rename active board">✎</button>
-          <button type="button" data-board-action="duplicate" class="board-manager-icon" title="Duplicate active board" aria-label="Duplicate active board">⧉</button>
-          <button type="button" data-board-action="delete" class="board-manager-icon danger-soft" title="Delete active board" aria-label="Delete active board">🗑</button>
-        </div>
-        <div class="english-board-manager-group surface-group">
-          <strong>Surface</strong>
-          <div class="board-surface-options" role="group" aria-label="Board surface">
-            <button type="button" data-board-surface="current">Current</button>
-            <button type="button" data-board-surface="squares">Squares</button>
-            <button type="button" data-board-surface="notebook">Notebook</button>
-            <button type="button" data-board-surface="english">English</button>
+        <div class="english-board-manager-row board-workspace-row">
+          <div class="english-board-manager-group boards-group">
+            <strong>Boards</strong>
+            <div id="englishBoardTabs" class="english-board-tabs" aria-label="Boards"></div>
+            <div class="board-manager-actions" role="group" aria-label="Board actions">
+              <button type="button" data-board-action="add" class="board-manager-icon" title="Add board" aria-label="Add board">＋</button>
+              <button type="button" data-board-action="rename" class="board-manager-icon" title="Rename active board" aria-label="Rename active board">✎</button>
+              <button type="button" data-board-action="duplicate" class="board-manager-icon" title="Duplicate active board" aria-label="Duplicate active board">⧉</button>
+              <button type="button" data-board-action="delete" class="board-manager-icon danger-soft" title="Delete active board" aria-label="Delete active board">🗑</button>
+            </div>
+          </div>
+
+          <div class="english-board-manager-group surface-group">
+            <strong>Surface</strong>
+            <div class="board-surface-options" role="group" aria-label="Board surface">
+              <button type="button" data-board-surface="current">Current</button>
+              <button type="button" data-board-surface="squares">Squares</button>
+              <button type="button" data-board-surface="notebook">Notebook</button>
+              <button type="button" data-board-surface="english">English</button>
+            </div>
           </div>
         </div>
-        <div class="english-board-manager-group activity-group">
-          <strong>Activity</strong>
-          <div class="activity-actions" role="group" aria-label="Classroom activity controls">
-            <button type="button" data-activity-action="set-start" title="Use the current board as the activity start state">📌 Set Start</button>
-            <button type="button" data-activity-action="reset-board" title="Reset this board to its start state">↺ Reset Board</button>
-            <button type="button" data-activity-action="reset-lesson" title="Reset all prepared boards">↺ All</button>
-            <button type="button" data-activity-action="play" title="Enter Student Play mode">▶ Play</button>
+
+        <div class="english-board-manager-row teacher-workflow-row">
+          <div class="english-board-manager-group activity-group">
+            <strong>Activity</strong>
+            <div class="activity-actions" role="group" aria-label="Classroom activity controls">
+              <button type="button" data-activity-action="set-start">📌 Set Start</button>
+              <button type="button" data-activity-action="reset-board">↺ Reset</button>
+              <button type="button" data-activity-action="play">▶ Play</button>
+              <details class="activity-more">
+                <summary aria-label="More activity actions" title="More activity actions">⋯</summary>
+                <div class="activity-more-menu">
+                  <button type="button" data-activity-action="reset-lesson">↺ Reset All Boards</button>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <div class="english-board-manager-group lesson-group">
+            <strong>Lesson</strong>
+            <div class="lesson-actions" role="group" aria-label="Lesson file actions">
+              <button type="button" data-lesson-action="save">💾 Save</button>
+              <button type="button" data-lesson-action="load">↥ Load</button>
+              <button type="button" data-lesson-action="export">⇩ Export</button>
+              <button type="button" data-lesson-action="import">⇧ Import</button>
+            </div>
           </div>
         </div>
-        <div class="english-board-manager-group lesson-group">
-          <strong>Lesson</strong>
-          <div class="lesson-actions" role="group" aria-label="Lesson file actions">
-            <button type="button" data-lesson-action="save" title="Save lesson on this device">💾 Save</button>
-            <button type="button" data-lesson-action="load" title="Load the saved lesson">↥ Load</button>
-            <button type="button" data-lesson-action="export" title="Export lesson file">⇩ Export</button>
-            <button type="button" data-lesson-action="import" title="Import lesson file">⇧ Import</button>
-          </div>
-        </div>
+
         <input id="englishLessonImport" type="file" accept=".englishlab.json,.json,application/json" hidden />
       </div>
 
@@ -511,7 +526,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.23</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.23.1</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -625,7 +640,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.23</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.23.1</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
