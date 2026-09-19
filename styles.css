@@ -1223,6 +1223,10 @@ textarea {
   text-transform:uppercase;
   letter-spacing:.08em;
 }
+
+#englishBuildWord {
+  text-transform:none;
+}
 .english-presets { margin-top:9px; }
 .english-presets button,
 .english-action-row button {
