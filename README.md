@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.13 — Foam Kit 2.0 + Segment & Blend + Student Mode
+## v0.13.1 — regression repair
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,14 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.13.1 regression repair
+
+- Restores collection selectors that accidentally broke board initialization in v0.13.
+- Migrates saved v0.12 board pieces from the legacy storage key.
+- Restores the missing Reset Size control.
+- Makes audio fallbacks immediate when recorded MP3 assets are not installed.
+- Adds a visible Student Mode notice with a one-tap return to Teacher Mode.
 
 ### v0.13 Foam Kit 2.0
 
@@ -158,7 +166,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v13` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v13-1` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -176,6 +184,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.13
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.13.1
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.

@@ -2183,3 +2183,41 @@ body[data-english-board-mode="segment"] .english-board-gridline {
   .grapheme-tray { grid-template-columns:repeat(5,minmax(0,1fr)); }
   body[data-interface-mode="student"] .english-board-canvas { min-height:520px; }
 }
+
+
+/* v0.13.1 regression fixes */
+.student-mode-notice {
+  display:none;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:10px;
+  padding:9px 11px;
+  border:1px solid #bfdbfe;
+  border-radius:12px;
+  background:#eff6ff;
+  color:#1e3a8a;
+  font-size:.74rem;
+  font-weight:750;
+}
+.student-mode-notice button {
+  border:1px solid #93c5fd;
+  border-radius:9px;
+  background:#fff;
+  color:#1d4ed8;
+  padding:6px 9px;
+  font-weight:850;
+  white-space:nowrap;
+}
+body[data-interface-mode="student"] .student-mode-notice {
+  display:flex;
+}
+#englishResetSize {
+  min-width:3.35rem;
+}
+@media (max-width:640px){
+  .student-mode-notice {
+    align-items:stretch;
+    flex-direction:column;
+  }
+}

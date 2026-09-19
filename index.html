@@ -111,6 +111,11 @@
           <div id="englishPlatformBadge" class="english-platform-badge">Shared board core</div>
         </div>
 
+        <div id="studentModeNotice" class="student-mode-notice">
+          <span>Student Mode is active. Teacher tools are hidden, not removed.</span>
+          <button id="studentReturnTeacher" type="button">Show teacher tools</button>
+        </div>
+
         <div id="englishBuildControls" class="english-build-controls hidden">
           <div class="english-input-group">
             <label for="englishBuildWord">Target word</label>
@@ -180,9 +185,9 @@
         <button id="englishDetach" class="board-selection-btn word-edit">🔓 Detach word</button>
         <button id="englishRegroup" class="board-selection-btn word-edit">🔗 Regroup</button>
         <div class="board-scale-tools">
-          <button id="englishSmaller">A−</button>
-          <button id="englishScaleValue">100%</button>
-          <button id="englishLarger">A+</button>
+          <button id="englishSmaller" title="Smaller">A−</button>
+          <button id="englishResetSize" title="Reset size"><span id="englishScaleValue">100%</span></button>
+          <button id="englishLarger" title="Larger">A+</button>
         </div>
         <button id="englishDuplicate" class="board-selection-btn">⧉ Duplicate</button>
         <button id="englishDelete" class="board-selection-btn danger">🗑 Selected</button>
@@ -377,7 +382,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.13</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.13.1</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>

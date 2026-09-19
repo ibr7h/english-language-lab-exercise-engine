@@ -7,6 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 
 const STORAGE_KEY='englishLab.board.v0.13';
+const LEGACY_STORAGE_KEYS=['englishLab.board.v0.8'];
 const ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const VOWELS=new Set(['A','E','I','O','U']);
 const PHONICS_COLORS=Object.freeze({
@@ -21,6 +22,7 @@ const VOWEL_TEAMS=['IGH','AI','AY','EE','EA','OA','OE','OO','OU','OW','OI','OY',
 const KIT_DIGRAPHS=['SH','CH','TH','WH','PH','CK','NG','QU'];
 const KIT_VOWEL_TEAMS=['AI','AY','EE','EA','OA','OO','OI','OY','OW','IGH'];
 
+const RECORDED_AUDIO_KEYS=new Set([]);
 const SOUND_PROFILES=Object.freeze({
   A:{sound:'/æ/',example:'apple'}, B:{sound:'/b/',example:'ball'}, C:{sound:'/k/',example:'cat'},
   D:{sound:'/d/',example:'dog'}, E:{sound:'/ɛ/',example:'egg'}, F:{sound:'/f/',example:'fish'},
@@ -55,18 +57,22 @@ async function playStructuredAudio(kind,key){
   const token=String(key||'').toUpperCase();
   if(!token)return;
   const profile=SOUND_PROFILES[token]||{};
-  const audio=new Audio(audioAssetUrl(kind,token));
-  try{
-    await audio.play();
-    return;
-  }catch(_){}
-  if(kind==='name'){ speak(token,{rate:.72}); return; }
-  if(kind==='sound'){
-    // TTS cannot reliably produce isolated phonemes; announce a controlled cue until recorded audio is added.
-    speak(profile.example ? `${token}, as in ${profile.example}` : token,{rate:.68});
+  const recordingKey=`${kind}:${token}`;
+  if(RECORDED_AUDIO_KEYS.has(recordingKey)){
+    const audio=new Audio(audioAssetUrl(kind,token));
+    try{await audio.play();return;}catch(_){}
+  }
+  if(kind==='name'){
+    const spokenName=token.length>1?token.split('').join(' '):token;
+    speak(spokenName,{rate:.72});
     return;
   }
-  if(kind==='example'){ speak(profile.example||token,{rate:.78}); }
+  if(kind==='sound'){
+    // Safe prototype fallback. Recorded phoneme files will replace this cue when installed.
+    speak(profile.example||token,{rate:.68});
+    return;
+  }
+  if(kind==='example'){speak(profile.example||token,{rate:.78});}
 }
 function colorFor(letter){
   const upper=String(letter||'').toUpperCase();
@@ -136,7 +142,13 @@ class EnglishMagneticBoard {
   get items(){return this.state.items;}
   set items(value){this.state.replace(value);}
   init(){
-    const restored=loadBoardState(localStorage,STORAGE_KEY);
+    let restored=loadBoardState(localStorage,STORAGE_KEY);
+    if(!restored?.items?.length){
+      for(const legacyKey of LEGACY_STORAGE_KEYS){
+        const legacy=loadBoardState(localStorage,legacyKey);
+        if(legacy?.items?.length){restored=legacy;break;}
+      }
+    }
     if(restored?.items?.length){
       restored.items.forEach(item=>{
         item.color=normalizeLegacyColor(item.color,item.logicalChar||item.displayGlyph||'');
@@ -226,6 +238,7 @@ class EnglishMagneticBoard {
     });
     $('#studentModeBtn')?.addEventListener('click',()=>this.applyInterfaceMode('student'));
     $('#teacherModeBtn')?.addEventListener('click',()=>this.applyInterfaceMode('teacher'));
+    $('#studentReturnTeacher')?.addEventListener('click',()=>this.applyInterfaceMode('teacher'));
     $('#englishStartBuild')?.addEventListener('click',()=>this.startBuild());
     $('#englishBuildWord')?.addEventListener('keydown',e=>{if(e.key==='Enter')this.startBuild();});
     $('#englishReshuffle')?.addEventListener('click',()=>this.reshuffleExercise());
