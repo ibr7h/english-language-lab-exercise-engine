@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.20.1 — Side Toolbox Restored
+## v0.21 — Classroom Authoring Tools
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,20 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.21 Classroom Authoring Tools
+
+- Adds Rename and Duplicate for the active Board in both normal and Full Board controls.
+- Duplicate Board clones foam pieces, vector ink/groups, lock state, surface, mode, case, Build exercise and Segment state into an independent board record.
+- Adds Lock / Unlock for selected foam pieces and vector ink objects.
+- Locked foam pieces cannot be moved, resized, duplicated, deleted, scattered or aligned until unlocked.
+- Locked vector ink cannot be moved, erased, resized, duplicated, deleted, grouped or ungrouped until unlocked.
+- Clear Board preserves locked foam template objects; Clear Ink preserves locked drawings.
+- Locked foam objects display a small lock badge; selected locked ink receives a visual lock-state highlight.
+- Adds direct drag from the A–Z tray, Digraph tray, Vowel Teams tray and Full Board letter strip onto an exact board position.
+- Tap-to-add remains available for quick use.
+- Direct tray drag uses pointer capture, coalesced pointer events and requestAnimationFrame, and suppresses the post-drag click to prevent duplicate insertion.
+- The v0.20.1 reference branch remains untouched as the rollback baseline.
 
 ### v0.20.1 Side Toolbox Restored
 
@@ -361,7 +375,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v20-1` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v21` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -379,6 +393,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.20.1
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.21
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
