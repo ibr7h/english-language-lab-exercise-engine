@@ -53,11 +53,12 @@ export function analyzeWordPhonics(word){
   [...VOWEL_TEAMS].sort((a,b)=>b.length-a.length)
     .forEach(pattern=>markPattern(result,text,pattern,'vowel-team',PHONICS_COLORS.vowelTeam));
 
-  [...SOUND_CHUNKS].sort((a,b)=>b.length-a.length)
-    .forEach(pattern=>markPattern(result,text,pattern,'sound-chunk',PHONICS_COLORS.soundChunk));
-
   [...DIGRAPHS].sort((a,b)=>b.length-a.length)
     .forEach(pattern=>markPattern(result,text,pattern,'digraph',PHONICS_COLORS.digraph));
+
+  // More specific/longer sound chunks run after digraphs so TCH wins over CH.
+  [...SOUND_CHUNKS].sort((a,b)=>b.length-a.length)
+    .forEach(pattern=>markPattern(result,text,pattern,'sound-chunk',PHONICS_COLORS.soundChunk));
 
   for(const rule of SILENT_INITIAL_PATTERNS){
     if(!text.startsWith(rule.pattern))continue;
