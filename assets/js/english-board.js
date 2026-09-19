@@ -7,10 +7,13 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.21';
+const APP_VERSION='0.22';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const BOARDS_STORAGE_KEY='englishLab.boards.v1';
+const SAVED_LESSON_KEY='englishLab.savedLesson.v1';
+const LESSON_FORMAT='english-language-lab-lesson';
+const LESSON_FORMAT_VERSION=1;
 const BOARD_SURFACES=new Set(['current','squares','notebook','english']);
 const LEGACY_STORAGE_KEYS=['englishLab.board.v0.13','englishLab.board.v0.8'];
 const ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -235,6 +238,189 @@ class EnglishMagneticBoard {
     });
     if(this.boardsReady&&!this.loadingBoardRecord)this.persistBoards();
     return saved;
+  }
+
+  currentLessonName(){
+    try{
+      const saved=JSON.parse(localStorage.getItem(SAVED_LESSON_KEY)||'null');
+      if(saved?.name)return String(saved.name).slice(0,80);
+    }catch(_){}
+    return this.activeBoardRecord()?.name||'English lesson';
+  }
+
+  lessonSnapshot(name=this.currentLessonName()){
+    this.captureActiveBoard();
+    return {
+      format:LESSON_FORMAT,
+      version:LESSON_FORMAT_VERSION,
+      appVersion:APP_VERSION,
+      name:String(name||'English lesson').trim().slice(0,80)||'English lesson',
+      savedAt:new Date().toISOString(),
+      activeBoardId:this.activeBoardId,
+      settings:{
+        colorMode:this.colorMode,
+        interfaceMode:this.interfaceMode,
+        letterFont:localStorage.getItem('englishLab.letterFont')||'teachers',
+        uiFont:localStorage.getItem('englishLab.uiFont')||'system',
+        workspace:this.workspace?.exportWorkspaceSettings?.()||deepClone(this.workspace?.settings||{})
+      },
+      boards:deepClone(this.boards)
+    };
+  }
+
+  validateLessonPayload(payload){
+    if(!payload||typeof payload!=='object')throw new Error('Lesson file is empty or invalid');
+    if(payload.format!==LESSON_FORMAT)throw new Error('This is not an English Language Lab lesson file');
+    if(Number(payload.version)!==LESSON_FORMAT_VERSION)throw new Error('Unsupported lesson file version');
+    if(!Array.isArray(payload.boards)||payload.boards.length<1)throw new Error('Lesson has no boards');
+    if(payload.boards.length>50)throw new Error('Lesson contains too many boards');
+
+    payload.boards.forEach((record,index)=>{
+      if(!record||typeof record!=='object')throw new Error(`Board ${index+1} is invalid`);
+      if(record.items!=null&&!Array.isArray(record.items))throw new Error(`Board ${index+1} has invalid foam data`);
+      if(record.ink!=null&&!Array.isArray(record.ink))throw new Error(`Board ${index+1} has invalid ink data`);
+      if((record.items?.length||0)>3000||(record.ink?.length||0)>3000)throw new Error(`Board ${index+1} is too large`);
+    });
+
+    return payload;
+  }
+
+  applyLessonSettings(settings={}){
+    this.colorMode=settings.colorMode==='classic'?'classic':'phonics';
+    localStorage.setItem('englishLab.colorMode',this.colorMode);
+    const colorSelect=$('#englishColorMode');if(colorSelect)colorSelect.value=this.colorMode;
+
+    this.interfaceMode=settings.interfaceMode==='student'?'student':'teacher';
+    this.applyInterfaceMode(this.interfaceMode,true);
+
+    const applyFont=(id,key)=>{
+      if(!key)return;
+      const select=$(id);if(!select)return;
+      if([...select.options].some(option=>option.value===key)){
+        select.value=key;
+        select.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+    };
+    applyFont('#letterFontPicker',settings.letterFont);
+    applyFont('#uiFontPicker',settings.uiFont);
+
+    this.workspace?.importWorkspaceSettings?.(settings.workspace||{});
+  }
+
+  restoreLesson(payload,{toast=true}={}){
+    const lesson=this.validateLessonPayload(payload);
+    const sourceBoards=lesson.boards;
+    const activeIndex=Math.max(0,sourceBoards.findIndex(record=>record?.id===lesson.activeBoardId));
+
+    const imported=sourceBoards.map((record,index)=>this.normalizeBoardRecord({
+      ...deepClone(record),
+      id:this.boardId()
+    },index));
+
+    this.boards=imported;
+    this.activeBoardId=imported[Math.min(activeIndex,imported.length-1)]?.id||imported[0].id;
+    this.applyLessonSettings(lesson.settings||{});
+
+    const active=this.activeBoardRecord()||this.boards[0];
+    this.loadBoardRecord(active,{persist:false,toast:false});
+    this.persistBoards();
+    this.persist();
+
+    if(toast)this.toast(`Lesson loaded: ${lesson.name||'English lesson'}`);
+    return true;
+  }
+
+  saveLessonLocal(){
+    const current=this.currentLessonName();
+    const value=window.prompt('Lesson name',current);
+    if(value==null)return;
+    const name=String(value).trim().replace(/\s+/g,' ').slice(0,80);
+    if(!name)return;
+
+    const snapshot=this.lessonSnapshot(name);
+    try{
+      localStorage.setItem(SAVED_LESSON_KEY,JSON.stringify(snapshot));
+      this.toast(`Lesson saved: ${name}`);
+    }catch(_){
+      this.toast('Could not save the lesson on this device');
+    }
+  }
+
+  loadSavedLesson(){
+    let snapshot=null;
+    try{snapshot=JSON.parse(localStorage.getItem(SAVED_LESSON_KEY)||'null');}catch(_){}
+    if(!snapshot){
+      this.toast('No saved lesson on this device');
+      return;
+    }
+    if(!window.confirm(`Load "${snapshot.name||'saved lesson'}" and replace the current boards?`))return;
+    try{
+      this.restoreLesson(snapshot);
+    }catch(error){
+      this.toast(error?.message||'Saved lesson could not be loaded');
+    }
+  }
+
+  safeLessonFilename(name){
+    const clean=String(name||'english-lesson')
+      .trim()
+      .replace(/[^A-Za-z0-9 _-]+/g,'')
+      .replace(/\s+/g,'-')
+      .replace(/-+/g,'-')
+      .slice(0,60);
+    return (clean||'english-lesson')+'.englishlab.json';
+  }
+
+  async exportLesson(){
+    const snapshot=this.lessonSnapshot();
+    const json=JSON.stringify(snapshot,null,2);
+    const filename=this.safeLessonFilename(snapshot.name);
+    const file=new File([json],filename,{type:'application/json'});
+
+    try{
+      if(navigator.share&&navigator.canShare?.({files:[file]})){
+        await navigator.share({files:[file],title:snapshot.name});
+        this.toast('Lesson shared');
+        return;
+      }
+    }catch(error){
+      if(error?.name==='AbortError')return;
+    }
+
+    const url=URL.createObjectURL(file);
+    const anchor=document.createElement('a');
+    anchor.href=url;
+    anchor.download=filename;
+    anchor.rel='noopener';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    this.toast('Lesson exported');
+  }
+
+  requestLessonImport(){
+    const input=$('#englishLessonImport');
+    if(!input)return;
+    input.value='';
+    input.click();
+  }
+
+  async importLessonFile(file){
+    if(!file)return;
+    if(file.size>10*1024*1024){
+      this.toast('Lesson file is too large');
+      return;
+    }
+
+    try{
+      const text=await file.text();
+      const payload=this.validateLessonPayload(JSON.parse(text));
+      if(!window.confirm(`Import "${payload.name||file.name}" and replace the current boards?`))return;
+      this.restoreLesson(payload);
+    }catch(error){
+      this.toast(error?.message||'Lesson file could not be imported');
+    }
   }
 
   boardId(){
@@ -620,6 +806,19 @@ class EnglishMagneticBoard {
     $('#englishRunDiagnostics')?.addEventListener('click',()=>this.runDiagnostics(true));
     $('#englishCloseDiagnostics')?.addEventListener('click',()=>$('#englishDiagnosticsPanel')?.classList.add('hidden'));
     $('#englishResetAppData')?.addEventListener('click',()=>this.resetAppData());
+    document.querySelectorAll('[data-lesson-action]').forEach(button=>{
+      button.addEventListener('click',()=>{
+        const action=button.dataset.lessonAction;
+        if(action==='save')this.saveLessonLocal();
+        if(action==='load')this.loadSavedLesson();
+        if(action==='export')this.exportLesson();
+        if(action==='import')this.requestLessonImport();
+      });
+    });
+    $('#englishLessonImport')?.addEventListener('change',event=>{
+      const file=event.target.files?.[0];
+      if(file)this.importLessonFile(file);
+    });
     $('#englishBoardCanvas')?.addEventListener('pointerdown',e=>{
       if(e.target.closest('.free-foam-piece'))return;
       this.workspace?.clearInkSelection(false);
@@ -1491,6 +1690,7 @@ class EnglishMagneticBoard {
     add('Board rename / duplicate',document.querySelectorAll('[data-board-action="rename"]').length>=2&&document.querySelectorAll('[data-board-action="duplicate"]').length>=2,'Normal + Full Board');
     add('Object locking',Boolean($('#englishLockSelected')&&$('#englishWorkspaceLockSelected')),'Foam and vector ink');
     add('Direct tray drag',typeof this.bindTrayDirectDrag==='function','Tray / grapheme / Full Board strip');
+    add('Lesson save / transfer',document.querySelectorAll('[data-lesson-action]').length>=8&&Boolean($('#englishLessonImport')),'Save / Load / Export / Import');
     add('Board surfaces',document.querySelectorAll('[data-board-surface]').length>=8,'Current / Squares / Notebook / English');
     add('Build free movement',true,'Slot capture only when dropped inside a slot');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
