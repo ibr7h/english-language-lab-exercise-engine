@@ -233,6 +233,16 @@
             <button type="button" data-board-surface="english">English</button>
           </div>
         </div>
+        <div class="english-board-manager-group lesson-group">
+          <strong>Lesson</strong>
+          <div class="lesson-actions" role="group" aria-label="Lesson file actions">
+            <button type="button" data-lesson-action="save" title="Save lesson on this device">💾 Save</button>
+            <button type="button" data-lesson-action="load" title="Load the saved lesson">↥ Load</button>
+            <button type="button" data-lesson-action="export" title="Export lesson file">⇩ Export</button>
+            <button type="button" data-lesson-action="import" title="Import lesson file">⇧ Import</button>
+          </div>
+        </div>
+        <input id="englishLessonImport" type="file" accept=".englishlab.json,.json,application/json" hidden />
       </div>
 
       <div class="english-board-layout">
@@ -387,6 +397,16 @@
           </div>
 
           <div class="workspace-tool-group">
+            <strong>Lesson</strong>
+            <div class="workspace-lesson-grid">
+              <button type="button" data-lesson-action="save">💾 Save</button>
+              <button type="button" data-lesson-action="load">↥ Load saved</button>
+              <button type="button" data-lesson-action="export">⇩ Export</button>
+              <button type="button" data-lesson-action="import">⇧ Import</button>
+            </div>
+          </div>
+
+          <div class="workspace-tool-group">
             <strong>Selected object</strong>
             <div class="workspace-action-grid">
               <button id="englishWorkspaceSideLock" type="button">🔒 Lock</button>
@@ -458,7 +478,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.21</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.22</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -572,7 +592,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.21</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.22</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
