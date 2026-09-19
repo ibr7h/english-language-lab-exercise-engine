@@ -230,6 +230,8 @@ export class BoardWorkspace {
     document.querySelectorAll('[data-board-action]').forEach(btn=>{
       btn.addEventListener('click',()=>{
         if(btn.dataset.boardAction==='add')this.board.addBoard();
+        if(btn.dataset.boardAction==='rename')this.board.renameActiveBoard();
+        if(btn.dataset.boardAction==='duplicate')this.board.duplicateActiveBoard();
         if(btn.dataset.boardAction==='delete')this.board.deleteActiveBoard();
       });
     });
@@ -506,6 +508,7 @@ export class BoardWorkspace {
         if(role==='letter')this.board.addLetter(token);
         else this.board.addGrapheme(token,role);
       });
+      this.board.bindTrayDirectDrag?.(btn,token,role);
 
       this.stripScroller.appendChild(btn);
     });
@@ -1329,8 +1332,13 @@ export class BoardWorkspace {
 
   clearInk(){
     if(!this.strokes.length)return;
+    const unlocked=this.strokes.filter(stroke=>!stroke.locked);
+    if(!unlocked.length){
+      this.board.toast?.('Locked drawings are protected');
+      return;
+    }
     this.checkpointInk('CLEAR_INK');
-    this.strokes=[];
+    this.strokes=this.strokes.filter(stroke=>stroke.locked);
     this.selectedStrokeId=null;
     this.selectedStrokeIds.clear();
     this.persistInk();
@@ -1422,20 +1430,25 @@ export class BoardWorkspace {
 
     ['#englishInkGroup','#englishWorkspaceInkGroup'].forEach(selector=>{
       const button=document.querySelector(selector);
-      if(button)button.disabled=!canGroup;
+      if(button)button.disabled=!canGroup||selectionLocked;
     });
     ['#englishInkUngroup','#englishWorkspaceInkUngroup'].forEach(selector=>{
       const button=document.querySelector(selector);
       if(button)button.disabled=!canUngroup||selectionLocked;
     });
 
-    ['#englishWorkspaceLockSelected','#englishWorkspaceSideLock'].forEach(selector=>{
+    ['#englishLockSelected','#englishWorkspaceLockSelected','#englishWorkspaceSideLock'].forEach(selector=>{
       const button=document.querySelector(selector);
       if(button)button.disabled=selectedCount===0||!selectionUnlocked;
     });
-    ['#englishWorkspaceUnlockSelected','#englishWorkspaceSideUnlock'].forEach(selector=>{
+    ['#englishUnlockSelected','#englishWorkspaceUnlockSelected','#englishWorkspaceSideUnlock'].forEach(selector=>{
       const button=document.querySelector(selector);
       if(button)button.disabled=selectedCount===0||!selectionLocked;
+    });
+
+    ['#englishSmaller','#englishResetSize','#englishLarger','#englishDuplicate','#englishDelete'].forEach(selector=>{
+      const button=document.querySelector(selector);
+      if(button)button.disabled=selectedCount===0||selectionLocked;
     });
   }
 }
