@@ -269,7 +269,9 @@ class EnglishMagneticBoard {
       item.x=clamp(Number(item.x)||0,4,Math.max(4,rect.width-72));
       item.y=clamp(Number(item.y)||0,4,Math.max(4,rect.height-82));
       const el=document.createElement('button');
-      const pieceHtml=`<span class="foam-piece-glyph pointer-events-none">${this.escape(this.display(item.logicalChar))}</span>`;
+      const visibleColor=normalizeLegacyColor(item.color,item.logicalChar||item.displayGlyph||'');
+      item.color=visibleColor;
+      const pieceHtml=`<span class="foam-piece-glyph foam-glyph ${visibleColor} pointer-events-none">${this.escape(this.display(item.logicalChar))}</span>`;
       decorateBoardPieceElement(el,{
         item,selected:this.selectedIds.has(item.id),selectionMode:this.selectionMode,mobile,
         minTouchTarget:this.platform.minTarget,contentHtml:pieceHtml

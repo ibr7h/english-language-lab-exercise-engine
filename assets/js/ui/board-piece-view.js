@@ -7,7 +7,7 @@ export function decorateBoardPieceElement(el,{item,selected=false,selectionMode=
   el.style.touchAction='none';
   if(minTouchTarget>0){ el.style.minWidth=`${minTouchTarget}px`; el.style.minHeight=`${minTouchTarget}px`; }
   const cls=!selected?'':selectionMode==='word'?' is-selected is-word-selected':selectionMode==='letter'?' is-selected is-letter-selected':' is-selected is-multi-selected';
-  el.className=`free-foam-piece foam-glyph ${item.color||''} piece-type-${item.type}${item.exerciseId?' exercise-piece':''}${cls}`;
+  el.className=`free-foam-piece piece-type-${item.type}${item.exerciseId?' exercise-piece':''}${cls}`;
   el.style.left=`${Number(item.x)||0}px`;
   el.style.top=`${Number(item.y)||0}px`;
   const base=mobile?52:66;

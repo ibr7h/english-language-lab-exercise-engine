@@ -1966,3 +1966,72 @@ textarea {
 .legend-dot.glyph-green { background:#10b981; box-shadow:2px 2px 0 #047857; }
 .legend-dot.glyph-yellow { background:#facc15; box-shadow:2px 2px 0 #ca8a04; }
 .legend-dot.glyph-purple { background:#8b5cf6; box-shadow:2px 2px 0 #6d28d9; }
+
+
+/* v0.12 board foam parity fixes */
+/* The board holder is interaction geometry only. It must never be visible. */
+.free-foam-piece {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  -webkit-text-stroke: 0 !important;
+  text-shadow: none !important;
+}
+.free-foam-piece:focus,
+.free-foam-piece:focus-visible,
+.free-foam-piece.is-selected,
+.free-foam-piece.is-word-selected,
+.free-foam-piece.is-letter-selected,
+.free-foam-piece.is-multi-selected {
+  background: transparent !important;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* The nested glyph is the actual EVA foam piece, exactly like the tray. */
+.free-foam-piece > .foam-piece-glyph.foam-glyph {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: .72em;
+  font-family: var(--letter-font) !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  -webkit-text-fill-color: currentColor !important;
+  -webkit-text-stroke: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Selection follows the letter visually instead of drawing a rectangular box. */
+.free-foam-piece.is-selected > .foam-piece-glyph {
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,.95))
+    drop-shadow(0 0 5px rgba(245,158,11,.82))
+    drop-shadow(0 4px 3px rgba(0,0,0,.18)) !important;
+}
+.free-foam-piece.is-word-selected > .foam-piece-glyph {
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,.95))
+    drop-shadow(0 0 5px rgba(124,58,237,.78))
+    drop-shadow(0 4px 3px rgba(0,0,0,.18)) !important;
+}
+.free-foam-piece.is-multi-selected > .foam-piece-glyph {
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,.95))
+    drop-shadow(0 0 5px rgba(15,118,110,.78))
+    drop-shadow(0 4px 3px rgba(0,0,0,.18)) !important;
+}
+.free-foam-piece.is-dragging > .foam-piece-glyph {
+  filter: drop-shadow(0 14px 12px rgba(0,0,0,.32)) !important;
+}
+
+/* CSS display:grid previously overrode the HTML hidden state. */
+.english-board-empty[hidden] {
+  display: none !important;
+}
