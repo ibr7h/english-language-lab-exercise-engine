@@ -1021,17 +1021,62 @@ class EnglishMagneticBoard {
   handleKeyboard(event){
     const tag=document.activeElement?.tagName;
     if(['INPUT','TEXTAREA','SELECT'].includes(tag))return;
+
+    if(event.key==='Escape'&&this.keyboardGrabbed){
+      event.preventDefault();
+      this.keyboardGrabbed=false;
+      this.toast('Keyboard move released');
+      return;
+    }
+
     const action=this.platform.actionForKey(event.key);
+    const focusedPiece=document.activeElement?.closest?.('.free-foam-piece');
+
+    if(action?.type==='activate'&&focusedPiece){
+      event.preventDefault();
+      const id=focusedPiece.dataset.pieceId;
+      const item=this.state.find(id);
+      if(!item)return;
+      if(item.locked){
+        this.toast('Object locked');
+        return;
+      }
+
+      if(this.keyboardGrabbed&&this.activeItemId===id){
+        this.keyboardGrabbed=false;
+        this.toast('Letter released · choose a slot or another control');
+      }else{
+        this.setSelection([id],'letter',id);
+        this.keyboardGrabbed=true;
+        this.syncPieceSelectionDom();
+        this.renderFoamSelectionOverlay();
+        this.toast('Letter selected · use arrow keys to move · OK to release');
+      }
+      return;
+    }
+
     if(!action||!this.activeItemId)return;
-    if(action.type==='delete'){event.preventDefault();this.deleteSelected();return;}
+    if(action.type==='delete'){
+      event.preventDefault();
+      this.keyboardGrabbed=false;
+      this.deleteSelected();
+      return;
+    }
     if(action.type==='move'){
+      if(this.platform.id==='webos'&&!this.keyboardGrabbed)return;
       event.preventDefault();
       const moving=this.items.filter(i=>this.selectedIds.has(i.id));
       if(!moving.length)return;
       if(moving.some(i=>i.locked)){this.toast('Unlock selected objects before moving them');return;}
       this.checkpoint('KEY_MOVE');
       moving.forEach(i=>{i.x+=action.dx;i.y+=action.dy;});
+      const activeId=this.activeItemId;
       this.renderBoard();
+      requestAnimationFrame(()=>{
+        if(!activeId)return;
+        const node=document.querySelector('.free-foam-piece[data-piece-id="'+CSS.escape(activeId)+'"]');
+        node?.focus?.();
+      });
     }
   }
   display(letter,caseMode=this.caseMode){
@@ -1317,7 +1362,7 @@ class EnglishMagneticBoard {
     this.activeItemId=activeId&&this.selectedIds.has(activeId)?activeId:(this.selectedIds.values().next().value||null);
     this.updateSelectedAudio?.();
   }
-  clearSelection(render=true){this.setSelection([], 'none', null);if(render)this.renderBoard();}
+  clearSelection(render=true){this.keyboardGrabbed=false;this.setSelection([], 'none', null);if(render)this.renderBoard();}
   selectAll(){
     const selectable=this.items.filter(i=>pieceCan(i,BOARD_CAPABILITIES.SELECTABLE));
     this.setSelection(selectable.map(i=>i.id),'all',selectable[0]?.id||null);this.renderBoard();this.toast(`${selectable.length} pieces selected`);
