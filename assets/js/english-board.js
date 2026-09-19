@@ -792,7 +792,8 @@ class EnglishMagneticBoard {
         drag.ghost.className='tray-drag-ghost';
         const resolvedRole=role==='letter'?(VOWELS.has(token)?'vowel':'consonant'):role;
         drag.ghost.innerHTML=`<span class="foam-glyph ${this.colorForToken(token,resolvedRole)}">${this.escape(this.display(token))}</span>`;
-        document.body.appendChild(drag.ghost);
+        const ghostHost=this.workspace?.isWorkspace?$('#magnetic-board'):document.body;
+        ghostHost?.appendChild(drag.ghost);
       }
 
       event.preventDefault();
