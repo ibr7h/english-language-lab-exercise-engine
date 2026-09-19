@@ -43,6 +43,7 @@ export class BoardWorkspace {
       penWidth:5,
       strip:'letters',
       toolboxOpen:true,
+      toolTab:'objects',
       ...safeParse(localStorage.getItem(WORKSPACE_STORAGE_KEY),{})
     };
 
@@ -187,6 +188,7 @@ export class BoardWorkspace {
     this.setPenWidth(this.settings.penWidth,false);
     this.setStrip(this.settings.strip,false);
     this.setToolboxOpen(this.settings.toolboxOpen,false);
+    this.setToolTab(this.settings.toolTab,false);
     this.renderStrip();
     this.syncCaseButtons();
     this.resizeInkSvg();
@@ -225,6 +227,27 @@ export class BoardWorkspace {
     document.querySelector('#englishFullscreenBoard')?.addEventListener('click',()=>this.enter());
     document.querySelector('#englishWorkspaceExit')?.addEventListener('click',()=>this.exit());
     document.querySelector('#englishWorkspaceToolboxToggle')?.addEventListener('click',()=>this.setToolboxOpen(!this.settings.toolboxOpen));
+
+    document.querySelectorAll('[data-workspace-tab]').forEach(btn=>{
+      btn.addEventListener('click',()=>this.setToolTab(btn.dataset.workspaceTab));
+    });
+
+    document.querySelectorAll('[data-workspace-object-action]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const action=btn.dataset.workspaceObjectAction;
+        if(action==='undo')this.undoSelectedDomain();
+        if(action==='redo')this.redoSelectedDomain();
+        if(action==='smaller')this.resizeSelected(-.1);
+        if(action==='reset')this.resetSelectedSize();
+        if(action==='larger')this.resizeSelected(.1);
+        if(action==='duplicate')this.duplicateSelected();
+        if(action==='delete')this.deleteSelected();
+        if(action==='group')this.groupSelectedInk();
+        if(action==='ungroup')this.ungroupSelectedInk();
+        if(action==='align')this.board.autoAlignRows();
+        if(action==='scatter')this.board.scatterPieces();
+      });
+    });
 
     document.querySelectorAll('[data-board-action]').forEach(btn=>{
       btn.addEventListener('click',()=>{
@@ -397,6 +420,7 @@ export class BoardWorkspace {
     this.section.classList.add('is-board-workspace');
     document.querySelector('#englishWorkspaceChrome')?.setAttribute('aria-hidden','false');
     this.setToolboxOpen(this.settings.toolboxOpen,false);
+    this.setToolTab(this.settings.toolTab,false);
     this.renderStrip();
     this.syncCaseButtons();
 
@@ -439,6 +463,27 @@ export class BoardWorkspace {
     this.section.classList.toggle('workspace-toolbox-collapsed',!this.settings.toolboxOpen);
     const button=document.querySelector('#englishWorkspaceToolboxToggle');
     if(button)button.setAttribute('aria-expanded',String(this.settings.toolboxOpen));
+    if(persist)this.persistSettings();
+  }
+
+  setToolTab(tab,persist=true){
+    const allowed=['objects','interaction','boards','letters','guides','pen'];
+    const next=allowed.includes(tab)?tab:'objects';
+    this.settings.toolTab=next;
+
+    document.querySelectorAll('[data-workspace-tab]').forEach(button=>{
+      const active=button.dataset.workspaceTab===next;
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-selected',active?'true':'false');
+      button.tabIndex=active?0:-1;
+    });
+
+    document.querySelectorAll('[data-workspace-panel]').forEach(panel=>{
+      const active=panel.dataset.workspacePanel===next;
+      panel.classList.toggle('active',active);
+      panel.hidden=!active;
+    });
+
     if(persist)this.persistSettings();
   }
 
@@ -1341,6 +1386,25 @@ export class BoardWorkspace {
     ['#englishInkUngroup','#englishWorkspaceInkUngroup'].forEach(selector=>{
       const button=document.querySelector(selector);
       if(button)button.disabled=!canUngroup;
+    });
+
+    const setActionDisabled=(action,disabled)=>{
+      document.querySelectorAll(`[data-workspace-object-action="${action}"]`).forEach(button=>{button.disabled=Boolean(disabled);});
+    };
+    setActionDisabled('undo',useInkDomain?this.inkPast.length===0:!this.board?.history?.canUndo);
+    setActionDisabled('redo',useInkDomain?this.inkFuture.length===0:!this.board?.history?.canRedo);
+    setActionDisabled('smaller',selectedCount===0);
+    setActionDisabled('reset',selectedCount===0);
+    setActionDisabled('larger',selectedCount===0);
+    setActionDisabled('duplicate',selectedCount===0);
+    setActionDisabled('delete',selectedCount===0);
+    setActionDisabled('group',!canGroup);
+    setActionDisabled('ungroup',!canUngroup);
+    setActionDisabled('align',totalFoam===0);
+    setActionDisabled('scatter',totalFoam===0);
+
+    document.querySelectorAll('[data-workspace-scale-display]').forEach(node=>{
+      node.textContent=scale?.textContent||'100%';
     });
   }
 }

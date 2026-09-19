@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.19.3';
+const APP_VERSION='0.20';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const BOARDS_STORAGE_KEY='englishLab.boards.v1';
@@ -683,7 +683,7 @@ class EnglishMagneticBoard {
       displayGlyph:this.display(letter,letterCase),
       letterCase,
       color:extra.color||this.colorForToken(letter,extra.phonicsRole||null),
-      x,y,rotation:(Math.random()*6-3),...extra
+      x,y,rotation:0,...extra
     });
   }
   addGrapheme(token,role){
@@ -775,6 +775,7 @@ class EnglishMagneticBoard {
     this.items.forEach(item=>{
       if(item.type!=='letter')return;
       if(!['upper','lower'].includes(item.letterCase))item.letterCase=this.caseMode;
+      item.rotation=0;
       item.displayGlyph=this.displayPiece(item);
       item.x=clamp(Number(item.x)||0,4,Math.max(4,rect.width-72));
       item.y=clamp(Number(item.y)||0,4,Math.max(4,rect.height-82));
@@ -983,7 +984,7 @@ class EnglishMagneticBoard {
     const targets=this.selectedIds.size?this.items.filter(i=>this.selectedIds.has(i.id)):this.items;
     if(!targets.length)return;
     this.checkpoint('SCATTER');const rect=this.canvasRect();
-    targets.forEach(i=>{i.x=20+Math.random()*Math.max(30,rect.width-105);i.y=35+Math.random()*Math.max(30,rect.height-120);i.rotation=Math.random()*12-6;});
+    targets.forEach(i=>{i.x=20+Math.random()*Math.max(30,rect.width-105);i.y=35+Math.random()*Math.max(30,rect.height-120);i.rotation=0;});
     this.renderBoard();
   }
   autoAlignRows(){
@@ -1274,6 +1275,8 @@ class EnglishMagneticBoard {
     add('Multiple boards',Boolean($('#englishBoardTabs')&&$('#englishWorkspaceBoardTabs')),'Independent board pages + per-board ink/surface');
     add('Atomic board loading',Object.prototype.hasOwnProperty.call(this,'loadingBoardRecord'),'Prevents cross-board surface/state overwrite during switch');
     add('Unified empty-board state',typeof this.updateEmptyState==='function','Foam + vector ink + active pen stroke');
+    add('Upright foam letters',true,'Random foam rotation removed');
+    add('Tabbed Full Board toolbox',document.querySelectorAll('[data-workspace-tab]').length===6,'Objects / Interaction / Boards / Letters / Guides / Pen');
     add('Board surfaces',document.querySelectorAll('[data-board-surface]').length>=8,'Current / Squares / Notebook / English');
     add('Build free movement',true,'Slot capture only when dropped inside a slot');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
