@@ -33,6 +33,7 @@ export function createLetterPiece(data={}) {
     exerciseId:data.exerciseId==null?null:String(data.exerciseId),
     exerciseTargetIndex:Number.isInteger(data.exerciseTargetIndex)?data.exerciseTargetIndex:null,
     exerciseSlot:Number.isInteger(data.exerciseSlot)?data.exerciseSlot:null,
+    locked:Boolean(data.locked),
     capabilities:{selectable:true,movable:true,scalable:true,deletable:true,attachable:true}
   };
 }
