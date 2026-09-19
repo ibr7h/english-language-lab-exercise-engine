@@ -2849,6 +2849,39 @@ body.board-workspace-active > .tabs {
   margin:0 1px;
   background:#dce2e5;
 }
+.workspace-build-actions {
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:0 5px 0 1px;
+  margin-right:2px;
+  border-right:1px solid #dce2e5;
+}
+.workspace-build-check {
+  flex:0 0 auto;
+  height:34px;
+  border:1px solid var(--accent);
+  border-radius:9px;
+  background:var(--accent);
+  color:#fff;
+  padding:0 9px;
+  font-size:.72rem;
+  font-weight:900;
+  white-space:nowrap;
+}
+.workspace-build-status {
+  display:block;
+  max-width:190px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#53616a;
+  font-size:.64rem;
+  font-weight:750;
+}
+.workspace-build-status[data-type="good"] { color:var(--good); }
+.workspace-build-status[data-type="bad"] { color:var(--bad); }
 .workspace-toolbox {
   top:60px;
 }
@@ -2887,6 +2920,18 @@ body.board-workspace-active > .tabs {
   .workspace-scale-btn {
     flex-basis:48px;
     width:48px;
+  }
+  .workspace-build-actions {
+    gap:2px;
+    padding-right:3px;
+  }
+  .workspace-build-check {
+    height:32px;
+    padding-inline:7px;
+    font-size:.68rem;
+  }
+  .workspace-build-status {
+    display:none;
   }
   .workspace-toolbox {
     top:58px;
