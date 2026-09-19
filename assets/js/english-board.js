@@ -12,6 +12,7 @@ const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const BOARDS_STORAGE_KEY='englishLab.boards.v1';
 const SAVED_LESSON_KEY='englishLab.savedLesson.v1';
+const CURRENT_LESSON_NAME_KEY='englishLab.currentLessonName';
 const LESSON_FORMAT='english-language-lab-lesson';
 const LESSON_FORMAT_VERSION=1;
 const BOARD_SURFACES=new Set(['current','squares','notebook','english']);
@@ -241,10 +242,8 @@ class EnglishMagneticBoard {
   }
 
   currentLessonName(){
-    try{
-      const saved=JSON.parse(localStorage.getItem(SAVED_LESSON_KEY)||'null');
-      if(saved?.name)return String(saved.name).slice(0,80);
-    }catch(_){}
+    const current=localStorage.getItem(CURRENT_LESSON_NAME_KEY);
+    if(current)return String(current).slice(0,80);
     return this.activeBoardRecord()?.name||'English lesson';
   }
 
@@ -330,6 +329,7 @@ class EnglishMagneticBoard {
       this.loadingBoardRecord=false;
     }
 
+    localStorage.setItem(CURRENT_LESSON_NAME_KEY,String(lesson.name||'English lesson').slice(0,80));
     const active=this.activeBoardRecord()||this.boards[0];
     this.loadBoardRecord(active,{persist:false,toast:false});
     this.persistBoards();
@@ -349,6 +349,7 @@ class EnglishMagneticBoard {
     const snapshot=this.lessonSnapshot(name);
     try{
       localStorage.setItem(SAVED_LESSON_KEY,JSON.stringify(snapshot));
+      localStorage.setItem(CURRENT_LESSON_NAME_KEY,name);
       this.toast(`Lesson saved: ${name}`);
     }catch(_){
       this.toast('Could not save the lesson on this device');
@@ -416,6 +417,16 @@ class EnglishMagneticBoard {
     input.click();
   }
 
+  readLessonFileText(file){
+    if(file?.text)return file.text();
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>resolve(String(reader.result||''));
+      reader.onerror=()=>reject(reader.error||new Error('Could not read lesson file'));
+      reader.readAsText(file);
+    });
+  }
+
   async importLessonFile(file){
     if(!file)return;
     if(file.size>10*1024*1024){
@@ -424,7 +435,7 @@ class EnglishMagneticBoard {
     }
 
     try{
-      const text=await file.text();
+      const text=await this.readLessonFileText(file);
       const payload=this.validateLessonPayload(JSON.parse(text));
       if(!window.confirm(`Import "${payload.name||file.name}" and replace the current boards?`))return;
       this.restoreLesson(payload);
