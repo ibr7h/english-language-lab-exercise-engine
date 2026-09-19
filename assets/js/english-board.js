@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.20';
+const APP_VERSION='0.20.1';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const BOARDS_STORAGE_KEY='englishLab.boards.v1';
@@ -1276,7 +1276,7 @@ class EnglishMagneticBoard {
     add('Atomic board loading',Object.prototype.hasOwnProperty.call(this,'loadingBoardRecord'),'Prevents cross-board surface/state overwrite during switch');
     add('Unified empty-board state',typeof this.updateEmptyState==='function','Foam + vector ink + active pen stroke');
     add('Upright foam letters',true,'Random foam rotation removed');
-    add('Tabbed Full Board toolbox',document.querySelectorAll('[data-workspace-tab]').length===6,'Objects / Interaction / Boards / Letters / Guides / Pen');
+    add('Full Board side toolbox',Boolean($('#englishWorkspaceToolbox')),'Scrollable side toolbox with all board tools');
     add('Board surfaces',document.querySelectorAll('[data-board-surface]').length>=8,'Current / Squares / Notebook / English');
     add('Build free movement',true,'Slot capture only when dropped inside a slot');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
