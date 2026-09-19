@@ -3254,3 +3254,74 @@ body.board-workspace-active > .tabs {
     overflow-x:auto;
   }
 }
+
+
+/* v0.21 Classroom Authoring Tools */
+.free-foam-piece.is-locked {
+  cursor:not-allowed;
+}
+.free-foam-piece.is-locked::after {
+  content:"🔒";
+  position:absolute;
+  right:-7px;
+  top:-8px;
+  width:22px;
+  height:22px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(91,103,241,.25);
+  border-radius:999px;
+  background:rgba(255,255,255,.97);
+  box-shadow:0 3px 9px rgba(31,42,49,.16);
+  font-size:.68rem;
+  line-height:1;
+  pointer-events:none;
+}
+.ink-object.is-locked {
+  cursor:not-allowed;
+}
+.ink-object.is-locked.is-selected {
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,.95))
+    drop-shadow(0 0 5px rgba(91,103,241,.9));
+}
+.tray-drag-ghost {
+  position:fixed;
+  left:0;
+  top:0;
+  z-index:100500;
+  min-width:66px;
+  min-height:72px;
+  display:grid;
+  place-items:center;
+  padding:4px 8px;
+  border:1px solid rgba(120,132,142,.26);
+  border-radius:16px;
+  background:rgba(255,255,255,.93);
+  box-shadow:0 18px 32px rgba(31,42,49,.22);
+  pointer-events:none;
+  will-change:transform;
+  transform:translate3d(-200px,-200px,0);
+}
+.tray-drag-ghost .foam-glyph {
+  font-size:2.7rem;
+  white-space:nowrap;
+}
+.foam-tray-letter,
+.grapheme-piece-btn,
+.workspace-letter-piece {
+  touch-action:none;
+}
+.board-manager-icon[title*="Rename"],
+.board-manager-icon[title*="Duplicate"] {
+  font-size:.86rem;
+}
+@media(max-width:700px){
+  .tray-drag-ghost {
+    min-width:58px;
+    min-height:64px;
+  }
+  .tray-drag-ghost .foam-glyph {
+    font-size:2.35rem;
+  }
+}
