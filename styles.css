@@ -3003,3 +3003,9 @@ body.board-workspace-active > .tabs {
     flex-basis:auto;
   }
 }
+
+
+/* v0.17.1 Aspect-ratio-safe vector ink */
+.board-ink-svg {
+  shape-rendering:geometricPrecision;
+}

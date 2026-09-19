@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.17';
+const APP_VERSION='0.17.1';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const LEGACY_STORAGE_KEYS=['englishLab.board.v0.13','englishLab.board.v0.8'];
@@ -867,7 +867,7 @@ class EnglishMagneticBoard {
       $('#englishWorkspaceBoardUndo')&&
       $('#englishWorkspaceBoardRedo')
     ),'Topbar: resize / duplicate / delete / align / scatter / undo / redo');
-    add('Vector ink layer',Boolean($('#englishInkSvg')&&$('#englishInkObjects')),'Selectable SVG stroke objects');
+    add('Vector ink layer',Boolean($('#englishInkSvg')&&$('#englishInkObjects')),'Shape-safe SVG stroke objects across board aspect ratios');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
 
     try{

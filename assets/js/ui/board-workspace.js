@@ -1,6 +1,7 @@
 const WORKSPACE_STORAGE_KEY='englishLab.boardWorkspace.v1';
-const INK_STORAGE_KEY='englishLab.boardInk.v2';
-const LEGACY_INK_STORAGE_KEY='englishLab.boardInk.v1';
+const INK_STORAGE_KEY='englishLab.boardInk.v3';
+const LEGACY_INK_V2_KEY='englishLab.boardInk.v2';
+const LEGACY_INK_V1_KEY='englishLab.boardInk.v1';
 
 function safeParse(raw,fallback){
   if(!raw)return fallback;
@@ -53,6 +54,7 @@ export class BoardWorkspace {
     this.resizeObserver=null;
     this.isWorkspace=false;
     this.nativeFullscreenRequested=false;
+    this.pendingLegacyInk=null;
     this.legacyInkMigrated=false;
 
     this.loadInk();
@@ -60,44 +62,86 @@ export class BoardWorkspace {
 
   loadInk(){
     const current=safeParse(localStorage.getItem(INK_STORAGE_KEY),null);
-    if(current?.version===2&&Array.isArray(current.strokes)){
+    if(current?.version===3&&Array.isArray(current.strokes)){
       this.strokes=current.strokes.map(stroke=>this.normalizeStroke(stroke)).filter(Boolean);
       return;
     }
 
-    const legacy=safeParse(localStorage.getItem(LEGACY_INK_STORAGE_KEY),null);
-    if(legacy?.strokes&&Array.isArray(legacy.strokes)){
-      this.strokes=legacy.strokes
-        .filter(stroke=>stroke&&stroke.tool!=='erase'&&Array.isArray(stroke.points)&&stroke.points.length)
-        .map(stroke=>this.normalizeStroke({
-          id:stroke.id||uid('ink'),
-          color:stroke.color||'#172132',
-          width:Number(stroke.width)||5,
-          points:stroke.points,
-          tx:0,
-          ty:0,
-          scale:1
-        }))
-        .filter(Boolean);
-      this.legacyInkMigrated=true;
+    const legacyV2=safeParse(localStorage.getItem(LEGACY_INK_V2_KEY),null);
+    if(legacyV2?.version===2&&Array.isArray(legacyV2.strokes)){
+      this.pendingLegacyInk={version:2,strokes:legacyV2.strokes};
+      return;
+    }
+
+    const legacyV1=safeParse(localStorage.getItem(LEGACY_INK_V1_KEY),null);
+    if(legacyV1?.strokes&&Array.isArray(legacyV1.strokes)){
+      this.pendingLegacyInk={
+        version:1,
+        strokes:legacyV1.strokes.filter(stroke=>stroke&&stroke.tool!=='erase')
+      };
     }
   }
 
   normalizeStroke(stroke){
-    if(!stroke||!Array.isArray(stroke.points)||!stroke.points.length)return null;
+    if(!stroke||!Array.isArray(stroke.localPoints)||!stroke.localPoints.length)return null;
     return {
       id:String(stroke.id||uid('ink')),
       color:String(stroke.color||'#172132'),
       width:clamp(Number(stroke.width)||5,1,40),
-      points:stroke.points.map(point=>({
+      anchorX:clamp(Number(stroke.anchorX)||0,0,1),
+      anchorY:clamp(Number(stroke.anchorY)||0,0,1),
+      localPoints:stroke.localPoints.map(point=>({
+        x:Number(point.x)||0,
+        y:Number(point.y)||0,
+        pressure:clamp(Number(point.pressure)||.5,0,1)
+      })),
+      scale:clamp(Number(stroke.scale)||1,.25,4)
+    };
+  }
+
+  migrateLegacyInk(){
+    if(!this.pendingLegacyInk?.strokes?.length)return false;
+    const rect=this.inkSvg.getBoundingClientRect();
+    if(rect.width<2||rect.height<2)return false;
+    const base=Math.max(1,Math.min(rect.width,rect.height));
+
+    const migrated=[];
+    for(const raw of this.pendingLegacyInk.strokes){
+      if(!raw||!Array.isArray(raw.points)||!raw.points.length)continue;
+
+      const points=raw.points.map(point=>({
         x:clamp(Number(point.x)||0,0,1),
         y:clamp(Number(point.y)||0,0,1),
         pressure:clamp(Number(point.pressure)||.5,0,1)
-      })),
-      tx:Number(stroke.tx)||0,
-      ty:Number(stroke.ty)||0,
-      scale:clamp(Number(stroke.scale)||1,.25,4)
-    };
+      }));
+
+      const xs=points.map(point=>point.x);
+      const ys=points.map(point=>point.y);
+      const centerX=(Math.min(...xs)+Math.max(...xs))/2;
+      const centerY=(Math.min(...ys)+Math.max(...ys))/2;
+      const legacyScale=clamp(Number(raw.scale)||1,.25,4);
+      const tx=Number(raw.tx)||0;
+      const ty=Number(raw.ty)||0;
+
+      migrated.push({
+        id:String(raw.id||uid('ink')),
+        color:String(raw.color||'#172132'),
+        width:clamp(Number(raw.width)||5,1,40),
+        anchorX:clamp(centerX+tx,0,1),
+        anchorY:clamp(centerY+ty,0,1),
+        localPoints:points.map(point=>({
+          x:((point.x-centerX)*rect.width)/base,
+          y:((point.y-centerY)*rect.height)/base,
+          pressure:point.pressure
+        })),
+        scale:legacyScale
+      });
+    }
+
+    this.strokes=migrated;
+    this.pendingLegacyInk=null;
+    this.legacyInkMigrated=true;
+    return true;
   }
 
   init(){
@@ -114,14 +158,14 @@ export class BoardWorkspace {
     this.syncCaseButtons();
     this.resizeInkSvg();
 
+    if(this.migrateLegacyInk()){
+      this.persistInk();
+    }
+
     requestAnimationFrame(()=>{
       this.renderInk();
       this.updateFoamToolState();
     });
-
-    if(this.legacyInkMigrated){
-      this.persistInk();
-    }
 
     if('ResizeObserver'in window){
       this.resizeObserver=new ResizeObserver(()=>{
@@ -216,7 +260,7 @@ export class BoardWorkspace {
   persistInk(){
     try{
       localStorage.setItem(INK_STORAGE_KEY,JSON.stringify({
-        version:2,
+        version:3,
         savedAt:Date.now(),
         strokes:this.strokes
       }));
@@ -447,8 +491,8 @@ export class BoardWorkspace {
   pointFromEvent(event){
     const rect=this.inkSvg.getBoundingClientRect();
     return {
-      x:clamp((event.clientX-rect.left)/Math.max(1,rect.width),0,1),
-      y:clamp((event.clientY-rect.top)/Math.max(1,rect.height),0,1),
+      x:clamp(event.clientX-rect.left,0,rect.width),
+      y:clamp(event.clientY-rect.top,0,rect.height),
       pressure:Number.isFinite(event.pressure)&&event.pressure>0?event.pressure:.5
     };
   }
@@ -469,10 +513,7 @@ export class BoardWorkspace {
       id:uid('ink'),
       color:this.settings.penColor,
       width:this.settings.penWidth,
-      points:[this.pointFromEvent(event)],
-      tx:0,
-      ty:0,
-      scale:1
+      draftPoints:[this.pointFromEvent(event)]
     };
 
     this.inkSvg.setPointerCapture?.(event.pointerId);
@@ -483,9 +524,9 @@ export class BoardWorkspace {
     event.preventDefault();
 
     const point=this.pointFromEvent(event);
-    const points=this.activeStroke.points;
+    const points=this.activeStroke.draftPoints;
     const prev=points[points.length-1];
-    if(prev&&Math.hypot(point.x-prev.x,point.y-prev.y)<.0015)return;
+    if(prev&&Math.hypot(point.x-prev.x,point.y-prev.y)<1.25)return;
 
     points.push(point);
     this.renderActiveStroke();
@@ -495,17 +536,16 @@ export class BoardWorkspace {
     if(!this.activeStroke)return;
     event.preventDefault();
 
-    if(this.activeStroke.points.length===1){
-      const p=this.activeStroke.points[0];
-      this.activeStroke.points.push({
-        ...p,
-        x:clamp(p.x+.0012,0,1),
-        y:clamp(p.y+.0012,0,1)
-      });
+    if(this.activeStroke.draftPoints.length===1){
+      const p=this.activeStroke.draftPoints[0];
+      this.activeStroke.draftPoints.push({...p,x:p.x+1,y:p.y+1});
     }
 
-    this.strokes.push(this.activeStroke);
-    this.selectedStrokeId=this.activeStroke.id;
+    const finalized=this.finalizeDraftStroke(this.activeStroke);
+    if(finalized){
+      this.strokes.push(finalized);
+      this.selectedStrokeId=finalized.id;
+    }
     this.activeStroke=null;
     this.persistInk();
     this.renderInk();
@@ -516,35 +556,47 @@ export class BoardWorkspace {
     return this.strokes.find(stroke=>stroke.id===id)||null;
   }
 
-  strokeCenter(stroke){
-    const xs=stroke.points.map(point=>point.x);
-    const ys=stroke.points.map(point=>point.y);
+  finalizeDraftStroke(draft){
+    const points=draft?.draftPoints;
+    if(!Array.isArray(points)||!points.length)return null;
+
+    const rect=this.inkSvg.getBoundingClientRect();
+    const base=Math.max(1,Math.min(rect.width,rect.height));
+    const xs=points.map(point=>point.x);
+    const ys=points.map(point=>point.y);
+    const centerX=(Math.min(...xs)+Math.max(...xs))/2;
+    const centerY=(Math.min(...ys)+Math.max(...ys))/2;
+
     return {
-      x:(Math.min(...xs)+Math.max(...xs))/2,
-      y:(Math.min(...ys)+Math.max(...ys))/2
+      id:String(draft.id||uid('ink')),
+      color:String(draft.color||'#172132'),
+      width:clamp(Number(draft.width)||5,1,40),
+      anchorX:clamp(centerX/Math.max(1,rect.width),0,1),
+      anchorY:clamp(centerY/Math.max(1,rect.height),0,1),
+      localPoints:points.map(point=>({
+        x:(point.x-centerX)/base,
+        y:(point.y-centerY)/base,
+        pressure:point.pressure
+      })),
+      scale:1
     };
   }
 
-  transformedPoints(stroke){
-    const center=this.strokeCenter(stroke);
+  renderedPoints(stroke){
+    const rect=this.inkSvg.getBoundingClientRect();
+    const base=Math.max(1,Math.min(rect.width,rect.height));
+    const cx=(Number(stroke.anchorX)||0)*rect.width;
+    const cy=(Number(stroke.anchorY)||0)*rect.height;
     const scale=Number(stroke.scale)||1;
-    const tx=Number(stroke.tx)||0;
-    const ty=Number(stroke.ty)||0;
 
-    return stroke.points.map(point=>({
-      x:center.x+(point.x-center.x)*scale+tx,
-      y:center.y+(point.y-center.y)*scale+ty,
+    return stroke.localPoints.map(point=>({
+      x:cx+(Number(point.x)||0)*base*scale,
+      y:cy+(Number(point.y)||0)*base*scale,
       pressure:point.pressure
     }));
   }
 
-  pathData(stroke){
-    const rect=this.inkSvg.getBoundingClientRect();
-    const points=this.transformedPoints(stroke).map(point=>({
-      x:point.x*rect.width,
-      y:point.y*rect.height
-    }));
-
+  pathFromPoints(points){
     if(!points.length)return '';
     if(points.length===1)return `M ${points[0].x} ${points[0].y}`;
     if(points.length===2)return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
@@ -563,11 +615,14 @@ export class BoardWorkspace {
     return d;
   }
 
+  pathData(stroke){
+    return this.pathFromPoints(this.renderedPoints(stroke));
+  }
+
   strokeBounds(stroke){
-    const rect=this.inkSvg.getBoundingClientRect();
-    const points=this.transformedPoints(stroke);
-    const xs=points.map(point=>point.x*rect.width);
-    const ys=points.map(point=>point.y*rect.height);
+    const points=this.renderedPoints(stroke);
+    const xs=points.map(point=>point.x);
+    const ys=points.map(point=>point.y);
     const pad=Math.max(8,(stroke.width||5)*(stroke.scale||1)*1.6);
 
     return {
@@ -581,9 +636,18 @@ export class BoardWorkspace {
   renderActiveStroke(){
     const old=this.inkLayer.querySelector('[data-active-ink="true"]');
     old?.remove();
-    if(!this.activeStroke)return;
+    if(!this.activeStroke?.draftPoints?.length)return;
 
-    const path=this.createStrokePath(this.activeStroke,{active:true});
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.classList.add('ink-object');
+    path.dataset.activeInk='true';
+    path.setAttribute('d',this.pathFromPoints(this.activeStroke.draftPoints));
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke',this.activeStroke.color||'#172132');
+    path.setAttribute('stroke-width',String(this.activeStroke.width||5));
+    path.setAttribute('stroke-linecap','round');
+    path.setAttribute('stroke-linejoin','round');
+    path.setAttribute('pointer-events','none');
     this.inkLayer.appendChild(path);
   }
 
@@ -621,7 +685,7 @@ export class BoardWorkspace {
       this.inkLayer.appendChild(this.createStrokePath(stroke));
     });
 
-    if(this.activeStroke)this.inkLayer.appendChild(this.createStrokePath(this.activeStroke,{active:true}));
+    if(this.activeStroke)this.renderActiveStroke();
     this.renderInkSelection();
     this.updateInkButtons();
   }
@@ -670,8 +734,8 @@ export class BoardWorkspace {
       pointerId:event.pointerId,
       startX:event.clientX,
       startY:event.clientY,
-      tx:Number(stroke.tx)||0,
-      ty:Number(stroke.ty)||0
+      anchorX:Number(stroke.anchorX)||0,
+      anchorY:Number(stroke.anchorY)||0
     };
 
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -686,8 +750,8 @@ export class BoardWorkspace {
     if(!stroke)return;
 
     const rect=this.inkSvg.getBoundingClientRect();
-    stroke.tx=drag.tx+(event.clientX-drag.startX)/Math.max(1,rect.width);
-    stroke.ty=drag.ty+(event.clientY-drag.startY)/Math.max(1,rect.height);
+    stroke.anchorX=clamp(drag.anchorX+(event.clientX-drag.startX)/Math.max(1,rect.width),0,1);
+    stroke.anchorY=clamp(drag.anchorY+(event.clientY-drag.startY)/Math.max(1,rect.height),0,1);
 
     const path=event.currentTarget;
     path.setAttribute('d',this.pathData(stroke));
@@ -776,8 +840,9 @@ export class BoardWorkspace {
     this.checkpointInk('DUPLICATE_INK');
     const copy=clone(stroke);
     copy.id=uid('ink');
-    copy.tx=(Number(copy.tx)||0)+.025;
-    copy.ty=(Number(copy.ty)||0)+.025;
+    const rect=this.inkSvg.getBoundingClientRect();
+    copy.anchorX=clamp((Number(copy.anchorX)||0)+24/Math.max(1,rect.width),0,1);
+    copy.anchorY=clamp((Number(copy.anchorY)||0)+24/Math.max(1,rect.height),0,1);
 
     this.strokes.push(copy);
     this.selectedStrokeId=copy.id;
