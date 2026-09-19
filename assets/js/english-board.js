@@ -1904,6 +1904,13 @@ class EnglishMagneticBoard {
     if(!this.selectedIds.size)return;
     if(this.selectedFoamLocked()){this.toast('Unlock selected objects before deleting');return;}
     this.checkpoint('DELETE');
+    const deleting=new Set(this.selectedIds);
+    if(this.exercise?.slots){
+      this.exercise.slots=this.exercise.slots.map(id=>deleting.has(id)?null:id);
+      this.exercise.feedback=null;
+      this.exercise.hintIndex=null;
+      this.exercise.completed=false;
+    }
     applyBoardCommand(this.state,{type:BOARD_COMMANDS.DELETE_PIECES,ids:[...this.selectedIds]});
     this.clearSelection(false);this.renderBoard();
   }
@@ -2092,6 +2099,7 @@ class EnglishMagneticBoard {
     ex.sourceWord=String(ex.sourceWord||ex.word).replace(/[^A-Za-z]/g,'').slice(0,14)||ex.word;
     ex.letters=Array.isArray(ex.letters)&&ex.letters.length===ex.word.length?[...ex.letters]:[...ex.word];
     ex.slots=Array.isArray(ex.slots)&&ex.slots.length===ex.word.length?[...ex.slots]:Array(ex.word.length).fill(null);
+    ex.slots=ex.slots.map(id=>id&&this.state.find(id)?id:null);
     ex.snapMode=this.validBuildSnapMode(ex.snapMode||'inside');
     ex.caseMatters=Boolean(ex.caseMatters);
     ex.expectedCases=Array.isArray(ex.expectedCases)&&ex.expectedCases.length===ex.word.length
