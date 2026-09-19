@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.22';
+const APP_VERSION='0.23';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const BOARDS_STORAGE_KEY='englishLab.boards.v1';
@@ -459,7 +459,8 @@ class EnglishMagneticBoard {
       mode:['free','build','completed','segment'].includes(record?.mode)?record.mode:'free',
       caseMode:record?.caseMode==='lower'?'lower':'upper',
       exercise:record?.exercise?deepClone(record.exercise):null,
-      segmentState:record?.segmentState?deepClone(record.segmentState):null
+      segmentState:record?.segmentState?deepClone(record.segmentState):null,
+      startState:record?.startState?deepClone(record.startState):null
     };
   }
 
@@ -609,11 +610,83 @@ class EnglishMagneticBoard {
       mode:'free',
       caseMode:this.caseMode,
       exercise:null,
-      segmentState:null
+      segmentState:null,
+      startState:null
     },this.boards.length);
     this.boards.push(record);
     this.activeBoardId=record.id;
     this.loadBoardRecord(record);
+  }
+
+  activityStateFromCurrent(){
+    return {
+      items:this.state.snapshot(),
+      ink:this.workspace?.exportInkState?.()||[],
+      surface:this.boardSurface,
+      mode:this.mode,
+      caseMode:this.caseMode,
+      exercise:this.exercise?deepClone(this.exercise):null,
+      segmentState:this.segmentState?deepClone(this.segmentState):null
+    };
+  }
+
+  applyActivityStateToRecord(record,state){
+    if(!record||!state)return false;
+    record.items=Array.isArray(state.items)?deepClone(state.items):[];
+    record.ink=Array.isArray(state.ink)?deepClone(state.ink):[];
+    record.surface=BOARD_SURFACES.has(state.surface)?state.surface:'current';
+    record.mode=['free','build','completed','segment'].includes(state.mode)?state.mode:'free';
+    record.caseMode=state.caseMode==='lower'?'lower':'upper';
+    record.exercise=state.exercise?deepClone(state.exercise):null;
+    record.segmentState=state.segmentState?deepClone(state.segmentState):null;
+    return true;
+  }
+
+  setActivityStartState(){
+    const record=this.activeBoardRecord();
+    if(!record)return;
+    this.captureActiveBoard();
+    record.startState=deepClone(this.activityStateFromCurrent());
+    this.persistBoards();
+    this.renderBoardManager();
+    this.toast(`Start state saved for ${record.name}`);
+  }
+
+  resetCurrentActivity({toast=true}={}){
+    const record=this.activeBoardRecord();
+    if(!record?.startState){
+      if(toast)this.toast('Set a Start State for this board first');
+      return false;
+    }
+
+    this.applyActivityStateToRecord(record,record.startState);
+    this.loadBoardRecord(record,{persist:true,toast:false});
+    if(toast)this.toast(`${record.name} reset to Start State`);
+    return true;
+  }
+
+  resetWholeLesson(){
+    this.captureActiveBoard();
+    const prepared=this.boards.filter(record=>record.startState);
+    if(!prepared.length){
+      this.toast('No boards have a Start State yet');
+      return;
+    }
+    if(!window.confirm(`Reset ${prepared.length} prepared board${prepared.length===1?'':'s'} to their Start State?`))return;
+
+    prepared.forEach(record=>this.applyActivityStateToRecord(record,record.startState));
+    const active=this.activeBoardRecord()||this.boards[0];
+    this.loadBoardRecord(active,{persist:false,toast:false});
+    this.persistBoards();
+    this.toast(`Reset ${prepared.length} prepared board${prepared.length===1?'':'s'}`);
+  }
+
+  studentBoardStep(delta){
+    if(this.boards.length<2)return;
+    const index=Math.max(0,this.boards.findIndex(record=>record.id===this.activeBoardId));
+    const nextIndex=clamp(index+(Number(delta)||0),0,this.boards.length-1);
+    if(nextIndex===index)return;
+    this.switchBoard(this.boards[nextIndex].id);
   }
 
   renameActiveBoard(){
@@ -688,9 +761,11 @@ class EnglishMagneticBoard {
         button.type='button';
         button.className='board-tab-btn';
         button.classList.toggle('active',record.id===this.activeBoardId);
+        button.classList.toggle('has-start-state',Boolean(record.startState));
+        button.dataset.prepared=record.startState?'true':'false';
         button.textContent=record.name||`Board ${index+1}`;
-        button.title=`Open ${button.textContent}`;
-        button.setAttribute('aria-label',`Open ${button.textContent}`);
+        button.title=`${record.startState?'Prepared activity · ':''}Open ${button.textContent}`;
+        button.setAttribute('aria-label',button.title);
         button.addEventListener('click',()=>this.switchBoard(record.id));
         host.appendChild(button);
       });
@@ -704,6 +779,23 @@ class EnglishMagneticBoard {
     document.querySelectorAll('[data-board-action="delete"]').forEach(button=>{
       button.disabled=this.boards.length<=1;
     });
+
+    const active=this.activeBoardRecord();
+    const hasStart=Boolean(active?.startState);
+    const anyStart=this.boards.some(record=>record.startState);
+    document.querySelectorAll('[data-activity-action="reset-board"]').forEach(button=>{
+      button.disabled=!hasStart;
+    });
+    document.querySelectorAll('[data-activity-action="reset-lesson"]').forEach(button=>{
+      button.disabled=!anyStart;
+    });
+
+    const index=Math.max(0,this.boards.findIndex(record=>record.id===this.activeBoardId));
+    const name=active?.name||'Board';
+    const studentName=$('#studentBoardName');if(studentName)studentName.textContent=name;
+    const workspaceName=$('#englishWorkspaceStudentBoardName');if(workspaceName)workspaceName.textContent=name;
+    document.querySelectorAll('[data-student-board-step="-1"]').forEach(button=>{button.disabled=index<=0;});
+    document.querySelectorAll('[data-student-board-step="1"]').forEach(button=>{button.disabled=index>=this.boards.length-1;});
   }
   checkpoint(label){this.history.checkpoint(this.state.snapshot(),label);}
   undo(){
@@ -827,6 +919,18 @@ class EnglishMagneticBoard {
     $('#englishRunDiagnostics')?.addEventListener('click',()=>this.runDiagnostics(true));
     $('#englishCloseDiagnostics')?.addEventListener('click',()=>$('#englishDiagnosticsPanel')?.classList.add('hidden'));
     $('#englishResetAppData')?.addEventListener('click',()=>this.resetAppData());
+    document.querySelectorAll('[data-activity-action]').forEach(button=>{
+      button.addEventListener('click',()=>{
+        const action=button.dataset.activityAction;
+        if(action==='set-start')this.setActivityStartState();
+        if(action==='reset-board')this.resetCurrentActivity();
+        if(action==='reset-lesson')this.resetWholeLesson();
+        if(action==='play')this.applyInterfaceMode('student');
+      });
+    });
+    document.querySelectorAll('[data-student-board-step]').forEach(button=>{
+      button.addEventListener('click',()=>this.studentBoardStep(Number(button.dataset.studentBoardStep)||0));
+    });
     document.querySelectorAll('[data-lesson-action]').forEach(button=>{
       button.addEventListener('click',()=>{
         const action=button.dataset.lessonAction;
@@ -928,7 +1032,15 @@ class EnglishMagneticBoard {
     document.body.dataset.interfaceMode=this.interfaceMode;
     $('#studentModeBtn')?.classList.toggle('active',this.interfaceMode==='student');
     $('#teacherModeBtn')?.classList.toggle('active',this.interfaceMode==='teacher');
-    if(!silent)this.toast(this.interfaceMode==='student'?'Student mode':'Teacher mode');
+
+    if(this.interfaceMode==='student'){
+      this.clearSelection(false);
+      this.workspace?.clearInkSelection(false);
+      this.workspace?.setTool?.('move',false);
+      this.renderBoard();
+    }
+    this.renderBoardManager();
+    if(!silent)this.toast(this.interfaceMode==='student'?'Student Play':'Teacher tools');
     this.persist();
   }
   recolorAllPieces(){
@@ -1712,6 +1824,8 @@ class EnglishMagneticBoard {
     add('Object locking',Boolean($('#englishLockSelected')&&$('#englishWorkspaceLockSelected')),'Foam and vector ink');
     add('Direct tray drag',typeof this.bindTrayDirectDrag==='function','Tray / grapheme / Full Board strip');
     add('Lesson save / transfer',document.querySelectorAll('[data-lesson-action]').length>=8&&Boolean($('#englishLessonImport')),'Save / Load / Export / Import');
+    add('Per-board Start State',document.querySelectorAll('[data-activity-action="set-start"]').length>=2,'Set / Reset current / Reset lesson');
+    add('Student Play navigation',document.querySelectorAll('[data-student-board-step]').length>=4,'Previous / Start over / Next');
     add('Board surfaces',document.querySelectorAll('[data-board-surface]').length>=8,'Current / Squares / Notebook / English');
     add('Build free movement',true,'Slot capture only when dropped inside a slot');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
