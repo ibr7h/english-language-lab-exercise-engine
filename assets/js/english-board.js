@@ -2752,7 +2752,7 @@ class EnglishMagneticBoard {
     add('Multiple boards',Boolean($('#englishBoardTabs')&&$('#englishWorkspaceBoardTabs')),'Independent board pages + per-board ink/surface');
     add('Atomic board loading',Object.prototype.hasOwnProperty.call(this,'loadingBoardRecord'),'Prevents cross-board surface/state overwrite during switch');
     add('Unified empty-board state',typeof this.updateEmptyState==='function','Foam + vector ink + active pen stroke');
-    add('Upright foam letters',true,'Random foam rotation removed');
+    add('Upright foam letters',this.items.every(item=>item.type!=='letter'||Math.abs(Number(item.rotation)||0)<.001),'All rendered foam letters should remain at 0°');
     add('Full Board side toolbox',Boolean($('#englishWorkspaceToolbox')),'Scrollable side toolbox with all board tools');
     add('Board rename / duplicate',document.querySelectorAll('[data-board-action="rename"]').length>=2&&document.querySelectorAll('[data-board-action="duplicate"]').length>=2,'Normal + Full Board');
     add('Object locking',Boolean($('#englishLockSelected')&&$('#englishWorkspaceLockSelected')),'Foam and vector ink');
@@ -2764,8 +2764,12 @@ class EnglishMagneticBoard {
     add('Foam selection bounding box',Boolean($('#englishFoamSelectionOverlay'))&&document.querySelectorAll('[data-foam-resize]').length===4,'Direct corner resize handles');
     add('Group direct manipulation',typeof this.applyFoamResizeFrame==='function','Move/resize/duplicate selected foam as one group');
     add('Board surfaces',document.querySelectorAll('[data-board-surface]').length>=8,'Current / Squares / Notebook / English');
-    add('Build free movement',true,'Move remains free; snap behavior is configurable');
-    add('Build 2.0 snap modes',Boolean($('#englishBuildSnapMode')&&$('#englishCaseMatters')),'Off / Inside / Strong + Case Matters');
+    const snapProbe={index:0,left:100,top:100,width:60,height:60,cx:130,cy:130};
+    const snapInsideExact=this.findBuildSlotCandidate(100,100,[snapProbe],'inside')?.index===0;
+    const snapInsideRejectsNear=this.findBuildSlotCandidate(60,100,[snapProbe],'inside')===null;
+    const snapStrongCapturesNear=this.findBuildSlotCandidate(60,100,[snapProbe],'strong')?.index===0;
+    add('Build free movement',snapInsideExact&&snapInsideRejectsNear,'Inside snap only captures when the piece center enters a slot');
+    add('Build 2.0 snap modes',Boolean($('#englishBuildSnapMode')&&$('#englishCaseMatters'))&&snapStrongCapturesNear,'Off / Inside / Strong + Case Matters');
     add('Build slot feedback',typeof this.buildSlotEvaluation==='function'&&typeof this.previewBuildDrop==='function','Live target + correct/wrong/case feedback');
     add('Tap / keyboard slot placement',typeof this.placeSelectedBuildPieceInSlot==='function','Selected build letters can be placed without precision dragging');
     add('Keyboard / webOS activation',this.platform.actionForKey('Enter')?.type==='activate','OK selects/releases foam objects; arrows move selected objects');
