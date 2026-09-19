@@ -3552,7 +3552,7 @@ body[data-interface-mode="student"] #englishSegmentControls {
 body[data-interface-mode="student"] #englishWorkspaceToolbox .workspace-tool-group:not(:first-child) {
   display:none !important;
 }
-body[data-interface-mode="student"] .workspace-topbar-tools > :not(.workspace-student-nav) {
+body[data-interface-mode="student"] .workspace-topbar-tools > :not(.workspace-student-nav):not(.workspace-build-actions) {
   display:none !important;
 }
 body[data-interface-mode="student"] .workspace-topbar-tools {
