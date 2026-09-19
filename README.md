@@ -26,6 +26,8 @@ Its schema is now version 2. The same reusable engine renders the lesson path, a
 - Switching boards resets foam and ink Undo/Redo histories so actions never cross between boards.
 - The existing single board is migrated automatically to Board 1 on first launch.
 - Board collection persists locally in `englishLab.boards.v1`; legacy active-board storage remains mirrored for compatibility.
+- Ink writes are synchronized immediately into the active board record, so drawing followed by app close does not lose per-board ink.
+- Board cloning uses a structured-clone fallback for older webOS/browser engines.
 
 ### v0.18.3 Smooth Board Object Drag
 

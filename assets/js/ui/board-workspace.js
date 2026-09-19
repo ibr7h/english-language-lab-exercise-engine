@@ -344,6 +344,7 @@ export class BoardWorkspace {
         strokes:this.strokes
       }));
     }catch(_){}
+    this.board?.persistBoards?.();
   }
 
   checkpointInk(label='INK'){

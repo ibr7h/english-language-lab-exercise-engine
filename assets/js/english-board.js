@@ -127,6 +127,11 @@ function analyzeWordPhonics(word){
   return result;
 }
 function clamp(n,min,max){return Math.max(min,Math.min(max,n));}
+function deepClone(value){
+  if(value==null)return value;
+  if(typeof structuredClone==='function')return structuredClone(value);
+  return JSON.parse(JSON.stringify(value));
+}
 
 class EnglishMagneticBoard {
   constructor(){
@@ -241,12 +246,12 @@ class EnglishMagneticBoard {
       id:String(record?.id||this.boardId()),
       name:String(record?.name||`Board ${index+1}`).slice(0,40),
       surface:BOARD_SURFACES.has(record?.surface)?record.surface:'current',
-      items:Array.isArray(record?.items)?structuredClone(record.items):[],
-      ink:Array.isArray(record?.ink)?structuredClone(record.ink):[],
+      items:Array.isArray(record?.items)?deepClone(record.items):[],
+      ink:Array.isArray(record?.ink)?deepClone(record.ink):[],
       mode:['free','build','completed','segment'].includes(record?.mode)?record.mode:'free',
       caseMode:record?.caseMode==='lower'?'lower':'upper',
-      exercise:record?.exercise?structuredClone(record.exercise):null,
-      segmentState:record?.segmentState?structuredClone(record.segmentState):null
+      exercise:record?.exercise?deepClone(record.exercise):null,
+      segmentState:record?.segmentState?deepClone(record.segmentState):null
     };
   }
 
@@ -295,8 +300,8 @@ class EnglishMagneticBoard {
     record.surface=this.boardSurface;
     record.mode=this.mode;
     record.caseMode=this.caseMode;
-    record.exercise=this.exercise?structuredClone(this.exercise):null;
-    record.segmentState=this.segmentState?structuredClone(this.segmentState):null;
+    record.exercise=this.exercise?deepClone(this.exercise):null;
+    record.segmentState=this.segmentState?deepClone(this.segmentState):null;
   }
 
   persistBoards(){
@@ -315,12 +320,12 @@ class EnglishMagneticBoard {
 
   loadBoardRecord(record,{persist=true,toast=true}={}){
     if(!record)return;
-    this.state.replace(structuredClone(record.items||[]));
+    this.state.replace(deepClone(record.items||[]));
     this.workspace?.importInkState?.(record.ink||[]);
     this.boardSurface=BOARD_SURFACES.has(record.surface)?record.surface:'current';
     this.caseMode=record.caseMode==='lower'?'lower':'upper';
-    this.exercise=record.exercise?structuredClone(record.exercise):null;
-    this.segmentState=record.segmentState?structuredClone(record.segmentState):null;
+    this.exercise=record.exercise?deepClone(record.exercise):null;
+    this.segmentState=record.segmentState?deepClone(record.segmentState):null;
     this.mode=['free','build','completed','segment'].includes(record.mode)?record.mode:'free';
     this.history=new BoardHistory(80);
     this.clearSelection(false);
@@ -348,9 +353,12 @@ class EnglishMagneticBoard {
 
   addBoard(){
     this.captureActiveBoard();
+    const used=new Set(this.boards.map(record=>record.name));
+    let number=1;
+    while(used.has(`Board ${number}`))number++;
     const record=this.normalizeBoardRecord({
       id:this.boardId(),
-      name:`Board ${this.boards.length+1}`,
+      name:`Board ${number}`,
       surface:this.boardSurface,
       items:[],
       ink:[],
