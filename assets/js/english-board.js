@@ -483,6 +483,7 @@ class EnglishMagneticBoard {
         button.classList.toggle('active',record.id===this.activeBoardId);
         button.textContent=record.name||`Board ${index+1}`;
         button.title=`Open ${button.textContent}`;
+        button.setAttribute('aria-label',`Open ${button.textContent}`);
         button.addEventListener('click',()=>this.switchBoard(record.id));
         host.appendChild(button);
       });
@@ -977,6 +978,11 @@ class EnglishMagneticBoard {
         ?this.items.filter(x=>this.selectedIds.has(x.id))
         :[start];
 
+      if(targets.some(target=>target.locked)){
+        this.toast('Unlock selected objects before moving them');
+        return;
+      }
+
       const origins=targets.map(target=>{
         const node=$(`.free-foam-piece[data-piece-id="${CSS.escape(target.id)}"]`);
         return {
@@ -1102,7 +1108,8 @@ class EnglishMagneticBoard {
     const token=this.selectedToken();
     if(!token){label.textContent='Select a letter or grapheme.';return;}
     const profile=SOUND_PROFILES[token]||{};
-    label.textContent=`${token}${profile.sound?' · '+profile.sound:''}${profile.example?' · '+profile.example:''}`;
+    const active=this.items.find(i=>i.id===this.activeItemId);
+    label.textContent=`${token}${profile.sound?' · '+profile.sound:''}${profile.example?' · '+profile.example:''}${active?.locked?' · 🔒 Locked':''}`;
   }
   playSelectedAudio(kind){
     const token=this.selectedToken();
@@ -1165,7 +1172,19 @@ class EnglishMagneticBoard {
   }
   clearBoard(){
     if(!this.items.length)return;
-    this.checkpoint('CLEAR');this.state.replace([]);this.exercise=null;this.clearSelection(false);this.renderBoard();this.toast('Board cleared');
+    const locked=this.items.filter(item=>item.locked);
+    const removable=this.items.length-locked.length;
+    if(!removable){
+      this.toast('Locked template objects are protected');
+      return;
+    }
+    this.checkpoint('CLEAR');
+    this.state.replace(locked);
+    this.exercise=null;
+    this.segmentState=null;
+    this.clearSelection(false);
+    this.renderBoard();
+    this.toast(locked.length?'Board cleared · locked objects kept':'Board cleared');
   }
   scatterPieces(){
     const targets=this.selectedIds.size?this.items.filter(i=>this.selectedIds.has(i.id)):this.items;
@@ -1178,10 +1197,11 @@ class EnglishMagneticBoard {
   autoAlignRows(){
     if(!this.items.length)return;
     const targets=this.selectedIds.size?this.items.filter(i=>this.selectedIds.has(i.id)):this.items;
+    if(!targets.length)return;
     if(targets.some(i=>i.locked)){this.toast('Unlock objects before aligning');return;}
     this.checkpoint('ALIGN');const rect=this.canvasRect();
     const groups=new Map();
-    this.items.forEach(i=>{const key=i.wordId||'__free__';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(i);});
+    targets.forEach(i=>{const key=i.wordId||'__free__';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(i);});
     let row=0;
     groups.forEach(group=>{
       group.sort((a,b)=>a.x-b.x);
