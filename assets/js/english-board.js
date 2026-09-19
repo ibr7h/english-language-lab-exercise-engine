@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.18.1';
+const APP_VERSION='0.18.2';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const LEGACY_STORAGE_KEYS=['englishLab.board.v0.13','englishLab.board.v0.8'];
@@ -497,6 +497,23 @@ class EnglishMagneticBoard {
       else this.setSelection(this.getWordIds(item.wordId),'word',item.id);
     }else this.setSelection([item.id],'letter',item.id);
   }
+  syncPieceSelectionDom(){
+    const canvas=$('#englishBoardCanvas');if(!canvas)return;
+    canvas.querySelectorAll('.free-foam-piece').forEach(node=>{
+      const id=node.dataset.pieceId||'';
+      const selected=this.selectedIds.has(id);
+      node.classList.remove('is-selected','is-word-selected','is-letter-selected','is-multi-selected');
+      if(selected){
+        node.classList.add('is-selected');
+        if(this.selectionMode==='word')node.classList.add('is-word-selected');
+        else if(this.selectionMode==='letter')node.classList.add('is-letter-selected');
+        else node.classList.add('is-multi-selected');
+      }
+      node.setAttribute('aria-pressed',selected?'true':'false');
+    });
+    this.workspace?.updateFoamToolState();
+  }
+
   renderBoard(){
     const canvas=$('#englishBoardCanvas');if(!canvas)return;
     const empty=canvas.querySelector('.english-board-empty');
@@ -538,45 +555,134 @@ class EnglishMagneticBoard {
     el.addEventListener('pointerdown',e=>{
       if(e.pointerType==='mouse'&&e.button!==0)return;
       e.preventDefault();
+
       this.selectForInteraction(item,{additive:e.shiftKey||e.metaKey||e.ctrlKey});
-      this.renderBoard();
-      const start=this.state.find(item.id);if(!start)return;
+      this.syncPieceSelectionDom();
+
+      const start=this.state.find(item.id);
+      if(!start)return;
+
       const rect=this.canvasRect();
       const targets=this.selectedIds.has(item.id)&&this.selectedIds.size>1
         ?this.items.filter(x=>this.selectedIds.has(x.id))
         :[start];
-      const origins=targets.map(x=>({id:x.id,x:x.x,y:x.y}));
-      const anchor={x:e.clientX,y:e.clientY};
-      this.drag={pointerId:e.pointerId,anchor,origins,moved:false};
+
+      const origins=targets.map(target=>{
+        const node=$(`.free-foam-piece[data-piece-id="${CSS.escape(target.id)}"]`);
+        return {
+          id:target.id,
+          x:Number(target.x)||0,
+          y:Number(target.y)||0,
+          rotation:Number(target.rotation)||0,
+          node
+        };
+      });
+
+      // One shared delta keeps multi-piece selections rigid at board edges.
+      const minDx=Math.max(...origins.map(o=>4-o.x));
+      const maxDx=Math.min(...origins.map(o=>Math.max(4,rect.width-72)-o.x));
+      const minDy=Math.max(...origins.map(o=>4-o.y));
+      const maxDy=Math.min(...origins.map(o=>Math.max(4,rect.height-82)-o.y));
+
+      this.drag={
+        pointerId:e.pointerId,
+        anchor:{x:e.clientX,y:e.clientY},
+        origins,
+        minDx,maxDx,minDy,maxDy,
+        dx:0,dy:0,
+        moved:false,
+        checkpointed:false,
+        raf:0,
+        sourceId:item.id
+      };
+
+      el.classList.add('is-dragging');
       el.setPointerCapture?.(e.pointerId);
     });
+
     el.addEventListener('pointermove',e=>{
-      const d=this.drag;if(!d||d.pointerId!==e.pointerId)return;
-      const dx=e.clientX-d.anchor.x,dy=e.clientY-d.anchor.y;
-      if(!d.moved&&Math.hypot(dx,dy)<4)return;
-      if(!d.moved){d.moved=true;this.checkpoint('MOVE_PIECE');}
+      const d=this.drag;
+      if(!d||d.pointerId!==e.pointerId)return;
+
+      const samples=typeof e.getCoalescedEvents==='function'?e.getCoalescedEvents():null;
+      const latest=samples?.length?samples[samples.length-1]:e;
+      let dx=latest.clientX-d.anchor.x;
+      let dy=latest.clientY-d.anchor.y;
+
+      if(!d.moved&&Math.hypot(dx,dy)<3)return;
+      if(!d.moved){
+        d.moved=true;
+        if(!d.checkpointed){
+          this.checkpoint('MOVE_PIECE');
+          d.checkpointed=true;
+        }
+      }
+
       e.preventDefault();
-      const rect=this.canvasRect();
-      d.origins.forEach(o=>{
-        const target=this.state.find(o.id);if(!target)return;
-        target.x=clamp(o.x+dx,4,Math.max(4,rect.width-72));
-        target.y=clamp(o.y+dy,4,Math.max(4,rect.height-82));
-        const node=document.querySelector(`.free-foam-piece[data-piece-id="${CSS.escape(o.id)}"]`);
-        if(node){node.style.left=`${target.x}px`;node.style.top=`${target.y}px`;node.classList.add('is-dragging');}
+      d.dx=clamp(dx,d.minDx,d.maxDx);
+      d.dy=clamp(dy,d.minDy,d.maxDy);
+
+      if(d.raf)return;
+      d.raf=requestAnimationFrame(()=>{
+        d.raf=0;
+        if(this.drag!==d)return;
+        const tx=d.dx,ty=d.dy;
+        d.origins.forEach(origin=>{
+          const node=origin.node;
+          if(!node?.isConnected)return;
+          node.classList.add('is-dragging');
+          node.style.transform=`translate3d(${tx}px,${ty}px,0) rotate(${origin.rotation}deg)`;
+        });
       });
     });
+
     const end=e=>{
-      if(!this.drag||this.drag.pointerId!==e.pointerId)return;
-      const drag=this.drag;
-      const moved=drag.moved;
-      drag.origins.forEach(o=>document.querySelector(`.free-foam-piece[data-piece-id="${CSS.escape(o.id)}"]`)?.classList.remove('is-dragging'));
+      const d=this.drag;
+      if(!d||d.pointerId!==e.pointerId)return;
+
+      if(d.raf){
+        cancelAnimationFrame(d.raf);
+        d.raf=0;
+      }
+
+      // Capture the final pointer position even when no last pointermove fired.
+      if(d.moved&&Number.isFinite(e.clientX)&&Number.isFinite(e.clientY)){
+        d.dx=clamp(e.clientX-d.anchor.x,d.minDx,d.maxDx);
+        d.dy=clamp(e.clientY-d.anchor.y,d.minDy,d.maxDy);
+      }
+
+      if(d.moved){
+        d.origins.forEach(origin=>{
+          const target=this.state.find(origin.id);
+          if(!target)return;
+          target.x=origin.x+d.dx;
+          target.y=origin.y+d.dy;
+        });
+      }
+
+      d.origins.forEach(origin=>{
+        if(!origin.node?.isConnected)return;
+        origin.node.classList.remove('is-dragging');
+        origin.node.style.transform=`rotate(${origin.rotation}deg)`;
+      });
+
       this.drag=null;
-      if(moved&&this.mode==='build'&&this.exercise)this.snapDraggedToNearestSlot(item.id);
-      this.renderBoard();
+
+      if(d.moved&&this.mode==='build'&&this.exercise){
+        this.snapDraggedToNearestSlot(d.sourceId);
+      }else{
+        this.renderBoard();
+      }
     };
-    el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+
+    el.addEventListener('pointerup',end);
+    el.addEventListener('pointercancel',end);
+    el.addEventListener('lostpointercapture',e=>{
+      if(this.drag?.pointerId===e.pointerId)end(e);
+    });
     el.addEventListener('dblclick',()=>speak(item.logicalChar));
   }
+
   selectedToken(){
     const item=this.items.find(i=>i.id===this.activeItemId);
     return item?.logicalChar||'';
@@ -899,6 +1005,7 @@ class EnglishMagneticBoard {
       $('#englishWorkspaceBoardRedo')
     ),'Topbar: resize / duplicate / delete / align / scatter / undo / redo');
     add('Vector ink layer',Boolean($('#englishInkSvg')&&$('#englishInkObjects')),'Stable board-space SVG objects across Normal / Full Board');
+    add('Smooth foam drag pipeline',typeof requestAnimationFrame==='function','RAF + translate3d + single commit on pointer release');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
 
     try{

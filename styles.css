@@ -3057,3 +3057,16 @@ body.board-workspace-active > .tabs {
 .board-ink-svg {
   contain:layout paint;
 }
+
+
+/* v0.18.2 Smooth Foam Drag */
+.free-foam-piece {
+  transform-origin:center center;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+.free-foam-piece.is-dragging {
+  will-change:transform;
+  transition:none !important;
+  pointer-events:auto;
+}
