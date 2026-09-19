@@ -76,6 +76,45 @@ test('phonics engine recognizes silent letters and advanced sound chunks', () =>
   assert.deepEqual(segmentPhonicsGraphemes('badge'),['B','A','DGE']);
 });
 
+test('Learning Path starts from alphabet foundations and preserves the legacy curriculum', () => {
+  const curriculum=JSON.parse(fs.readFileSync(new URL('../src/data/exercises.json',import.meta.url),'utf8'));
+  const engine=fs.readFileSync(new URL('../src/engine/exercise-engine.js',import.meta.url),'utf8');
+
+  assert.equal(curriculum.schemaVersion,3);
+  assert.equal(curriculum.levels[0].id,'level-0-getting-ready');
+  assert.equal(curriculum.levels[1].id,'level-1-letters-sounds');
+  assert.ok(curriculum.levels.some(level=>level.id==='level-1-foundations'));
+
+  const letterA=curriculum.levels[1].units[0].lessons.find(lesson=>lesson.id==='lesson-letter-a');
+  assert.ok(letterA,'Letter A/a lesson must exist');
+  assert.deepEqual(letterA.prerequisites,['lesson-0-big-small']);
+  assert.deepEqual(letterA.graphemes,['A','a']);
+
+  const aTypes=letterA.activities.flatMap(activity=>activity.exercises.map(exercise=>exercise.type));
+  for(const type of ['letter-intro','phoneme-match','letter-recognition','case-match','beginning-sound']){
+    assert.ok(aTypes.includes(type),`Letter A lesson missing ${type}`);
+  }
+
+  const ids=curriculum.levels.flatMap(level=>
+    level.units.flatMap(unit=>
+      unit.lessons.flatMap(lesson=>
+        lesson.activities.flatMap(activity=>
+          activity.exercises.map(exercise=>exercise.id)
+        )
+      )
+    )
+  );
+  assert.equal(new Set(ids).size,ids.length,'Curriculum exercise IDs must remain unique');
+
+  assert.ok(engine.includes("'letter-intro'"));
+  assert.ok(engine.includes("'letter-recognition'"));
+  assert.ok(engine.includes("'case-match'"));
+  assert.ok(engine.includes("'beginning-sound'"));
+  assert.ok(engine.includes('locationFromIds(ids)'));
+  assert.ok(engine.includes("level.id === 'level-1-foundations'"));
+  assert.ok(engine.includes('Never relock work a learner already started'));
+});
+
 test('v0.25.1 hardening UI contracts stay present', () => {
   const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
   const js=fs.readFileSync(new URL('../assets/js/english-board.js',import.meta.url),'utf8');
