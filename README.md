@@ -376,11 +376,12 @@ Colors now encode phonics information instead of being decorative:
 
 - Coral / red = vowel
 - Blue = consonant
-- Green = digraph (for example SH, CH, TH)
+- Green = digraph or multi-letter sound chunk (for example SH, CH, TH, TCH, DGE, TION, SION, CIAN)
 - Yellow = vowel team (for example AI, OO, EA)
 - Purple = silent-e
+- Gray = other silent letters in high-confidence spelling patterns (for example K in KNOW, W in WRITE, G in GNOME, B in LAMB)
 
-On the free A–Z board, vowels are coral and consonants are blue. When a word is created in Build or Completed Word mode, the word is analyzed and the more specific digraph, vowel-team and silent-e colors are applied automatically. A visible legend is included beside the foam-letter tray.
+On the free A–Z board, vowels are coral and consonants are blue. When a word is created in Build or Completed Word mode, the word is analyzed and the more specific digraph, vowel-team, sound-chunk, silent-e and silent-letter colors are applied automatically. Segment & Blend uses the same pattern engine and applies longest-pattern-first tokenization, so STATION becomes S · T · A · TION rather than splitting TION into four unrelated letters. The current Learning Path still teaches only the patterns explicitly present in its curriculum; recognizing an advanced pattern on the board does not by itself mark it as a completed lesson.
 
 ### Exact Arabic foam renderer
 
