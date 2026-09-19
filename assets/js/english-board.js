@@ -291,7 +291,10 @@ class EnglishMagneticBoard {
     const colorSelect=$('#englishColorMode');if(colorSelect)colorSelect.value=this.colorMode;
 
     this.interfaceMode=settings.interfaceMode==='student'?'student':'teacher';
-    this.applyInterfaceMode(this.interfaceMode,true);
+    localStorage.setItem('englishLab.interfaceMode',this.interfaceMode);
+    document.body.dataset.interfaceMode=this.interfaceMode;
+    $('#studentModeBtn')?.classList.toggle('active',this.interfaceMode==='student');
+    $('#teacherModeBtn')?.classList.toggle('active',this.interfaceMode==='teacher');
 
     const applyFont=(id,key)=>{
       if(!key)return;
@@ -319,7 +322,13 @@ class EnglishMagneticBoard {
 
     this.boards=imported;
     this.activeBoardId=imported[Math.min(activeIndex,imported.length-1)]?.id||imported[0].id;
-    this.applyLessonSettings(lesson.settings||{});
+
+    this.loadingBoardRecord=true;
+    try{
+      this.applyLessonSettings(lesson.settings||{});
+    }finally{
+      this.loadingBoardRecord=false;
+    }
 
     const active=this.activeBoardRecord()||this.boards[0];
     this.loadBoardRecord(active,{persist:false,toast:false});
@@ -375,11 +384,12 @@ class EnglishMagneticBoard {
     const snapshot=this.lessonSnapshot();
     const json=JSON.stringify(snapshot,null,2);
     const filename=this.safeLessonFilename(snapshot.name);
-    const file=new File([json],filename,{type:'application/json'});
+    const blob=new Blob([json],{type:'application/json'});
+    const shareFile=typeof File==='function'?new File([blob],filename,{type:'application/json'}):null;
 
     try{
-      if(navigator.share&&navigator.canShare?.({files:[file]})){
-        await navigator.share({files:[file],title:snapshot.name});
+      if(shareFile&&navigator.share&&navigator.canShare?.({files:[shareFile]})){
+        await navigator.share({files:[shareFile],title:snapshot.name});
         this.toast('Lesson shared');
         return;
       }
@@ -387,7 +397,7 @@ class EnglishMagneticBoard {
       if(error?.name==='AbortError')return;
     }
 
-    const url=URL.createObjectURL(file);
+    const url=URL.createObjectURL(blob);
     const anchor=document.createElement('a');
     anchor.href=url;
     anchor.download=filename;
