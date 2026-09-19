@@ -27,7 +27,6 @@ export class BoardWorkspace {
       penWidth:5,
       strip:'letters',
       toolboxOpen:true,
-      foamToolsOpen:true,
       ...safeParse(localStorage.getItem(WORKSPACE_STORAGE_KEY),{})
     };
     const ink=safeParse(localStorage.getItem(INK_STORAGE_KEY),{});
@@ -48,7 +47,6 @@ export class BoardWorkspace {
     this.setPenWidth(this.settings.penWidth,false);
     this.setStrip(this.settings.strip,false);
     this.setToolboxOpen(this.settings.toolboxOpen,false);
-    this.setFoamToolsOpen(this.settings.foamToolsOpen,false);
     this.renderStrip();
     this.setupInkCanvas();
     this.syncCaseButtons();
@@ -79,7 +77,6 @@ export class BoardWorkspace {
     document.querySelector('#englishFullscreenBoard')?.addEventListener('click',()=>this.enter());
     document.querySelector('#englishWorkspaceExit')?.addEventListener('click',()=>this.exit());
     document.querySelector('#englishWorkspaceToolboxToggle')?.addEventListener('click',()=>this.setToolboxOpen(!this.settings.toolboxOpen));
-    document.querySelector('#englishWorkspaceFoamToolsToggle')?.addEventListener('click',()=>this.setFoamToolsOpen(!this.settings.foamToolsOpen));
 
     document.querySelectorAll('[data-workspace-tool]').forEach(btn=>{
       btn.addEventListener('click',()=>this.setTool(btn.dataset.workspaceTool));
@@ -135,7 +132,6 @@ export class BoardWorkspace {
     this.section.classList.add('is-board-workspace');
     document.querySelector('#englishWorkspaceChrome')?.setAttribute('aria-hidden','false');
     this.setToolboxOpen(this.settings.toolboxOpen,false);
-    this.setFoamToolsOpen(this.settings.foamToolsOpen,false);
     this.renderStrip();
     this.syncCaseButtons();
 
@@ -177,15 +173,6 @@ export class BoardWorkspace {
     if(persist)this.persistSettings();
   }
 
-  setFoamToolsOpen(open,persist=true){
-    this.settings.foamToolsOpen=Boolean(open);
-    const group=document.querySelector('#englishWorkspaceFoamTools');
-    group?.classList.toggle('is-collapsed',!this.settings.foamToolsOpen);
-    const button=document.querySelector('#englishWorkspaceFoamToolsToggle');
-    if(button)button.setAttribute('aria-expanded',String(this.settings.foamToolsOpen));
-    if(persist)this.persistSettings();
-  }
-
   updateFoamToolState(){
     const selectedCount=this.board?.selectedIds?.size||0;
     const total=this.board?.items?.length||0;
@@ -215,14 +202,6 @@ export class BoardWorkspace {
     const scale=document.querySelector('#englishWorkspaceScaleValue');
     if(scale)scale.textContent=`${Math.round((active?.scale||1)*100)}%`;
 
-    const status=document.querySelector('#englishWorkspaceSelectionStatus');
-    if(status){
-      status.textContent=selectedCount===0
-        ? 'No letter selected'
-        : selectedCount===1
-          ? `Selected: ${active?.logicalChar||'1 piece'}`
-          : `${selectedCount} pieces selected`;
-    }
   }
 
   setTool(tool,persist=true){

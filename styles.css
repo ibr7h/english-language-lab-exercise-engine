@@ -2756,3 +2756,139 @@ body.board-workspace-active > .tabs {
 #magnetic-board.workspace-toolbox-collapsed #englishWorkspaceFoamTools {
   pointer-events:none;
 }
+
+
+/* v0.15.2 Full Board icon topbar */
+#magnetic-board.is-board-workspace .english-board-layout {
+  inset:58px 8px 112px 8px;
+}
+.workspace-topbar {
+  height:46px;
+  grid-template-columns:42px minmax(0,1fr) 42px;
+  gap:7px;
+}
+.workspace-topbar > strong {
+  display:none;
+}
+.workspace-menu-btn,
+.workspace-exit-btn {
+  width:42px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  font-size:1rem;
+}
+.workspace-topbar-tools {
+  pointer-events:auto;
+  min-width:0;
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 5px;
+  border:1px solid rgba(116,129,138,.38);
+  border-radius:13px;
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(10px);
+  box-shadow:0 5px 15px rgba(31,42,49,.10);
+  scrollbar-width:none;
+  overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.workspace-topbar-tools::-webkit-scrollbar {
+  display:none;
+}
+.workspace-icon-btn {
+  flex:0 0 36px;
+  width:36px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border:1px solid transparent;
+  border-radius:9px;
+  background:transparent;
+  color:#33414a;
+  padding:0;
+  font-size:1rem;
+  font-weight:900;
+  line-height:1;
+}
+.workspace-icon-btn:hover:not(:disabled),
+.workspace-icon-btn:focus-visible:not(:disabled) {
+  background:#eef2f4;
+  border-color:#d7dfe3;
+}
+.workspace-icon-btn:active:not(:disabled) {
+  transform:translateY(1px);
+}
+.workspace-icon-btn:disabled {
+  opacity:.28;
+  filter:grayscale(.4);
+  cursor:not-allowed;
+}
+.workspace-text-icon {
+  font-size:.78rem;
+  letter-spacing:-.03em;
+}
+.workspace-scale-btn {
+  flex-basis:50px;
+  width:50px;
+  font-size:.67rem;
+}
+.workspace-delete-btn {
+  color:#a12f36;
+}
+.workspace-topbar-separator {
+  flex:0 0 1px;
+  width:1px;
+  height:22px;
+  margin:0 1px;
+  background:#dce2e5;
+}
+.workspace-toolbox {
+  top:60px;
+}
+
+/* Foam commands now live in the top bar; suppress any stale v0.15.1 side group. */
+#englishWorkspaceFoamTools {
+  display:none !important;
+}
+
+@media(max-width:700px){
+  #magnetic-board.is-board-workspace .english-board-layout {
+    inset:57px 4px 108px 4px;
+  }
+  .workspace-topbar {
+    top:max(5px,env(safe-area-inset-top));
+    left:4px;
+    right:4px;
+    grid-template-columns:38px minmax(0,1fr) 38px;
+    gap:4px;
+  }
+  .workspace-menu-btn,
+  .workspace-exit-btn {
+    width:38px;
+    height:38px;
+  }
+  .workspace-topbar-tools {
+    justify-content:flex-start;
+    gap:3px;
+    padding-inline:4px;
+  }
+  .workspace-icon-btn {
+    flex-basis:34px;
+    width:34px;
+    height:32px;
+  }
+  .workspace-scale-btn {
+    flex-basis:48px;
+    width:48px;
+  }
+  .workspace-toolbox {
+    top:58px;
+  }
+}

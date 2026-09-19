@@ -288,9 +288,27 @@
 
       <div id="englishWorkspaceChrome" class="board-workspace-chrome" aria-hidden="true">
         <div class="workspace-topbar">
-          <button id="englishWorkspaceToolboxToggle" type="button" class="workspace-topbar-btn" aria-expanded="true">☰ Tools</button>
-          <strong>Magnetic Whiteboard</strong>
-          <button id="englishWorkspaceExit" type="button" class="workspace-topbar-btn workspace-exit-btn">✕ Exit</button>
+          <button id="englishWorkspaceToolboxToggle" type="button" class="workspace-topbar-btn workspace-menu-btn" aria-expanded="true" title="Show or hide tools">☰</button>
+
+          <div class="workspace-topbar-tools" role="toolbar" aria-label="Foam letter tools">
+            <button id="englishWorkspaceBoardUndo" type="button" class="workspace-icon-btn" title="Undo" aria-label="Undo">↶</button>
+            <button id="englishWorkspaceBoardRedo" type="button" class="workspace-icon-btn" title="Redo" aria-label="Redo">↷</button>
+            <span class="workspace-topbar-separator" aria-hidden="true"></span>
+
+            <button id="englishWorkspaceSmaller" type="button" class="workspace-icon-btn workspace-text-icon" title="Make selected letter smaller" aria-label="Make selected letter smaller">A−</button>
+            <button id="englishWorkspaceResetSize" type="button" class="workspace-icon-btn workspace-scale-btn" title="Reset selected letter size" aria-label="Reset selected letter size"><span id="englishWorkspaceScaleValue">100%</span></button>
+            <button id="englishWorkspaceLarger" type="button" class="workspace-icon-btn workspace-text-icon" title="Make selected letter larger" aria-label="Make selected letter larger">A+</button>
+            <span class="workspace-topbar-separator" aria-hidden="true"></span>
+
+            <button id="englishWorkspaceDuplicate" type="button" class="workspace-icon-btn" title="Duplicate selected letter" aria-label="Duplicate selected letter">⧉</button>
+            <button id="englishWorkspaceDelete" type="button" class="workspace-icon-btn workspace-delete-btn" title="Delete selected letter" aria-label="Delete selected letter">🗑</button>
+            <span class="workspace-topbar-separator" aria-hidden="true"></span>
+
+            <button id="englishWorkspaceAlign" type="button" class="workspace-icon-btn" title="Align foam pieces" aria-label="Align foam pieces">📏</button>
+            <button id="englishWorkspaceScatter" type="button" class="workspace-icon-btn" title="Scatter foam pieces" aria-label="Scatter foam pieces">🎲</button>
+          </div>
+
+          <button id="englishWorkspaceExit" type="button" class="workspace-topbar-btn workspace-exit-btn" title="Exit full board" aria-label="Exit full board">✕</button>
         </div>
 
         <aside id="englishWorkspaceToolbox" class="workspace-toolbox" aria-label="Whiteboard tools">
@@ -308,30 +326,6 @@
             <div class="workspace-segmented">
               <button type="button" data-workspace-case="upper">ABC</button>
               <button type="button" data-workspace-case="lower">abc</button>
-            </div>
-          </div>
-
-          <div id="englishWorkspaceFoamTools" class="workspace-tool-group workspace-collapsible-group">
-            <button id="englishWorkspaceFoamToolsToggle" type="button" class="workspace-group-toggle" aria-expanded="true" aria-controls="englishWorkspaceFoamToolsBody">
-              <span><strong>Foam Tools</strong><small id="englishWorkspaceSelectionStatus">No letter selected</small></span>
-              <span class="workspace-group-chevron" aria-hidden="true">⌃</span>
-            </button>
-            <div id="englishWorkspaceFoamToolsBody" class="workspace-collapsible-body">
-              <div class="workspace-foam-size">
-                <button id="englishWorkspaceSmaller" type="button" title="Smaller">A−</button>
-                <button id="englishWorkspaceResetSize" type="button" title="Reset size"><span id="englishWorkspaceScaleValue">100%</span></button>
-                <button id="englishWorkspaceLarger" type="button" title="Larger">A+</button>
-              </div>
-              <div class="workspace-foam-actions">
-                <button id="englishWorkspaceDuplicate" type="button">⧉ Duplicate</button>
-                <button id="englishWorkspaceDelete" type="button" class="workspace-danger">🗑 Delete</button>
-                <button id="englishWorkspaceAlign" type="button">📏 Align</button>
-                <button id="englishWorkspaceScatter" type="button">🎲 Scatter</button>
-              </div>
-              <div class="workspace-foam-history">
-                <button id="englishWorkspaceBoardUndo" type="button">↶ Undo</button>
-                <button id="englishWorkspaceBoardRedo" type="button">↷ Redo</button>
-              </div>
             </div>
           </div>
 
@@ -390,7 +384,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.15.1</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.15.2</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -504,7 +498,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.15.1</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.15.2</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
