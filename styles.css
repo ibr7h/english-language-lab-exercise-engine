@@ -3325,3 +3325,55 @@ body.board-workspace-active > .tabs {
     font-size:2.35rem;
   }
 }
+
+
+/* v0.22 Lesson Files */
+.lesson-group {
+  margin-inline-start:auto;
+}
+.lesson-actions {
+  display:flex;
+  align-items:center;
+  gap:4px;
+  flex-wrap:wrap;
+}
+.lesson-actions button,
+.workspace-lesson-grid button {
+  border:1px solid #d8dee2;
+  background:#fff;
+  color:#43515a;
+  border-radius:8px;
+  padding:6px 8px;
+  font-size:.66rem;
+  font-weight:800;
+  white-space:nowrap;
+}
+.lesson-actions button:hover,
+.workspace-lesson-grid button:hover {
+  border-color:#aeb9bf;
+  background:#f7f9fa;
+}
+.workspace-lesson-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+}
+@media(max-width:1100px){
+  .english-board-manager-bar {
+    flex-wrap:wrap;
+  }
+  .lesson-group {
+    margin-inline-start:0;
+  }
+}
+@media(max-width:900px){
+  .lesson-actions {
+    overflow-x:auto;
+    flex-wrap:nowrap;
+    width:100%;
+    padding-bottom:2px;
+  }
+  .lesson-group {
+    flex-wrap:wrap;
+  }
+}
