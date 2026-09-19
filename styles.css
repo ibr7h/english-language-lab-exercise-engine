@@ -1224,7 +1224,9 @@ textarea {
   letter-spacing:.08em;
 }
 
-#englishBuildWord {
+#englishBuildWord,
+#englishCompletedWord,
+#englishSegmentWord {
   text-transform:none;
 }
 .english-presets { margin-top:9px; }
