@@ -7,6 +7,7 @@ import { BoardHistory } from '../assets/js/core/board-history.js';
 import { BOARD_COMMANDS, applyBoardCommand } from '../assets/js/core/board-commands.js';
 import { createLetterPiece } from '../assets/js/core/board-piece.js';
 import { PlatformAdapter } from '../assets/js/core/platform-adapter.js';
+import { analyzeWordPhonics, segmentPhonicsGraphemes } from '../src/engine/phonics-engine.js';
 
 test('letter pieces normalize logical char and preserve case', () => {
   const piece=createLetterPiece({logicalChar:'a',displayGlyph:'a',letterCase:'lower',x:12,y:34});
@@ -54,6 +55,25 @@ test('platform adapter exposes OK activation and webOS movement', () => {
   assert.deepEqual(adapter.actionForKey('ArrowRight'),{type:'move',dx:18,dy:0});
 });
 
+test('phonics engine recognizes silent letters and advanced sound chunks', () => {
+  const roles=word=>analyzeWordPhonics(word).map(item=>item.role);
+
+  assert.deepEqual(roles('CAT'),['consonant','vowel','consonant']);
+  assert.deepEqual(roles('SHIP'),['digraph','digraph','vowel','consonant']);
+  assert.deepEqual(roles('RAIN'),['consonant','vowel-team','vowel-team','consonant']);
+  assert.deepEqual(roles('CAKE'),['consonant','vowel','consonant','silent-e']);
+  assert.deepEqual(roles('KNOW'),['silent-letter','consonant','vowel-team','vowel-team']);
+  assert.deepEqual(roles('LAMB'),['consonant','vowel','consonant','silent-letter']);
+  assert.deepEqual(roles('STATION'),['consonant','consonant','vowel','sound-chunk','sound-chunk','sound-chunk','sound-chunk']);
+  assert.deepEqual(roles('VISION'),['consonant','vowel','sound-chunk','sound-chunk','sound-chunk','sound-chunk']);
+  assert.deepEqual(roles('MUSICIAN'),['consonant','vowel','consonant','vowel','sound-chunk','sound-chunk','sound-chunk','sound-chunk']);
+
+  assert.deepEqual(segmentPhonicsGraphemes('station'),['S','T','A','TION']);
+  assert.deepEqual(segmentPhonicsGraphemes('vision'),['V','I','SION']);
+  assert.deepEqual(segmentPhonicsGraphemes('musician'),['M','U','S','I','CIAN']);
+  assert.deepEqual(segmentPhonicsGraphemes('badge'),['B','A','DGE']);
+});
+
 test('v0.25.1 hardening UI contracts stay present', () => {
   const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
   const js=fs.readFileSync(new URL('../assets/js/english-board.js',import.meta.url),'utf8');
@@ -87,6 +107,7 @@ test('v0.25.1 hardening UI contracts stay present', () => {
   assert.ok(js.includes("this.trayCaseMode='upper'"));
   assert.ok(js.includes("this.trayCaseMode==='both'"));
   assert.ok(sw.includes("english-language-lab-v25-1"));
+  assert.ok(sw.includes('./src/engine/phonics-engine.js'));
   assert.ok(css.includes(':not(.workspace-student-nav):not(.workspace-build-actions)'));
   assert.match(css,/#englishBuildWord,\s*#englishCompletedWord,\s*#englishSegmentWord\s*\{[^}]*text-transform\s*:\s*none;/s);
   assert.equal(curriculum.appVersion,'0.25.1');
