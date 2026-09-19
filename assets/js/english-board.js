@@ -927,6 +927,7 @@ class EnglishMagneticBoard {
         if(action==='reset-board')this.resetCurrentActivity();
         if(action==='reset-lesson')this.resetWholeLesson();
         if(action==='play')this.applyInterfaceMode('student');
+        button.closest('details')?.removeAttribute('open');
       });
     });
     document.querySelectorAll('[data-student-board-step]').forEach(button=>{
