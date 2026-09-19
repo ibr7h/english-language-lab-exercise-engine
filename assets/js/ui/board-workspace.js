@@ -321,6 +321,32 @@ export class BoardWorkspace {
     });
   }
 
+  exportWorkspaceSettings(){
+    return clone(this.settings);
+  }
+
+  importWorkspaceSettings(settings={}){
+    const current=this.settings||{};
+    const next={
+      tool:['move','pen','eraser','lasso'].includes(settings.tool)?settings.tool:(current.tool||'move'),
+      guide:['blank','baseline','primary','four-line'].includes(settings.guide)?settings.guide:(current.guide||'blank'),
+      penColor:['#172132','#dc2626','#2563eb','#15803d'].includes(settings.penColor)?settings.penColor:(current.penColor||'#172132'),
+      penWidth:clamp(Number(settings.penWidth)||Number(current.penWidth)||5,2,18),
+      strip:['letters','digraphs','vowel-teams'].includes(settings.strip)?settings.strip:(current.strip||'letters'),
+      toolboxOpen:typeof settings.toolboxOpen==='boolean'?settings.toolboxOpen:Boolean(current.toolboxOpen)
+    };
+
+    this.settings=next;
+    this.canvasHost.dataset.workspaceTool=next.tool;
+    document.querySelectorAll('[data-workspace-tool]').forEach(btn=>btn.classList.toggle('active',btn.dataset.workspaceTool===next.tool));
+    this.applyGuide(next.guide,false);
+    this.setPenColor(next.penColor,false);
+    this.setPenWidth(next.penWidth,false);
+    this.setStrip(next.strip,false);
+    this.setToolboxOpen(next.toolboxOpen,false);
+    this.persistSettings();
+  }
+
   exportInkState(){
     return clone(this.strokes);
   }
