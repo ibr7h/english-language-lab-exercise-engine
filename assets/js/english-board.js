@@ -806,14 +806,41 @@ class EnglishMagneticBoard {
     document.querySelectorAll('[data-student-board-step="-1"]').forEach(button=>{button.disabled=index<=0;});
     document.querySelectorAll('[data-student-board-step="1"]').forEach(button=>{button.disabled=index>=this.boards.length-1;});
   }
-  checkpoint(label){this.history.checkpoint(this.state.snapshot(),label);}
+  historySnapshot(){
+    return {
+      items:this.state.snapshot(),
+      exercise:this.exercise?deepClone(this.exercise):null,
+      segmentState:this.segmentState?deepClone(this.segmentState):null
+    };
+  }
+
+  restoreHistorySnapshot(snapshot){
+    if(Array.isArray(snapshot)){
+      this.state.restore(snapshot);
+      return;
+    }
+    this.state.restore(Array.isArray(snapshot?.items)?snapshot.items:[]);
+    this.exercise=snapshot?.exercise?deepClone(snapshot.exercise):null;
+    this.normalizeBuildExercise();
+    this.segmentState=snapshot?.segmentState?deepClone(snapshot.segmentState):null;
+  }
+
+  checkpoint(label){this.history.checkpoint(this.historySnapshot(),label);}
   undo(){
-    const snap=this.history.undo(this.state.snapshot());if(!snap)return;
-    this.state.restore(snap);this.clearSelection(false);this.renderBoard();this.toast('Undo');
+    const snap=this.history.undo(this.historySnapshot());if(!snap)return;
+    this.restoreHistorySnapshot(snap);
+    this.clearSelection(false);
+    this.syncBuildOptionControls();
+    this.renderBoard();
+    this.toast('Undo');
   }
   redo(){
-    const snap=this.history.redo(this.state.snapshot());if(!snap)return;
-    this.state.restore(snap);this.clearSelection(false);this.renderBoard();this.toast('Redo');
+    const snap=this.history.redo(this.historySnapshot());if(!snap)return;
+    this.restoreHistorySnapshot(snap);
+    this.clearSelection(false);
+    this.syncBuildOptionControls();
+    this.renderBoard();
+    this.toast('Redo');
   }
   updatePlatformBadge(){
     const el=$('#englishPlatformBadge');
@@ -1638,6 +1665,13 @@ class EnglishMagneticBoard {
       if(start.locked){
         this.toast('Object locked');
         return;
+      }
+
+      if(this.mode==='build'&&this.exercise){
+        this.exercise.feedback=null;
+        this.exercise.hintIndex=null;
+        this.exercise.completed=false;
+        this.renderAssemblySlots();
       }
 
       const rect=this.canvasRect();
@@ -2526,7 +2560,10 @@ class EnglishMagneticBoard {
     add('Foam selection bounding box',Boolean($('#englishFoamSelectionOverlay'))&&document.querySelectorAll('[data-foam-resize]').length===4,'Direct corner resize handles');
     add('Group direct manipulation',typeof this.applyFoamResizeFrame==='function','Move/resize/duplicate selected foam as one group');
     add('Board surfaces',document.querySelectorAll('[data-board-surface]').length>=8,'Current / Squares / Notebook / English');
-    add('Build free movement',true,'Slot capture only when dropped inside a slot');
+    add('Build free movement',true,'Move remains free; snap behavior is configurable');
+    add('Build 2.0 snap modes',Boolean($('#englishBuildSnapMode')&&$('#englishCaseMatters')),'Off / Inside / Strong + Case Matters');
+    add('Build slot feedback',typeof this.buildSlotEvaluation==='function'&&typeof this.previewBuildDrop==='function','Live target + correct/wrong/case feedback');
+    add('Exercise-aware Undo / Redo',typeof this.historySnapshot==='function','Foam + Build slots + Segment state');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
 
     try{
