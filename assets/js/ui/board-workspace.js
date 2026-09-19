@@ -906,6 +906,9 @@ export class BoardWorkspace {
       path.addEventListener('pointermove',event=>this.onStrokePointerMove(event,stroke.id));
       path.addEventListener('pointerup',event=>this.onStrokePointerEnd(event,stroke.id));
       path.addEventListener('pointercancel',event=>this.onStrokePointerEnd(event,stroke.id));
+      path.addEventListener('lostpointercapture',event=>{
+        if(this.strokeDrag?.pointerId===event.pointerId)this.onStrokePointerEnd(event,stroke.id);
+      });
     }
 
     return path;
@@ -953,6 +956,16 @@ export class BoardWorkspace {
     }
   }
 
+  syncInkSelectionDom(){
+    if(!this.inkLayer||!this.selectionLayer)return;
+    this.inkLayer.querySelectorAll('.ink-object[data-stroke-id]').forEach(node=>{
+      node.classList.toggle('is-selected',this.selectedStrokeIds.has(node.dataset.strokeId||''));
+    });
+    this.selectionLayer.removeAttribute('transform');
+    this.renderInkSelection();
+    this.updateFoamToolState();
+  }
+
   onStrokePointerDown(event,id){
     const stroke=this.findStroke(id);
     if(!stroke)return;
@@ -977,8 +990,12 @@ export class BoardWorkspace {
 
     event.preventDefault();
     event.stopPropagation();
-    this.selectInk(id);
-    this.checkpointInk('MOVE_STROKE');
+
+    // Keep the live SVG path in place: selection styling is synchronized
+    // without rebuilding the ink layer before pointer capture.
+    this.setInkSelection([id],id,{render:false});
+    this.board.syncPieceSelectionDom?.();
+    this.syncInkSelectionDom();
 
     const selected=this.selectedInkStrokes();
     this.strokeDrag={
@@ -989,10 +1006,17 @@ export class BoardWorkspace {
       origins:selected.map(item=>({
         id:item.id,
         anchorX:Number(item.anchorX)||0,
-        anchorY:Number(item.anchorY)||0
-      }))
+        anchorY:Number(item.anchorY)||0,
+        node:this.inkLayer.querySelector(`[data-stroke-id="${CSS.escape(item.id)}"]`)
+      })),
+      dx:0,
+      dy:0,
+      moved:false,
+      checkpointed:false,
+      raf:0
     };
 
+    event.currentTarget.classList.add('is-dragging');
     event.currentTarget.setPointerCapture?.(event.pointerId);
   }
 
@@ -1000,19 +1024,36 @@ export class BoardWorkspace {
     const drag=this.strokeDrag;
     if(!drag||drag.id!==id||drag.pointerId!==event.pointerId)return;
 
-    event.preventDefault();
-    const dx=event.clientX-drag.startX;
-    const dy=event.clientY-drag.startY;
+    const samples=typeof event.getCoalescedEvents==='function'?event.getCoalescedEvents():null;
+    const latest=samples?.length?samples[samples.length-1]:event;
+    const dx=latest.clientX-drag.startX;
+    const dy=latest.clientY-drag.startY;
 
-    drag.origins.forEach(origin=>{
-      const target=this.findStroke(origin.id);
-      if(!target)return;
-      target.anchorX=origin.anchorX+dx;
-      target.anchorY=origin.anchorY+dy;
-      const node=this.inkLayer.querySelector(`[data-stroke-id="${CSS.escape(origin.id)}"]`);
-      if(node)node.setAttribute('d',this.pathData(target));
+    if(!drag.moved&&Math.hypot(dx,dy)<2.5)return;
+    if(!drag.moved){
+      drag.moved=true;
+      if(!drag.checkpointed){
+        this.checkpointInk('MOVE_STROKE');
+        drag.checkpointed=true;
+      }
+    }
+
+    event.preventDefault();
+    drag.dx=dx;
+    drag.dy=dy;
+
+    if(drag.raf)return;
+    drag.raf=requestAnimationFrame(()=>{
+      drag.raf=0;
+      if(this.strokeDrag!==drag)return;
+      const tx=drag.dx,ty=drag.dy;
+      drag.origins.forEach(origin=>{
+        if(!origin.node?.isConnected)return;
+        origin.node.classList.add('is-dragging');
+        origin.node.setAttribute('transform',`translate(${tx} ${ty})`);
+      });
+      this.selectionLayer.setAttribute('transform',`translate(${tx} ${ty})`);
     });
-    this.renderInkSelection();
   }
 
   onStrokePointerEnd(event,id){
@@ -1020,8 +1061,35 @@ export class BoardWorkspace {
     if(!drag||drag.id!==id||drag.pointerId!==event.pointerId)return;
 
     event.preventDefault();
+
+    if(drag.raf){
+      cancelAnimationFrame(drag.raf);
+      drag.raf=0;
+    }
+
+    if(drag.moved&&Number.isFinite(event.clientX)&&Number.isFinite(event.clientY)){
+      drag.dx=event.clientX-drag.startX;
+      drag.dy=event.clientY-drag.startY;
+    }
+
+    if(drag.moved){
+      drag.origins.forEach(origin=>{
+        const target=this.findStroke(origin.id);
+        if(!target)return;
+        target.anchorX=origin.anchorX+drag.dx;
+        target.anchorY=origin.anchorY+drag.dy;
+      });
+    }
+
+    drag.origins.forEach(origin=>{
+      if(!origin.node?.isConnected)return;
+      origin.node.classList.remove('is-dragging');
+      origin.node.removeAttribute('transform');
+    });
+    this.selectionLayer.removeAttribute('transform');
+
     this.strokeDrag=null;
-    this.persistInk();
+    if(drag.moved)this.persistInk();
     this.renderInk();
     this.updateFoamToolState();
   }

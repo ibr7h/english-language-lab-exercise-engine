@@ -3070,3 +3070,12 @@ body.board-workspace-active > .tabs {
   transition:none !important;
   pointer-events:auto;
 }
+
+
+/* v0.18.3 Smooth Ink Drag */
+.ink-object.is-dragging {
+  will-change:transform;
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,.95))
+    drop-shadow(0 0 6px rgba(245,158,11,.95));
+}
