@@ -302,6 +302,14 @@
               <g id="englishInkSelection" aria-hidden="true"></g>
               <g id="englishInkLasso" aria-hidden="true"></g>
             </svg>
+            <div id="englishFoamMarquee" class="foam-selection-marquee" aria-hidden="true"></div>
+            <div id="englishFoamSelectionOverlay" class="foam-selection-overlay" aria-hidden="true">
+              <span class="foam-selection-label">Selection</span>
+              <button type="button" class="foam-resize-handle handle-nw" data-foam-resize="nw" aria-label="Resize selection from top left"></button>
+              <button type="button" class="foam-resize-handle handle-ne" data-foam-resize="ne" aria-label="Resize selection from top right"></button>
+              <button type="button" class="foam-resize-handle handle-se" data-foam-resize="se" aria-label="Resize selection from bottom right"></button>
+              <button type="button" class="foam-resize-handle handle-sw" data-foam-resize="sw" aria-label="Resize selection from bottom left"></button>
+            </div>
             <div class="english-board-empty">
               <span>🧲</span>
               <strong>The magnetic board is ready</strong>
@@ -318,7 +326,7 @@
           </div>
 
           <div class="english-board-footer">
-            <span>Tap: select · Double tap: hear · Drag: move · Shift/Ctrl tap: multi-select</span>
+            <span>Tap: select · Drag selected: move · Drag empty board: box-select · Corner handles: resize</span>
             <span>Delete key and arrow keys are supported.</span>
           </div>
         </div>
@@ -526,7 +534,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.23.1</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.24</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -640,7 +648,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.23.1</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.24</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
