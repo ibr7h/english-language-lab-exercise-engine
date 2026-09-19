@@ -193,6 +193,8 @@
         </div>
         <button id="englishDuplicate" class="board-selection-btn">⧉ Duplicate</button>
         <button id="englishDelete" class="board-selection-btn danger">🗑 Selected</button>
+        <button id="englishLockSelected" class="board-selection-btn">🔒 Lock</button>
+        <button id="englishUnlockSelected" class="board-selection-btn">🔓 Unlock</button>
         <button id="englishAlign" class="board-selection-btn">📏 Align</button>
         <button id="englishScatter" class="board-selection-btn">🎲 Scatter</button>
         <button id="englishSpeak" class="board-selection-btn accent">📢 Speak</button>
@@ -218,6 +220,8 @@
           <strong>Boards</strong>
           <div id="englishBoardTabs" class="english-board-tabs" aria-label="Boards"></div>
           <button type="button" data-board-action="add" class="board-manager-icon" title="Add board" aria-label="Add board">＋</button>
+          <button type="button" data-board-action="rename" class="board-manager-icon" title="Rename active board" aria-label="Rename active board">✎</button>
+          <button type="button" data-board-action="duplicate" class="board-manager-icon" title="Duplicate active board" aria-label="Duplicate active board">⧉</button>
           <button type="button" data-board-action="delete" class="board-manager-icon danger-soft" title="Delete active board" aria-label="Delete active board">🗑</button>
         </div>
         <div class="english-board-manager-group surface-group">
@@ -339,6 +343,8 @@
 
             <button id="englishWorkspaceDuplicate" type="button" class="workspace-icon-btn" title="Duplicate selected letter" aria-label="Duplicate selected letter">⧉</button>
             <button id="englishWorkspaceDelete" type="button" class="workspace-icon-btn workspace-delete-btn" title="Delete selected letter" aria-label="Delete selected letter">🗑</button>
+            <button id="englishWorkspaceLockSelected" type="button" class="workspace-icon-btn" title="Lock selected object" aria-label="Lock selected object">🔒</button>
+            <button id="englishWorkspaceUnlockSelected" type="button" class="workspace-icon-btn" title="Unlock selected object" aria-label="Unlock selected object">🔓</button>
             <span class="workspace-topbar-separator" aria-hidden="true"></span>
 
             <button id="englishWorkspaceInkGroup" type="button" class="workspace-icon-btn" title="Group selected ink strokes" aria-label="Group selected ink strokes" disabled>🔗</button>
@@ -368,6 +374,8 @@
             <div id="englishWorkspaceBoardTabs" class="workspace-board-tabs" aria-label="Boards"></div>
             <div class="workspace-board-actions">
               <button type="button" data-board-action="add">＋ Board</button>
+              <button type="button" data-board-action="rename">✎ Rename</button>
+              <button type="button" data-board-action="duplicate">⧉ Duplicate</button>
               <button type="button" data-board-action="delete">🗑 Delete</button>
             </div>
             <div class="workspace-surface-grid" role="group" aria-label="Board surface">
@@ -375,6 +383,14 @@
               <button type="button" data-board-surface="squares">Squares</button>
               <button type="button" data-board-surface="notebook">Notebook</button>
               <button type="button" data-board-surface="english">English</button>
+            </div>
+          </div>
+
+          <div class="workspace-tool-group">
+            <strong>Selected object</strong>
+            <div class="workspace-action-grid">
+              <button id="englishWorkspaceSideLock" type="button">🔒 Lock</button>
+              <button id="englishWorkspaceSideUnlock" type="button">🔓 Unlock</button>
             </div>
           </div>
 
@@ -442,7 +458,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.20.1</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.21</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -556,7 +572,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.20.1</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.21</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
