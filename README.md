@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.24 — Selection & Direct Manipulation
+## v0.25 — Build a Word 2.0
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,25 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.25 Build a Word 2.0
+
+- Adds configurable Build snap behavior: Off, Inside and Strong.
+- Off accepts a letter only when dropped inside a slot but leaves the foam piece exactly at the release position.
+- Inside centers the letter only when its center is dropped inside the slot.
+- Strong adds a wider magnetic capture region around the nearest slot and centers the letter after release.
+- Slots highlight live during drag without rebuilding the board or interrupting the v0.24 smooth drag pipeline.
+- Adds Case Matters for mixed-case activities such as `Cat`, while preserving the source case of each scattered foam piece.
+- Build exercises now store source word, expected per-letter case, snap mode, case rule, attempts, feedback and hint state in the per-Board exercise record.
+- Check gives per-slot visual feedback: green correct, red wrong letter, amber correct letter/wrong case, and visible empty-slot feedback.
+- Hint highlights the target slot and selects a matching foam letter.
+- Progress messages report how many letters are placed before Check.
+- Moving a letter into an occupied slot returns the displaced piece above the slot instead of leaving two pieces stacked.
+- Reshuffle now resets slots, feedback, hints and completion state consistently.
+- Board Undo/Redo snapshots now include the Build exercise and Segment state, fixing the older mismatch where a foam position could undo without restoring slot assignments.
+- Invalid or deleted Build slot references are automatically cleaned.
+- Existing v0.22 lesson files and per-Board Start States remain compatible because Build 2.0 data lives inside the existing exercise record.
+- The stable `reference-v0.20.1` branch remains unchanged.
 
 ### v0.24 Selection & Direct Manipulation
 
@@ -433,7 +452,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v24` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v25` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -451,6 +470,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.24
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.25
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
