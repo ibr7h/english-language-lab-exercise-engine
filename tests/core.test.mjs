@@ -58,6 +58,7 @@ test('v0.25.1 hardening UI contracts stay present', () => {
   const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
   const js=fs.readFileSync(new URL('../assets/js/english-board.js',import.meta.url),'utf8');
   const sw=fs.readFileSync(new URL('../sw.js',import.meta.url),'utf8');
+  const css=fs.readFileSync(new URL('../styles.css',import.meta.url),'utf8');
   const curriculum=JSON.parse(fs.readFileSync(new URL('../src/data/exercises.json',import.meta.url),'utf8'));
 
   const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]);
@@ -77,5 +78,6 @@ test('v0.25.1 hardening UI contracts stay present', () => {
   assert.ok(js.includes('syncFoamCoordinatesToCanvas'));
   assert.ok(js.includes('placeSelectedBuildPieceInSlot'));
   assert.ok(sw.includes("english-language-lab-v25-1"));
+  assert.ok(css.includes(':not(.workspace-student-nav):not(.workspace-build-actions)'));
   assert.equal(curriculum.appVersion,'0.25.1');
 });
