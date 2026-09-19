@@ -1,0 +1,12 @@
+{
+  "name": "english-language-lab-exercise-engine",
+  "version": "0.25.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
