@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.19.2 — Per-Board Surface Isolation
+## v0.19.3 — Unified Empty Board State
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,14 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.19.3 Unified Empty Board State
+
+- The “The magnetic board is ready” empty-state message now reacts to both foam pieces and vector ink.
+- Starting the first pen stroke hides the message immediately, rather than waiting for a foam letter.
+- Deleting or clearing the final ink stroke restores the empty-state message when no foam pieces remain.
+- Undo/Redo, board switching and per-board ink restoration automatically resynchronize the empty state.
+- One shared `updateEmptyState()` method prevents Foam and Ink from maintaining conflicting definitions of an empty board.
 
 ### v0.19.2 Per-Board Surface Isolation
 
@@ -333,7 +341,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v19-2` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v19-3` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -351,6 +359,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.19.2
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.19.3
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.

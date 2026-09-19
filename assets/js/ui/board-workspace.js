@@ -596,6 +596,7 @@ export class BoardWorkspace {
       draftPoints:[this.pointFromEvent(event)]
     };
 
+    this.board.updateEmptyState?.();
     this.inkSvg.setPointerCapture?.(event.pointerId);
   }
 
@@ -955,6 +956,7 @@ export class BoardWorkspace {
     if(this.activeStroke)this.renderActiveStroke();
     this.renderInkSelection();
     this.updateInkButtons();
+    this.board.updateEmptyState?.();
   }
 
   renderInkSelection(){

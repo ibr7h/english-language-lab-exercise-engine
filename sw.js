@@ -1,4 +1,4 @@
-const CACHE = 'english-language-lab-v19-2';
+const CACHE = 'english-language-lab-v19-3';
 const ASSETS = [
   './',
   './index.html',

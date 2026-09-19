@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.19.2';
+const APP_VERSION='0.19.3';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const BOARDS_STORAGE_KEY='englishLab.boards.v1';
@@ -755,6 +755,17 @@ class EnglishMagneticBoard {
     this.workspace?.updateFoamToolState();
   }
 
+  updateEmptyState(){
+    const canvas=$('#englishBoardCanvas');if(!canvas)return;
+    const empty=canvas.querySelector('.english-board-empty');if(!empty)return;
+    const hasFoam=this.items.some(item=>item.type==='letter');
+    const hasInk=Boolean(
+      this.workspace?.activeStroke ||
+      (Array.isArray(this.workspace?.strokes)&&this.workspace.strokes.length)
+    );
+    empty.hidden=hasFoam||hasInk;
+  }
+
   renderBoard(){
     const canvas=$('#englishBoardCanvas');if(!canvas)return;
     const empty=canvas.querySelector('.english-board-empty');
@@ -783,7 +794,7 @@ class EnglishMagneticBoard {
       this.bindPiece(el,item);
       canvas.appendChild(el);
     });
-    if(empty)empty.hidden=this.items.length>0;
+    this.updateEmptyState();
     const count=$('#englishPieceCount');if(count)count.textContent=`${this.items.length} pieces`;
     const scale=$('#englishScaleValue');
     if(scale){
@@ -1262,6 +1273,7 @@ class EnglishMagneticBoard {
     add('Smooth foam drag pipeline',typeof requestAnimationFrame==='function','RAF + translate3d + single commit on pointer release');
     add('Multiple boards',Boolean($('#englishBoardTabs')&&$('#englishWorkspaceBoardTabs')),'Independent board pages + per-board ink/surface');
     add('Atomic board loading',Object.prototype.hasOwnProperty.call(this,'loadingBoardRecord'),'Prevents cross-board surface/state overwrite during switch');
+    add('Unified empty-board state',typeof this.updateEmptyState==='function','Foam + vector ink + active pen stroke');
     add('Board surfaces',document.querySelectorAll('[data-board-surface]').length>=8,'Current / Squares / Notebook / English');
     add('Build free movement',true,'Slot capture only when dropped inside a slot');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
