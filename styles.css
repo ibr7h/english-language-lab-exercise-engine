@@ -3377,3 +3377,181 @@ body.board-workspace-active > .tabs {
     flex-wrap:wrap;
   }
 }
+
+
+/* v0.23 Classroom Activity Mode */
+.student-only {
+  display:none !important;
+}
+.activity-actions,
+.workspace-activity-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:5px;
+}
+.activity-actions {
+  display:flex;
+  flex-wrap:wrap;
+}
+.activity-actions button,
+.workspace-activity-grid button {
+  border:1px solid #d8dee2;
+  background:#fff;
+  color:#43515a;
+  border-radius:8px;
+  padding:6px 8px;
+  font-size:.66rem;
+  font-weight:800;
+  white-space:nowrap;
+}
+.activity-actions button:disabled,
+.workspace-activity-grid button:disabled,
+.student-play-actions button:disabled,
+.workspace-student-nav button:disabled {
+  opacity:.34;
+  cursor:not-allowed;
+}
+.board-tab-btn.has-start-state::after {
+  content:"";
+  display:inline-block;
+  width:6px;
+  height:6px;
+  margin-inline-start:5px;
+  border-radius:50%;
+  background:#16a34a;
+  vertical-align:middle;
+  box-shadow:0 0 0 2px rgba(22,163,74,.12);
+}
+
+.student-play-copy {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+.student-play-copy strong {
+  white-space:nowrap;
+}
+#studentBoardName {
+  min-width:0;
+  max-width:220px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#475569;
+}
+.student-play-actions {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.student-play-actions button {
+  border:1px solid #93c5fd;
+  border-radius:9px;
+  background:#fff;
+  color:#1d4ed8;
+  padding:6px 9px;
+  font-weight:850;
+  white-space:nowrap;
+}
+
+.workspace-student-nav {
+  min-width:0;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  pointer-events:auto;
+}
+.workspace-student-nav strong {
+  max-width:min(36vw,260px);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#26323a;
+  font-size:.76rem;
+}
+.workspace-student-nav button {
+  min-width:31px;
+  height:31px;
+  border:1px solid rgba(116,129,138,.45);
+  border-radius:9px;
+  background:rgba(255,255,255,.96);
+  color:#26323a;
+  font-weight:900;
+}
+
+body[data-interface-mode="student"] .student-only {
+  display:flex !important;
+}
+body[data-interface-mode="student"] .experience-switch {
+  display:none !important;
+}
+body[data-interface-mode="student"] .english-mode-row {
+  display:none !important;
+}
+body[data-interface-mode="student"] #englishBuildControls > .english-input-group,
+body[data-interface-mode="student"] #englishBuildControls .english-presets,
+body[data-interface-mode="student"] #englishBuildControls .english-options,
+body[data-interface-mode="student"] #englishSegmentControls > .english-input-group,
+body[data-interface-mode="student"] #englishSegmentControls .segment-presets,
+body[data-interface-mode="student"] #englishCompletedControls {
+  display:none !important;
+}
+body[data-interface-mode="student"] #englishBuildControls,
+body[data-interface-mode="student"] #englishSegmentControls {
+  margin-top:0;
+  padding-top:0;
+  border-top:0;
+}
+body[data-interface-mode="student"] #englishWorkspaceToolbox .workspace-tool-group:not(:first-child) {
+  display:none !important;
+}
+body[data-interface-mode="student"] .workspace-topbar-tools > :not(.workspace-student-nav) {
+  display:none !important;
+}
+body[data-interface-mode="student"] .workspace-topbar-tools {
+  overflow:visible;
+  justify-content:center;
+}
+body[data-interface-mode="student"] #englishWorkspaceToolbox {
+  width:min(270px,82vw);
+  bottom:auto;
+  max-height:150px;
+}
+body[data-interface-mode="student"] .english-inline-interaction {
+  margin-top:6px;
+}
+body[data-interface-mode="student"] .english-kit-note,
+body[data-interface-mode="student"] .english-color-legend {
+  display:none;
+}
+
+@media(max-width:900px){
+  .activity-group {
+    flex-wrap:wrap;
+  }
+  .activity-actions {
+    width:100%;
+    overflow-x:auto;
+    flex-wrap:nowrap;
+    padding-bottom:2px;
+  }
+}
+@media(max-width:640px){
+  .student-play-copy {
+    width:100%;
+    justify-content:space-between;
+  }
+  .student-play-actions {
+    width:100%;
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+  }
+  .student-play-actions #studentReturnTeacher {
+    grid-column:1 / -1;
+  }
+  .workspace-student-nav strong {
+    max-width:42vw;
+  }
+}
