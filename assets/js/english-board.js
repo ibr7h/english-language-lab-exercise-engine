@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.24';
+const APP_VERSION='0.25';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const BOARDS_STORAGE_KEY='englishLab.boards.v1';
@@ -160,6 +160,9 @@ class EnglishMagneticBoard {
     this.loadingBoardRecord=false;
     this.foamMarquee=null;
     this.foamResize=null;
+    const savedSnap=localStorage.getItem('englishLab.buildSnapMode');
+    this.buildSnapModeSetting=['off','inside','strong'].includes(savedSnap)?savedSnap:'inside';
+    this.buildCaseMattersSetting=localStorage.getItem('englishLab.buildCaseMatters')==='true';
   }
   get items(){return this.state.items;}
   set items(value){this.state.replace(value);}
@@ -215,6 +218,7 @@ class EnglishMagneticBoard {
 
     const caseSelect=$('#englishCase'); if(caseSelect)caseSelect.value=this.caseMode;
     const colorSelect=$('#englishColorMode'); if(colorSelect)colorSelect.value=this.colorMode;
+    this.syncBuildOptionControls();
 
     const requestedMode=document.body.dataset.requestedBoardMode;
     this.setMode(['free','build','completed','segment'].includes(requestedMode)?requestedMode:(this.mode||'free'),true);
@@ -540,6 +544,7 @@ class EnglishMagneticBoard {
       this.boardSurface=BOARD_SURFACES.has(record.surface)?record.surface:'current';
       this.caseMode=record.caseMode==='lower'?'lower':'upper';
       this.exercise=record.exercise?deepClone(record.exercise):null;
+      this.normalizeBuildExercise();
       this.segmentState=record.segmentState?deepClone(record.segmentState):null;
       this.mode=['free','build','completed','segment'].includes(record.mode)?record.mode:'free';
 
@@ -563,7 +568,7 @@ class EnglishMagneticBoard {
         if(hint)hint.textContent='Pick a foam letter, move it anywhere, resize it, duplicate it, or build freely.';
       }else if(this.mode==='build'){
         if(title)title.textContent='Build a word — scattered foam letters + answer slots';
-        if(hint)hint.textContent='Move letters freely anywhere. A letter snaps only when you drop it inside an answer slot.';
+        if(hint)hint.textContent=this.buildHintText();
       }else if(this.mode==='completed'){
         if(title)title.textContent='Completed words — move the word or detach its letters';
         if(hint)hint.textContent='First tap selects the whole word. Detach lets you move each letter separately.';
@@ -577,6 +582,7 @@ class EnglishMagneticBoard {
       this.workspace?.renderStrip();
       this.workspace?.syncCaseButtons();
       const caseSelect=$('#englishCase');if(caseSelect)caseSelect.value=this.caseMode;
+      this.syncBuildOptionControls();
 
       // renderBoard() calls persist(), so keep the guard active through render.
       this.renderBoard();
@@ -829,7 +835,7 @@ class EnglishMagneticBoard {
       if(hint)hint.textContent='Pick a foam letter, move it anywhere, resize it, duplicate it, or build freely.';
     }else if(next==='build'){
       if(title)title.textContent='Build a word — scattered foam letters + answer slots';
-      if(hint)hint.textContent='Move letters freely anywhere. A letter snaps only when you drop it inside an answer slot.';
+      if(hint)hint.textContent=this.buildHintText();
     }else if(next==='completed'){
       if(title)title.textContent='Completed words — move the word or detach its letters';
       if(hint)hint.textContent='First tap selects the whole word. Detach lets you move each letter separately.';
@@ -903,6 +909,8 @@ class EnglishMagneticBoard {
     $('#englishCheck')?.addEventListener('click',()=>this.checkExercise());
     $('#englishHintBtn')?.addEventListener('click',()=>this.hintExercise());
     $('#englishShowTarget')?.addEventListener('change',()=>this.renderAssemblySlots());
+    $('#englishBuildSnapMode')?.addEventListener('change',event=>this.setBuildSnapMode(event.target.value));
+    $('#englishCaseMatters')?.addEventListener('change',event=>this.setBuildCaseMatters(Boolean(event.target.checked)));
     $('#englishAddCompleted')?.addEventListener('click',()=>this.addCompletedFromInput());
     $('#englishCompletedWord')?.addEventListener('keydown',e=>{if(e.key==='Enter')this.addCompletedFromInput();});
     $$('.english-preset-word').forEach(btn=>btn.addEventListener('click',()=>this.addCompletedWord(btn.dataset.word||'')));
@@ -1615,7 +1623,9 @@ class EnglishMagneticBoard {
       e.preventDefault();
 
       const additive=e.shiftKey||e.metaKey||e.ctrlKey;
-      if(this.selectedIds.has(item.id)&&this.selectedIds.size>1&&!additive){
+      if(this.mode==='build'&&this.exercise){
+        this.setSelection([item.id],'letter',item.id);
+      }else if(this.selectedIds.has(item.id)&&this.selectedIds.size>1&&!additive){
         this.activeItemId=item.id;
         this.updateSelectedAudio();
       }else{
@@ -1667,7 +1677,9 @@ class EnglishMagneticBoard {
         checkpointed:false,
         raf:0,
         sourceId:item.id,
-        selectionOverlay:$('#englishFoamSelectionOverlay')
+        selectionOverlay:$('#englishFoamSelectionOverlay'),
+        buildSlots:this.mode==='build'&&this.exercise?this.slotGeometry():null,
+        buildCandidateIndex:null
       };
 
       el.classList.add('is-dragging');
@@ -1695,6 +1707,11 @@ class EnglishMagneticBoard {
       e.preventDefault();
       d.dx=clamp(dx,d.minDx,d.maxDx);
       d.dy=clamp(dy,d.minDy,d.maxDy);
+
+      if(d.buildSlots?.length&&d.origins.length===1){
+        const origin=d.origins[0];
+        d.buildCandidateIndex=this.previewBuildDrop(origin.x+d.dx,origin.y+d.dy,d.buildSlots);
+      }
 
       if(d.raf)return;
       d.raf=requestAnimationFrame(()=>{
@@ -1745,9 +1762,10 @@ class EnglishMagneticBoard {
       if(d.selectionOverlay)d.selectionOverlay.style.transform='';
 
       this.drag=null;
+      this.clearBuildDropPreview();
 
       if(d.moved&&this.mode==='build'&&this.exercise){
-        this.snapDraggedToNearestSlot(d.sourceId);
+        this.snapDraggedToNearestSlot(d.sourceId,d.buildSlots);
       }else{
         this.renderBoard();
       }
