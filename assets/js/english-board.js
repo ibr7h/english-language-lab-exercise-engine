@@ -820,7 +820,8 @@ class EnglishMagneticBoard {
     return {
       items:this.state.snapshot(),
       exercise:this.exercise?deepClone(this.exercise):null,
-      segmentState:this.segmentState?deepClone(this.segmentState):null
+      segmentState:this.segmentState?deepClone(this.segmentState):null,
+      foamSpace:deepClone(this.foamCanvasSpace||this.currentFoamSpace())
     };
   }
 
@@ -830,6 +831,7 @@ class EnglishMagneticBoard {
       return;
     }
     this.state.restore(Array.isArray(snapshot?.items)?snapshot.items:[]);
+    this.foamCanvasSpace=this.normalizeFoamSpace(snapshot?.foamSpace)||this.foamCanvasSpace;
     this.exercise=snapshot?.exercise?deepClone(snapshot.exercise):null;
     this.normalizeBuildExercise();
     this.segmentState=snapshot?.segmentState?deepClone(snapshot.segmentState):null;
