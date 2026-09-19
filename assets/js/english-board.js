@@ -2423,8 +2423,8 @@ class EnglishMagneticBoard {
   }
 
   findBuildSlotCandidate(pieceX,pieceY,slots=this.slotGeometry(),mode=this.exercise?.snapMode){
-    if(!this.exercise||!Array.isArray(slots)||!slots.length)return null;
-    const snapMode=this.validBuildSnapMode(mode||'inside');
+    if(!Array.isArray(slots)||!slots.length)return null;
+    const snapMode=this.validBuildSnapMode(mode||this.exercise?.snapMode||'inside');
     const px=Number(pieceX)||0;
     const py=Number(pieceY)||0;
     const cx=px+35,cy=py+38;
