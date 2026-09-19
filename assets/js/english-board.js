@@ -6,6 +6,15 @@ import { detectPlatformProfile } from './core/platform-profile.js';
 import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
+import {
+  VOWELS,
+  PHONICS_COLORS,
+  DIGRAPHS,
+  VOWEL_TEAMS,
+  colorForLetter,
+  analyzeWordPhonics,
+  segmentPhonicsGraphemes
+} from '../../src/engine/phonics-engine.js';
 
 const APP_VERSION='0.25.1';
 const STORAGE_KEY='englishLab.board';
@@ -18,16 +27,6 @@ const LESSON_FORMAT_VERSION=1;
 const BOARD_SURFACES=new Set(['current','squares','notebook','english']);
 const LEGACY_STORAGE_KEYS=['englishLab.board.v0.13','englishLab.board.v0.8'];
 const ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-const VOWELS=new Set(['A','E','I','O','U']);
-const PHONICS_COLORS=Object.freeze({
-  consonant:'glyph-blue',
-  vowel:'glyph-red',
-  digraph:'glyph-green',
-  vowelTeam:'glyph-yellow',
-  silentE:'glyph-purple'
-});
-const DIGRAPHS=['SH','CH','TH','WH','PH','CK','NG','QU'];
-const VOWEL_TEAMS=['IGH','AI','AY','EE','EA','OA','OE','OO','OU','OW','OI','OY','UE','UI','IE'];
 const KIT_DIGRAPHS=['SH','CH','TH','WH','PH','CK','NG','QU'];
 const KIT_VOWEL_TEAMS=['AI','AY','EE','EA','OA','OO','OI','OY','OW','IGH'];
 
@@ -83,10 +82,6 @@ async function playStructuredAudio(kind,key){
   }
   if(kind==='example'){speak(profile.example||token,{rate:.78});}
 }
-function colorFor(letter){
-  const upper=String(letter||'').toUpperCase();
-  return VOWELS.has(upper) ? PHONICS_COLORS.vowel : PHONICS_COLORS.consonant;
-}
 function normalizeLegacyColor(color, letter=''){
   const map={
     'foam-coral':'glyph-red',
@@ -95,40 +90,7 @@ function normalizeLegacyColor(color, letter=''){
     'foam-yellow':'glyph-yellow',
     'foam-purple':'glyph-purple'
   };
-  return map[color] || color || colorFor(letter);
-}
-function analyzeWordPhonics(word){
-  const text=String(word||'').toUpperCase().replace(/[^A-Z]/g,'');
-  const result=[...text].map(letter=>({
-    letter,
-    role:VOWELS.has(letter)?'vowel':'consonant',
-    color:colorFor(letter)
-  }));
-
-  const markPattern=(pattern,role,color)=>{
-    let from=0;
-    while(from<=text.length-pattern.length){
-      const index=text.indexOf(pattern,from);
-      if(index<0)break;
-      for(let i=0;i<pattern.length;i++){
-        result[index+i]={...result[index+i],role,color};
-      }
-      from=index+pattern.length;
-    }
-  };
-
-  [...VOWEL_TEAMS].sort((a,b)=>b.length-a.length)
-    .forEach(pattern=>markPattern(pattern,'vowel-team',PHONICS_COLORS.vowelTeam));
-  DIGRAPHS.forEach(pattern=>markPattern(pattern,'digraph',PHONICS_COLORS.digraph));
-
-  if(text.length>=3 && text.endsWith('E')){
-    const last=text.length-1;
-    const previousRole=result[last]?.role;
-    if(previousRole!=='vowel-team'){
-      result[last]={...result[last],role:'silent-e',color:PHONICS_COLORS.silentE};
-    }
-  }
-  return result;
+  return map[color] || color || colorForLetter(letter);
 }
 function clamp(n,min,max){return Math.max(min,Math.min(max,n));}
 function deepClone(value){
@@ -1135,10 +1097,11 @@ class EnglishMagneticBoard {
   }
   colorForToken(token,role=null){
     if(this.colorMode==='classic')return PHONICS_COLORS.consonant;
-    if(role==='digraph')return PHONICS_COLORS.digraph;
+    if(role==='digraph'||role==='sound-chunk')return PHONICS_COLORS.soundChunk;
     if(role==='vowel-team')return PHONICS_COLORS.vowelTeam;
     if(role==='silent-e')return PHONICS_COLORS.silentE;
-    return colorFor(token);
+    if(role==='silent-letter')return PHONICS_COLORS.silentLetter;
+    return colorForLetter(token);
   }
   renderTray(){
     const tray=$('#englishLetterTray');if(!tray)return;
@@ -2139,7 +2102,7 @@ class EnglishMagneticBoard {
       [...token].forEach((sourceLetter,index)=>{
         const logicalLetter=sourceLetter.toUpperCase();
         const letterCase=sourceLetter===sourceLetter.toLowerCase()?'lower':'upper';
-        const role=phonics[index]||{color:colorFor(logicalLetter),role:VOWELS.has(logicalLetter)?'vowel':'consonant'};
+        const role=phonics[index]||{color:colorForLetter(logicalLetter),role:VOWELS.has(logicalLetter)?'vowel':'consonant'};
         const p=this.createPiece(logicalLetter,x,rowY,{
           wordId,wordLabel:token,rotation:0,color:role.color,phonicsRole:role.role,letterCase
         });
@@ -2181,15 +2144,7 @@ class EnglishMagneticBoard {
     if(text)speak(text);
   }
   segmentGraphemes(word){
-    const text=String(word||'').toUpperCase().replace(/[^A-Z]/g,'');
-    const patterns=[...VOWEL_TEAMS,...DIGRAPHS].sort((a,b)=>b.length-a.length);
-    const out=[];let i=0;
-    while(i<text.length){
-      const pattern=patterns.find(p=>text.startsWith(p,i));
-      if(pattern){out.push(pattern);i+=pattern.length;}
-      else{out.push(text[i]);i+=1;}
-    }
-    return out;
+    return segmentPhonicsGraphemes(word);
   }
   startSegmentBlend(){
     const input=$('#englishSegmentWord');
@@ -2206,7 +2161,9 @@ class EnglishMagneticBoard {
     graphemes.forEach((token,index)=>{
       const start=cursor,end=cursor+token.length;
       const roles=phonics.slice(start,end).map(x=>x.role);
-      const role=roles.includes('vowel-team')?'vowel-team'
+      const role=roles.includes('silent-letter')?'silent-letter'
+        :roles.includes('sound-chunk')?'sound-chunk'
+        :roles.includes('vowel-team')?'vowel-team'
         :roles.includes('digraph')?'digraph'
         :roles.includes('silent-e')?'silent-e'
         :(VOWELS.has(token)?'vowel':'consonant');
@@ -2414,7 +2371,7 @@ class EnglishMagneticBoard {
       const cols=Math.max(2,Math.min(word.length,Math.floor((rect.width-50)/90)));
       const col=k%cols,row=Math.floor(k/cols);
       const role=phonics[targetIndex]||{
-        color:colorFor(word[targetIndex]),
+        color:colorForLetter(word[targetIndex]),
         role:VOWELS.has(word[targetIndex])?'vowel':'consonant'
       };
       const piece=this.createPiece(word[targetIndex],35+col*90+(Math.random()*18-9),65+row*100+(Math.random()*18-9),{
