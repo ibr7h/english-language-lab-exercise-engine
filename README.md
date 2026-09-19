@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.23 — Classroom Activity Mode
+## v0.23.1 — Teacher Workflow Layout
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,19 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.23.1 Teacher Workflow Layout
+
+- Reorganizes the crowded normal-board manager into two stable workflow rows.
+- Row 1 contains Board navigation/actions and Surface selection only.
+- Row 2 contains Activity controls and Lesson file controls only.
+- Moves Reset All Boards into a compact `⋯` activity overflow menu because it is an infrequent destructive action.
+- Keeps Set Start, Reset Board and Student Play directly visible.
+- Keeps Save, Load, Export and Import on one Lesson row.
+- Adds responsive one-column fallback below 1050px and horizontal scrolling for compact mobile control groups.
+- Removes the native hover `title` from Board tabs so “Open Board 1” no longer appears as an intrusive tooltip.
+- Raises disabled-control contrast so unavailable actions remain legible without looking broken.
+- Full Board tooling remains unchanged.
 
 ### v0.23 Classroom Activity Mode
 
@@ -404,7 +417,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v23` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v23-1` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -422,6 +435,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.23
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.23.1
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
