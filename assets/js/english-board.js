@@ -152,6 +152,7 @@ class EnglishMagneticBoard {
     this.exercise=null;
     this.platform=createPlatformAdapter(detectPlatformProfile());
     this.drag=null;
+    this.keyboardGrabbed=false;
     this.workspace=null;
     this.boards=[];
     this.activeBoardId=null;
@@ -950,7 +951,7 @@ class EnglishMagneticBoard {
     $('#englishWorkspaceBuildReshuffle')?.addEventListener('click',()=>this.reshuffleExercise());
     $('#englishWorkspaceBuildCheck')?.addEventListener('click',()=>this.checkExercise());
     $('#englishWorkspaceBuildHint')?.addEventListener('click',()=>this.hintExercise());
-    $('#englishShowTarget')?.addEventListener('change',()=>this.renderAssemblySlots());
+    $('#englishShowTarget')?.addEventListener('change',event=>this.setBuildShowTarget(Boolean(event.target.checked)));
     $('#englishBuildSnapMode')?.addEventListener('change',event=>this.setBuildSnapMode(event.target.value));
     $('#englishCaseMatters')?.addEventListener('change',event=>this.setBuildCaseMatters(Boolean(event.target.checked)));
     $('#englishAddCompleted')?.addEventListener('click',()=>this.addCompletedFromInput());
@@ -2167,6 +2168,7 @@ class EnglishMagneticBoard {
     ex.slots=ex.slots.map(id=>id&&this.state.find(id)?id:null);
     ex.snapMode=this.validBuildSnapMode(ex.snapMode||'inside');
     ex.caseMatters=Boolean(ex.caseMatters);
+    ex.showTarget=typeof ex.showTarget==='boolean'?ex.showTarget:true;
     ex.expectedCases=Array.isArray(ex.expectedCases)&&ex.expectedCases.length===ex.word.length
       ?ex.expectedCases.map(value=>value==='lower'?'lower':'upper')
       :[...ex.sourceWord].map(char=>char===char.toLowerCase()?'lower':'upper');
@@ -2208,6 +2210,8 @@ class EnglishMagneticBoard {
     if(snapSelect)snapSelect.value=this.validBuildSnapMode(snap);
     const caseToggle=$('#englishCaseMatters');
     if(caseToggle)caseToggle.checked=Boolean(caseMatters);
+    const showTargetToggle=$('#englishShowTarget');
+    if(showTargetToggle)showTargetToggle.checked=this.exercise?.showTarget!==false;
 
     if(this.exercise?.sourceWord){
       const input=$('#englishBuildWord');
@@ -2236,6 +2240,16 @@ class EnglishMagneticBoard {
     this.syncBuildOptionControls();
     const label=next==='off'?'Off':next==='strong'?'Strong':'Inside';
     this.toast(`Build snap: ${label}`);
+  }
+
+  setBuildShowTarget(enabled){
+    const next=Boolean(enabled);
+    if(this.exercise){
+      this.exercise.showTarget=next;
+      this.renderAssemblySlots();
+      this.persist();
+    }
+    this.syncBuildOptionControls();
   }
 
   setBuildCaseMatters(enabled){
@@ -2283,6 +2297,7 @@ class EnglishMagneticBoard {
       attempts:0,
       snapMode,
       caseMatters,
+      showTarget:Boolean($('#englishShowTarget')?.checked!==false),
       feedback:null,
       hintIndex:null,
       completed:false
@@ -2496,8 +2511,7 @@ class EnglishMagneticBoard {
     zone.classList.toggle('build-complete',Boolean(ex.completed));
 
     if(target){
-      const show=$('#englishShowTarget')?.checked!==false;
-      target.textContent=show?ex.sourceWord:`${ex.word.length} letters`;
+      target.textContent=ex.showTarget?ex.sourceWord:`${ex.word.length} letters`;
     }
 
     slots.innerHTML='';
