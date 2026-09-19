@@ -2732,6 +2732,16 @@ class EnglishMagneticBoard {
     );
     add('Digraph tray',Boolean($('#englishDigraphTray')),'SH / CH / TH…');
     add('Vowel-team tray',Boolean($('#englishVowelTeamTray')),'AI / EE / OA…');
+    try{
+      const roleString=word=>analyzeWordPhonics(word).map(item=>item.role).join('|');
+      const expandedPhonicsOk=
+        roleString('KNOW')==='silent-letter|consonant|vowel-team|vowel-team'&&
+        roleString('STATION')==='consonant|consonant|vowel|sound-chunk|sound-chunk|sound-chunk|sound-chunk'&&
+        roleString('LAMB')==='consonant|vowel|consonant|silent-letter';
+      add('Expanded phonics patterns',expandedPhonicsOk,'KNOW: silent K · STATION: TION chunk · LAMB: silent B');
+    }catch(error){
+      add('Expanded phonics patterns',false,error.message);
+    }
     add('Build mode controls',Boolean($('#englishBuildControls')),'Shared board builder');
     add('Segment & Blend controls',Boolean($('#englishSegmentControls')),'Phonics manipulative');
     add('Student / Teacher switch',Boolean($('#studentModeBtn')&&$('#teacherModeBtn')),'Experience modes');
