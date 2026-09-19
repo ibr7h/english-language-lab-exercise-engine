@@ -247,10 +247,10 @@ class EnglishMagneticBoard {
     $('#englishShowTarget')?.addEventListener('change',()=>this.renderAssemblySlots());
     $('#englishAddCompleted')?.addEventListener('click',()=>this.addCompletedFromInput());
     $('#englishCompletedWord')?.addEventListener('keydown',e=>{if(e.key==='Enter')this.addCompletedFromInput();});
-    $('.english-preset-word').forEach(btn=>btn.addEventListener('click',()=>this.addCompletedWord(btn.dataset.word||'')));
+    $$('.english-preset-word').forEach(btn=>btn.addEventListener('click',()=>this.addCompletedWord(btn.dataset.word||'')));
     $('#englishStartSegment')?.addEventListener('click',()=>this.startSegmentBlend());
     $('#englishSegmentWord')?.addEventListener('keydown',e=>{if(e.key==='Enter')this.startSegmentBlend();});
-    $('.segment-presets [data-segment-word]').forEach(btn=>btn.addEventListener('click',()=>{
+    $$('.segment-presets [data-segment-word]').forEach(btn=>btn.addEventListener('click',()=>{
       const input=$('#englishSegmentWord'); if(input)input.value=btn.dataset.segmentWord||'';
       this.startSegmentBlend();
     }));
