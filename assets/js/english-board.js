@@ -146,6 +146,7 @@ class EnglishMagneticBoard {
     this.activeItemId=null;
     this.mode='free';
     this.caseMode='upper';
+    this.trayCaseMode='upper';
     this.colorMode=localStorage.getItem('englishLab.colorMode')||'phonics';
     this.interfaceMode=localStorage.getItem('englishLab.interfaceMode')||'teacher';
     this.wordCounter=0;
@@ -188,6 +189,9 @@ class EnglishMagneticBoard {
     if(restored){
       const meta=restored.meta||{};
       if(['upper','lower'].includes(meta.caseMode))this.caseMode=meta.caseMode;
+      this.trayCaseMode=['upper','lower','both'].includes(meta.trayCaseMode)
+        ?meta.trayCaseMode
+        :this.caseMode;
       if(['phonics','classic'].includes(meta.colorMode))this.colorMode=meta.colorMode;
       if(['student','teacher'].includes(meta.interfaceMode))this.interfaceMode=meta.interfaceMode;
       if(['free','build','completed','segment'].includes(meta.mode))this.mode=meta.mode;
@@ -221,7 +225,7 @@ class EnglishMagneticBoard {
     this.workspace.init();
     this.initBoards();
 
-    const caseSelect=$('#englishCase'); if(caseSelect)caseSelect.value=this.caseMode;
+    this.syncTrayCaseControls();
     const colorSelect=$('#englishColorMode'); if(colorSelect)colorSelect.value=this.colorMode;
     this.syncBuildOptionControls();
 
@@ -244,6 +248,7 @@ class EnglishMagneticBoard {
       appVersion:APP_VERSION,
       mode:this.mode,
       caseMode:this.caseMode,
+      trayCaseMode:this.trayCaseMode,
       colorMode:this.colorMode,
       interfaceMode:this.interfaceMode,
       boardSurface:this.boardSurface
@@ -469,6 +474,9 @@ class EnglishMagneticBoard {
       ink:Array.isArray(record?.ink)?deepClone(record.ink):[],
       mode:['free','build','completed','segment'].includes(record?.mode)?record.mode:'free',
       caseMode:record?.caseMode==='lower'?'lower':'upper',
+      trayCaseMode:['upper','lower','both'].includes(record?.trayCaseMode)
+        ?record.trayCaseMode
+        :(record?.caseMode==='lower'?'lower':'upper'),
       exercise:record?.exercise?deepClone(record.exercise):null,
       segmentState:record?.segmentState?deepClone(record.segmentState):null,
       startState:record?.startState?deepClone(record.startState):null,
@@ -494,6 +502,7 @@ class EnglishMagneticBoard {
         ink:this.workspace?.exportInkState?.()||[],
         mode:this.mode,
         caseMode:this.caseMode,
+        trayCaseMode:this.trayCaseMode,
         exercise:this.exercise,
         segmentState:this.segmentState||null,
         foamSpace:this.currentFoamSpace()
@@ -522,6 +531,7 @@ class EnglishMagneticBoard {
     record.surface=this.boardSurface;
     record.mode=this.mode;
     record.caseMode=this.caseMode;
+    record.trayCaseMode=this.trayCaseMode;
     record.exercise=this.exercise?deepClone(this.exercise):null;
     record.segmentState=this.segmentState?deepClone(this.segmentState):null;
     record.foamSpace=deepClone(this.foamCanvasSpace||this.currentFoamSpace());
@@ -552,6 +562,9 @@ class EnglishMagneticBoard {
       this.foamCanvasSpace=this.normalizeFoamSpace(record.foamSpace);
       this.boardSurface=BOARD_SURFACES.has(record.surface)?record.surface:'current';
       this.caseMode=record.caseMode==='lower'?'lower':'upper';
+      this.trayCaseMode=['upper','lower','both'].includes(record.trayCaseMode)
+        ?record.trayCaseMode
+        :this.caseMode;
       this.exercise=record.exercise?deepClone(record.exercise):null;
       this.normalizeBuildExercise();
       this.segmentState=record.segmentState?deepClone(record.segmentState):null;
@@ -590,7 +603,7 @@ class EnglishMagneticBoard {
       this.renderGraphemeTrays();
       this.workspace?.renderStrip();
       this.workspace?.syncCaseButtons();
-      const caseSelect=$('#englishCase');if(caseSelect)caseSelect.value=this.caseMode;
+      this.syncTrayCaseControls();
       this.syncBuildOptionControls();
 
       // renderBoard() calls persist(), so keep the guard active through render.
@@ -626,6 +639,7 @@ class EnglishMagneticBoard {
       ink:[],
       mode:'free',
       caseMode:this.caseMode,
+      trayCaseMode:this.trayCaseMode,
       exercise:null,
       segmentState:null,
       startState:null
@@ -642,6 +656,7 @@ class EnglishMagneticBoard {
       surface:this.boardSurface,
       mode:this.mode,
       caseMode:this.caseMode,
+      trayCaseMode:this.trayCaseMode,
       exercise:this.exercise?deepClone(this.exercise):null,
       segmentState:this.segmentState?deepClone(this.segmentState):null,
       foamSpace:deepClone(this.foamCanvasSpace||this.currentFoamSpace())
@@ -655,6 +670,9 @@ class EnglishMagneticBoard {
     record.surface=BOARD_SURFACES.has(state.surface)?state.surface:'current';
     record.mode=['free','build','completed','segment'].includes(state.mode)?state.mode:'free';
     record.caseMode=state.caseMode==='lower'?'lower':'upper';
+    record.trayCaseMode=['upper','lower','both'].includes(state.trayCaseMode)
+      ?state.trayCaseMode
+      :record.caseMode;
     record.exercise=state.exercise?deepClone(state.exercise):null;
     record.segmentState=state.segmentState?deepClone(state.segmentState):null;
     record.foamSpace=this.normalizeFoamSpace(state.foamSpace);
