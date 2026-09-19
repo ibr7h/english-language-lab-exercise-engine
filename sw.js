@@ -8,6 +8,7 @@ const ASSETS = [
   './src/data/content.js',
   './src/data/exercises.json',
   './src/engine/exercise-engine.js',
+  './src/engine/phonics-engine.js',
   './assets/js/english-board.js',
   './assets/js/core/board-state.js',
   './assets/js/core/board-history.js',
