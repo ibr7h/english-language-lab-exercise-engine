@@ -218,7 +218,10 @@
             <div class="english-board-gridline gridline-one"></div>
             <div class="english-board-gridline gridline-two"></div>
             <div id="englishWritingGuides" class="board-writing-guides" data-guide="blank" aria-hidden="true"></div>
-            <canvas id="englishInkCanvas" class="board-ink-canvas" aria-label="Whiteboard drawing layer"></canvas>
+            <svg id="englishInkSvg" class="board-ink-svg" aria-label="Vector drawing layer" role="img">
+              <g id="englishInkObjects"></g>
+              <g id="englishInkSelection" aria-hidden="true"></g>
+            </svg>
             <div class="english-board-empty">
               <span>🧲</span>
               <strong>The magnetic board is ready</strong>
@@ -384,7 +387,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.15.2</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.16</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -498,7 +501,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.15.2</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.16</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>

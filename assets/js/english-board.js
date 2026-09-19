@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.15.2';
+const APP_VERSION='0.16';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=2;
 const LEGACY_STORAGE_KEYS=['englishLab.board.v0.13','englishLab.board.v0.8'];
@@ -313,6 +313,7 @@ class EnglishMagneticBoard {
     $('#englishResetAppData')?.addEventListener('click',()=>this.resetAppData());
     $('#englishBoardCanvas')?.addEventListener('pointerdown',e=>{
       if(e.target.closest('.free-foam-piece'))return;
+      this.workspace?.clearInkSelection(false);
       if(this.selectedIds.size){this.clearSelection();}
     });
     window.addEventListener('keydown',e=>this.handleKeyboard(e));
@@ -417,7 +418,9 @@ class EnglishMagneticBoard {
     this.setSelection([p.id],'letter',p.id);this.renderBoard();speak(letter);
   }
   setSelection(ids,mode='multi',activeId=null){
-    this.selectedIds=new Set((ids||[]).filter(Boolean));
+    const cleanIds=(ids||[]).filter(Boolean);
+    if(cleanIds.length)this.workspace?.clearInkSelection(false);
+    this.selectedIds=new Set(cleanIds);
     this.selectionMode=this.selectedIds.size?mode:'none';
     this.activeItemId=activeId&&this.selectedIds.has(activeId)?activeId:(this.selectedIds.values().next().value||null);
     this.updateSelectedAudio?.();
@@ -830,7 +833,7 @@ class EnglishMagneticBoard {
       $('#englishWorkspaceBoardUndo')&&
       $('#englishWorkspaceBoardRedo')
     ),'Topbar: resize / duplicate / delete / align / scatter / undo / redo');
-    add('Ink canvas',Boolean($('#englishInkCanvas')),'Pen / eraser layer');
+    add('Vector ink layer',Boolean($('#englishInkSvg')&&$('#englishInkObjects')),'Selectable SVG stroke objects');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
 
     try{

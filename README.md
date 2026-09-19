@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.15.2 — Full Board icon toolbar
+## v0.16 — Vector Ink Objects
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,19 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.16 Vector Ink Objects
+
+- Replaces the raster Canvas ink layer with SVG vector paths.
+- Every pen stroke is a first-class object with ID, points, color, width, translation and scale.
+- Move mode can select and drag either foam pieces or ink strokes.
+- The selected ink stroke gets a visible vector bounding box.
+- Top-bar Smaller / Reset / Larger, Duplicate and Delete automatically target the selected ink object when one is selected.
+- Pen paths use quadratic curve smoothing rather than straight point-to-point segments, reducing broken corners.
+- Ink Undo/Redo now use snapshot history and include drawing, movement, scaling, duplication and deletion.
+- Eraser mode removes complete stroke objects on contact.
+- v0.15 vector-point ink is migrated from `englishLab.boardInk.v1` into the new v2 object store. Legacy eraser operations cannot be reconstructed as independent objects and are not migrated.
+- Ink remains resolution-independent because SVG paths are regenerated from normalized point data.
 
 ### v0.15.2 Full Board icon toolbar
 
@@ -222,7 +235,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v15-2` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v16` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -240,6 +253,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.15.2
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.16
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
