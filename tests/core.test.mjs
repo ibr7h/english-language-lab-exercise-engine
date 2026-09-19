@@ -69,14 +69,23 @@ test('v0.25.1 hardening UI contracts stay present', () => {
     'englishWorkspaceBuildReshuffle',
     'englishWorkspaceBuildCheck',
     'englishWorkspaceBuildHint',
-    'englishWorkspaceBuildStatus'
+    'englishWorkspaceBuildStatus',
+    'englishTrayCaseSwitch',
+    'englishTrayPieceCount'
   ]){
     assert.ok(html.includes(`id="${id}"`),`missing ${id}`);
+  }
+
+  for(const mode of ['upper','lower','both']){
+    assert.ok(html.includes(`data-tray-case="${mode}"`),`missing tray case ${mode}`);
+    assert.ok(html.includes(`data-workspace-case="${mode}"`),`missing workspace case ${mode}`);
   }
 
   assert.ok(js.includes("const APP_VERSION='0.25.1'"));
   assert.ok(js.includes('syncFoamCoordinatesToCanvas'));
   assert.ok(js.includes('placeSelectedBuildPieceInSlot'));
+  assert.ok(js.includes("this.trayCaseMode='upper'"));
+  assert.ok(js.includes("this.trayCaseMode==='both'"));
   assert.ok(sw.includes("english-language-lab-v25-1"));
   assert.ok(css.includes(':not(.workspace-student-nav):not(.workspace-build-actions)'));
   assert.match(css,/#englishBuildWord\s*\{[^}]*text-transform\s*:\s*none;/s);
