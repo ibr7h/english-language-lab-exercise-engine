@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.25 — Build a Word 2.0
+## v0.25.1 — Reference Hardening
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,18 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.25.1 Reference Hardening
+
+- Preserves foam-letter positions proportionally when switching between Normal Board and Full Board instead of clamping pieces to the smaller canvas.
+- Persists each Board's foam coordinate space and carries it through Start State, lesson save/import, Board duplication and Undo/Redo snapshots.
+- Adds Full Board Build controls for Reshuffle, Check and Hint, including live Build status.
+- Persists Show Target inside each Build exercise so Boards no longer leak that setting into one another.
+- Adds focusable Build slots: select a foam letter, then tap/click a slot or press Enter/OK to place it without precision dragging.
+- Adds keyboard/webOS activation: Enter/OK grabs/releases a focused foam letter, arrow keys move it, and Escape releases keyboard movement.
+- Adds zero-dependency Node regression tests and a GitHub Actions CI workflow.
+- PWA cache advances to `english-language-lab-v25-1`.
+- The stable `reference-v0.25` branch remains unchanged.
 
 ### v0.25 Build a Word 2.0
 
@@ -452,7 +464,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v25` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The service worker uses cache `english-language-lab-v25-1` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -470,6 +482,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.25
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.25.1
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
