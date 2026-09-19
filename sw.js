@@ -1,4 +1,4 @@
-const CACHE = 'english-language-lab-v14-2';
+const CACHE = 'english-language-lab-v15';
 const ASSETS = [
   './',
   './index.html',
@@ -16,6 +16,7 @@ const ASSETS = [
   './assets/js/core/platform-profile.js',
   './assets/js/core/platform-adapter.js',
   './assets/js/ui/board-piece-view.js',
+  './assets/js/ui/board-workspace.js',
   './assets/icon.svg'
 ];
 

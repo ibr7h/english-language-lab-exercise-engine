@@ -5,8 +5,9 @@ import { createLetterPiece, pieceCan, BOARD_CAPABILITIES } from './core/board-pi
 import { detectPlatformProfile } from './core/platform-profile.js';
 import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
+import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.14';
+const APP_VERSION='0.15';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=2;
 const LEGACY_STORAGE_KEYS=['englishLab.board.v0.13','englishLab.board.v0.8'];
@@ -140,6 +141,7 @@ class EnglishMagneticBoard {
     this.exercise=null;
     this.platform=createPlatformAdapter(detectPlatformProfile());
     this.drag=null;
+    this.workspace=null;
   }
   get items(){return this.state.items;}
   set items(value){this.state.replace(value);}
@@ -174,6 +176,12 @@ class EnglishMagneticBoard {
     this.renderTray();
     this.renderGraphemeTrays();
     this.applyInterfaceMode(this.interfaceMode,true);
+    this.workspace=new BoardWorkspace(this,{
+      alphabet:ALPHABET,
+      digraphs:KIT_DIGRAPHS,
+      vowelTeams:KIT_VOWEL_TEAMS
+    });
+    this.workspace.init();
 
     const caseSelect=$('#englishCase'); if(caseSelect)caseSelect.value=this.caseMode;
     const colorSelect=$('#englishColorMode'); if(colorSelect)colorSelect.value=this.colorMode;
@@ -261,12 +269,19 @@ class EnglishMagneticBoard {
     $('#englishScatter')?.addEventListener('click',()=>this.scatterPieces());
     $('#englishSpeak')?.addEventListener('click',()=>this.pronounceBoard());
     $('#englishClear')?.addEventListener('click',()=>this.clearBoard());
-    $('#englishCase')?.addEventListener('change',e=>{this.caseMode=e.target.value;this.renderTray();this.renderGraphemeTrays();this.renderBoard();this.persist();});
+    $('#englishCase')?.addEventListener('change',e=>{
+      this.caseMode=e.target.value;
+      this.renderTray();this.renderGraphemeTrays();this.renderBoard();
+      this.workspace?.renderStrip();
+      this.workspace?.syncCaseButtons();
+      this.persist();
+    });
     $('#englishColorMode')?.addEventListener('change',e=>{
       this.colorMode=e.target.value==='classic'?'classic':'phonics';
       localStorage.setItem('englishLab.colorMode',this.colorMode);
       this.recolorAllPieces();
       this.renderTray();this.renderGraphemeTrays();this.renderBoard();
+      this.workspace?.renderStrip();
     });
     $('#studentModeBtn')?.addEventListener('click',()=>this.applyInterfaceMode('student'));
     $('#teacherModeBtn')?.addEventListener('click',()=>this.applyInterfaceMode('teacher'));
@@ -803,6 +818,9 @@ class EnglishMagneticBoard {
     add('Segment & Blend controls',Boolean($('#englishSegmentControls')),'Phonics manipulative');
     add('Student / Teacher switch',Boolean($('#studentModeBtn')&&$('#teacherModeBtn')),'Experience modes');
     add('Main navigation',document.documentElement.dataset.mainNavReady==='true','Magnetic Board / Letters / Word Builder / Practice / Learning Path');
+    add('Classroom Whiteboard workspace',Boolean(this.workspace&&$('#englishFullscreenBoard')),'Full screen + toolbox + letter strip');
+    add('Ink canvas',Boolean($('#englishInkCanvas')),'Pen / eraser layer');
+    add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
 
     try{
       const a=createLetterPiece({logicalChar:'A'});

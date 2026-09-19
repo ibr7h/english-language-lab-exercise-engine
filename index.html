@@ -208,12 +208,17 @@
                 <small id="englishBoardHint">Pick a foam letter, move it anywhere, resize it, duplicate it, or build freely.</small>
               </div>
             </div>
-            <span id="englishPieceCount">0 pieces</span>
+            <div class="english-board-header-actions">
+              <span id="englishPieceCount">0 pieces</span>
+              <button id="englishFullscreenBoard" type="button" class="board-fullscreen-btn" aria-label="Open full-screen whiteboard">⛶ Full Board</button>
+            </div>
           </div>
 
           <div id="englishBoardCanvas" class="english-board-canvas" aria-label="Giant magnetic foam board">
             <div class="english-board-gridline gridline-one"></div>
             <div class="english-board-gridline gridline-two"></div>
+            <div id="englishWritingGuides" class="board-writing-guides" data-guide="blank" aria-hidden="true"></div>
+            <canvas id="englishInkCanvas" class="board-ink-canvas" aria-label="Whiteboard drawing layer"></canvas>
             <div class="english-board-empty">
               <span>🧲</span>
               <strong>The magnetic board is ready</strong>
@@ -281,6 +286,83 @@
         </aside>
       </div>
 
+      <div id="englishWorkspaceChrome" class="board-workspace-chrome" aria-hidden="true">
+        <div class="workspace-topbar">
+          <button id="englishWorkspaceToolboxToggle" type="button" class="workspace-topbar-btn" aria-expanded="true">☰ Tools</button>
+          <strong>Magnetic Whiteboard</strong>
+          <button id="englishWorkspaceExit" type="button" class="workspace-topbar-btn workspace-exit-btn">✕ Exit</button>
+        </div>
+
+        <aside id="englishWorkspaceToolbox" class="workspace-toolbox" aria-label="Whiteboard tools">
+          <div class="workspace-tool-group">
+            <strong>Interaction</strong>
+            <div class="workspace-segmented">
+              <button type="button" data-workspace-tool="move">👆 Move</button>
+              <button type="button" data-workspace-tool="pen">✏ Pen</button>
+              <button type="button" data-workspace-tool="eraser">⌫ Eraser</button>
+            </div>
+          </div>
+
+          <div class="workspace-tool-group">
+            <strong>Letter case</strong>
+            <div class="workspace-segmented">
+              <button type="button" data-workspace-case="upper">ABC</button>
+              <button type="button" data-workspace-case="lower">abc</button>
+            </div>
+          </div>
+
+          <div class="workspace-tool-group">
+            <strong>Writing guides</strong>
+            <div class="workspace-guide-grid">
+              <button type="button" data-guide-mode="blank">Blank</button>
+              <button type="button" data-guide-mode="baseline">Baseline</button>
+              <button type="button" data-guide-mode="primary">3-Line</button>
+              <button type="button" data-guide-mode="four-line">4-Line</button>
+            </div>
+          </div>
+
+          <div class="workspace-tool-group">
+            <strong>Pen</strong>
+            <div class="workspace-color-row" aria-label="Pen color">
+              <button type="button" data-ink-color="#172132" class="ink-color black" aria-label="Black pen"></button>
+              <button type="button" data-ink-color="#dc2626" class="ink-color red" aria-label="Red pen"></button>
+              <button type="button" data-ink-color="#2563eb" class="ink-color blue" aria-label="Blue pen"></button>
+              <button type="button" data-ink-color="#15803d" class="ink-color green" aria-label="Green pen"></button>
+            </div>
+            <label class="workspace-width-control">
+              <span>Width <b id="englishPenWidthValue">5px</b></span>
+              <input id="englishPenWidth" type="range" min="2" max="18" step="1" value="5" />
+            </label>
+            <div class="workspace-action-grid">
+              <button id="englishInkUndo" type="button">↶ Ink</button>
+              <button id="englishInkRedo" type="button">↷ Ink</button>
+              <button id="englishClearInk" type="button">🧽 Clear ink</button>
+            </div>
+          </div>
+
+          <div class="workspace-tool-group">
+            <strong>Board history</strong>
+            <div class="workspace-segmented">
+              <button id="englishWorkspaceBoardUndo" type="button">↶ Undo</button>
+              <button id="englishWorkspaceBoardRedo" type="button">↷ Redo</button>
+            </div>
+          </div>
+        </aside>
+
+        <div id="englishWorkspaceLetterStrip" class="workspace-letter-strip">
+          <div class="workspace-strip-tabs">
+            <button type="button" data-strip-kind="letters">ABC</button>
+            <button type="button" data-strip-kind="digraphs">Digraphs</button>
+            <button type="button" data-strip-kind="vowel-teams">Vowel Teams</button>
+          </div>
+          <div class="workspace-strip-row">
+            <button id="englishStripPrev" type="button" class="workspace-strip-arrow" aria-label="Scroll letters left">‹</button>
+            <div id="englishWorkspaceStripScroller" class="workspace-strip-scroller" aria-label="Scrollable foam letter strip"></div>
+            <button id="englishStripNext" type="button" class="workspace-strip-arrow" aria-label="Scroll letters right">›</button>
+          </div>
+        </div>
+      </div>
+
       <section id="englishDiagnosticsPanel" class="diagnostics-panel teacher-only hidden" aria-live="polite">
         <div class="diagnostics-head">
           <div>
@@ -291,7 +373,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.14</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.15</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -405,7 +487,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.14.2</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.15</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
