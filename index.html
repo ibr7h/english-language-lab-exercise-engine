@@ -55,12 +55,6 @@
               <option value="classic">Classic single color</option>
             </select>
           </label>
-          <label class="compact-control teacher-only">New letters
-            <select id="englishCase" aria-label="Case for new foam letters">
-              <option value="upper">ABC</option>
-              <option value="lower">abc</option>
-            </select>
-          </label>
           <label class="compact-control teacher-only">Letter font
             <select id="letterFontPicker">
               <optgroup label="Educational">
@@ -343,7 +337,12 @@
         <aside class="english-kit-panel">
           <div class="foam-tray-heading">
             <div><span class="foam-tray-icon">🧺</span><strong>Original Foam Letter Kit</strong></div>
-            <small>26 reusable pieces</small>
+            <small id="englishTrayPieceCount">26 reusable pieces</small>
+          </div>
+          <div id="englishTrayCaseSwitch" class="foam-case-switch" role="group" aria-label="Foam letter case">
+            <button type="button" data-tray-case="upper" class="active" aria-pressed="true">ABC</button>
+            <button type="button" data-tray-case="lower" aria-pressed="false">abc</button>
+            <button type="button" data-tray-case="both" aria-pressed="false">Aa</button>
           </div>
           <div id="englishLetterTray" class="english-letter-tray"></div>
           <p class="kit-copy-hint">Tap to add quickly, or drag a piece directly onto the board.</p>
@@ -492,6 +491,7 @@
             <div class="workspace-segmented">
               <button type="button" data-workspace-case="upper">ABC</button>
               <button type="button" data-workspace-case="lower">abc</button>
+              <button type="button" data-workspace-case="both">Aa</button>
             </div>
             <small class="workspace-case-note">Changes the tray only. Letters already on the board keep their own case.</small>
           </div>
