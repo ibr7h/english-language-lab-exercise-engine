@@ -106,7 +106,8 @@ export class BoardWorkspace {
         pressure:clamp(Number(point.pressure)||.5,0,1)
       })),
       scale:clamp(Number(stroke.scale)||1,.25,4),
-      groupId:stroke.groupId==null?null:String(stroke.groupId)
+      groupId:stroke.groupId==null?null:String(stroke.groupId),
+      locked:Boolean(stroke.locked)
     };
   }
 
@@ -266,6 +267,10 @@ export class BoardWorkspace {
     document.querySelector('#englishWorkspaceLarger')?.addEventListener('click',()=>this.resizeSelected(.1));
     document.querySelector('#englishWorkspaceDuplicate')?.addEventListener('click',()=>this.duplicateSelected());
     document.querySelector('#englishWorkspaceDelete')?.addEventListener('click',()=>this.deleteSelected());
+    document.querySelector('#englishWorkspaceLockSelected')?.addEventListener('click',()=>this.lockSelected());
+    document.querySelector('#englishWorkspaceUnlockSelected')?.addEventListener('click',()=>this.unlockSelected());
+    document.querySelector('#englishWorkspaceSideLock')?.addEventListener('click',()=>this.lockSelected());
+    document.querySelector('#englishWorkspaceSideUnlock')?.addEventListener('click',()=>this.unlockSelected());
     document.querySelector('#englishWorkspaceAlign')?.addEventListener('click',()=>this.board.autoAlignRows());
     document.querySelector('#englishWorkspaceScatter')?.addEventListener('click',()=>this.board.scatterPieces());
     document.querySelector('#englishWorkspaceBoardUndo')?.addEventListener('click',()=>this.undoSelectedDomain());
@@ -693,6 +698,10 @@ export class BoardWorkspace {
   groupSelectedInk(){
     const selected=this.selectedInkStrokes();
     if(selected.length<2)return;
+    if(selected.some(stroke=>stroke.locked)){
+      this.board.toast?.('Unlock selected drawings before grouping');
+      return;
+    }
     const groupIds=new Set(selected.map(stroke=>stroke.groupId).filter(Boolean));
     const alreadySingleGroup=groupIds.size===1&&selected.every(stroke=>stroke.groupId&&groupIds.has(stroke.groupId));
     if(alreadySingleGroup)return;
@@ -707,6 +716,10 @@ export class BoardWorkspace {
 
   ungroupSelectedInk(){
     const selected=this.selectedInkStrokes();
+    if(selected.some(stroke=>stroke.locked)){
+      this.board.toast?.('Unlock the drawing before ungrouping');
+      return;
+    }
     const groupIds=new Set(selected.map(stroke=>stroke.groupId).filter(Boolean));
     if(!groupIds.size)return;
 
@@ -845,7 +858,8 @@ export class BoardWorkspace {
         pressure:point.pressure
       })),
       scale:1,
-      groupId:null
+      groupId:null,
+      locked:false
     };
   }
 
@@ -920,6 +934,7 @@ export class BoardWorkspace {
     const path=document.createElementNS('http://www.w3.org/2000/svg','path');
     path.classList.add('ink-object');
     if(this.selectedStrokeIds.has(stroke.id))path.classList.add('is-selected');
+    if(stroke.locked)path.classList.add('is-locked');
     if(active)path.dataset.activeInk='true';
 
     path.dataset.strokeId=stroke.id;
@@ -1004,6 +1019,11 @@ export class BoardWorkspace {
     if(this.settings.tool==='eraser'){
       event.preventDefault();
       event.stopPropagation();
+      if(stroke.locked){
+        this.selectInk(id);
+        this.board.toast?.('Unlock the drawing before erasing it');
+        return;
+      }
       this.checkpointInk('ERASE_STROKE');
       const eraseIds=stroke.groupId
         ?new Set(this.strokes.filter(item=>item.groupId===stroke.groupId).map(item=>item.id))
@@ -1021,6 +1041,12 @@ export class BoardWorkspace {
 
     event.preventDefault();
     event.stopPropagation();
+
+    if(stroke.locked){
+      this.selectInk(id);
+      this.board.toast?.('Drawing locked');
+      return;
+    }
 
     // Keep the live SVG path in place: selection styling is synchronized
     // without rebuilding the ink layer before pointer capture.
@@ -1138,6 +1164,47 @@ export class BoardWorkspace {
     this.updateFoamToolState();
   }
 
+  lockSelected(){
+    if(this.selectedStrokeIds.size){
+      this.lockSelectedInk();
+      return;
+    }
+    this.board.lockSelectedFoam();
+  }
+
+  unlockSelected(){
+    if(this.selectedStrokeIds.size){
+      this.unlockSelectedInk();
+      return;
+    }
+    this.board.unlockSelectedFoam();
+  }
+
+  lockSelectedInk(){
+    const selected=this.selectedInkStrokes();
+    if(!selected.length)return;
+    this.checkpointInk('LOCK_INK');
+    selected.forEach(stroke=>{stroke.locked=true;});
+    this.persistInk();
+    this.renderInk();
+    this.updateFoamToolState();
+  }
+
+  unlockSelectedInk(){
+    const selected=this.selectedInkStrokes();
+    if(!selected.length)return;
+    this.checkpointInk('UNLOCK_INK');
+    selected.forEach(stroke=>{stroke.locked=false;});
+    this.persistInk();
+    this.renderInk();
+    this.updateFoamToolState();
+  }
+
+  selectedInkLocked(){
+    const selected=this.selectedInkStrokes();
+    return selected.length>0&&selected.some(stroke=>stroke.locked);
+  }
+
   resizeSelected(delta){
     if(this.selectedStrokeIds.size){
       this.resizeSelectedInk(delta);
@@ -1173,6 +1240,10 @@ export class BoardWorkspace {
   resizeInkSelectionByFactor(factor,label='RESIZE_INK'){
     const selected=this.selectedInkStrokes();
     if(!selected.length)return;
+    if(selected.some(stroke=>stroke.locked)){
+      this.board.toast?.('Unlock the drawing before resizing it');
+      return;
+    }
 
     const bounds=this.selectionBounds(selected);
     if(!bounds)return;
@@ -1215,6 +1286,10 @@ export class BoardWorkspace {
   duplicateSelectedInk(){
     const selected=this.selectedInkStrokes();
     if(!selected.length)return;
+    if(selected.some(stroke=>stroke.locked)){
+      this.board.toast?.('Unlock the drawing before duplicating it');
+      return;
+    }
 
     this.checkpointInk('DUPLICATE_INK');
     const newGroupId=selected.length>1?uid('inkgroup'):null;
@@ -1238,6 +1313,10 @@ export class BoardWorkspace {
   deleteSelectedInk(){
     const ids=new Set(this.selectedStrokeIds);
     if(!ids.size)return;
+    if(this.selectedInkStrokes().some(stroke=>stroke.locked)){
+      this.board.toast?.('Unlock the drawing before deleting it');
+      return;
+    }
 
     this.checkpointInk('DELETE_INK');
     this.strokes=this.strokes.filter(stroke=>!ids.has(stroke.id));
@@ -1273,6 +1352,13 @@ export class BoardWorkspace {
     const inkSelected=selectedInk.length>0;
     const foamSelectedCount=this.board?.selectedIds?.size||0;
     const selectedCount=inkSelected?selectedInk.length:foamSelectedCount;
+    const foamSelected=this.board?.items?.filter?.(item=>this.board.selectedIds.has(item.id))||[];
+    const selectionLocked=inkSelected
+      ?selectedInk.some(stroke=>stroke.locked)
+      :foamSelected.some(item=>item.locked);
+    const selectionUnlocked=inkSelected
+      ?selectedInk.some(stroke=>!stroke.locked)
+      :foamSelected.some(item=>!item.locked);
     const totalFoam=this.board?.items?.length||0;
     const activeFoam=this.board?.items?.find?.(item=>item.id===this.board.activeItemId)||null;
     const activeInk=inkSelected?(this.findStroke(this.selectedStrokeId)||selectedInk[0]):null;
@@ -1287,7 +1373,7 @@ export class BoardWorkspace {
 
     needsSelection.forEach(selector=>{
       const button=document.querySelector(selector);
-      if(button)button.disabled=selectedCount===0;
+      if(button)button.disabled=selectedCount===0||selectionLocked;
     });
 
     const align=document.querySelector('#englishWorkspaceAlign');
@@ -1340,7 +1426,16 @@ export class BoardWorkspace {
     });
     ['#englishInkUngroup','#englishWorkspaceInkUngroup'].forEach(selector=>{
       const button=document.querySelector(selector);
-      if(button)button.disabled=!canUngroup;
+      if(button)button.disabled=!canUngroup||selectionLocked;
+    });
+
+    ['#englishWorkspaceLockSelected','#englishWorkspaceSideLock'].forEach(selector=>{
+      const button=document.querySelector(selector);
+      if(button)button.disabled=selectedCount===0||!selectionUnlocked;
+    });
+    ['#englishWorkspaceUnlockSelected','#englishWorkspaceSideUnlock'].forEach(selector=>{
+      const button=document.querySelector(selector);
+      if(button)button.disabled=selectedCount===0||!selectionLocked;
     });
   }
 }
