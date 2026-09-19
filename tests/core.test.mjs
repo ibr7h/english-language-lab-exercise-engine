@@ -67,6 +67,8 @@ test('phonics engine recognizes silent letters and advanced sound chunks', () =>
   assert.deepEqual(roles('STATION'),['consonant','consonant','vowel','sound-chunk','sound-chunk','sound-chunk','sound-chunk']);
   assert.deepEqual(roles('VISION'),['consonant','vowel','sound-chunk','sound-chunk','sound-chunk','sound-chunk']);
   assert.deepEqual(roles('MUSICIAN'),['consonant','vowel','consonant','vowel','sound-chunk','sound-chunk','sound-chunk','sound-chunk']);
+  assert.deepEqual(roles('MATCH'),['consonant','vowel','sound-chunk','sound-chunk','sound-chunk']);
+  assert.deepEqual(roles('BADGE'),['consonant','vowel','sound-chunk','sound-chunk','sound-chunk']);
 
   assert.deepEqual(segmentPhonicsGraphemes('station'),['S','T','A','TION']);
   assert.deepEqual(segmentPhonicsGraphemes('vision'),['V','I','SION']);
