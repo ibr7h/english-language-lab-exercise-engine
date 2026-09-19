@@ -22,7 +22,7 @@
     </div>
     <div class="app-header-actions">
       <div class="experience-switch" role="group" aria-label="Experience mode">
-        <button id="studentModeBtn" class="experience-btn">👧 Student</button>
+        <button id="studentModeBtn" class="experience-btn">▶ Student Play</button>
         <button id="teacherModeBtn" class="experience-btn active">👩‍🏫 Teacher</button>
       </div>
       <div class="progress-pill" aria-live="polite">
@@ -112,8 +112,16 @@
         </div>
 
         <div id="studentModeNotice" class="student-mode-notice">
-          <span>Student Mode is active. Teacher tools are hidden, not removed.</span>
-          <button id="studentReturnTeacher" type="button">Show teacher tools</button>
+          <div class="student-play-copy">
+            <strong>Student Play</strong>
+            <span id="studentBoardName">Board</span>
+          </div>
+          <div class="student-play-actions">
+            <button type="button" data-student-board-step="-1" aria-label="Previous activity">‹</button>
+            <button type="button" data-activity-action="reset-board">↺ Start over</button>
+            <button type="button" data-student-board-step="1" aria-label="Next activity">›</button>
+            <button id="studentReturnTeacher" type="button">Teacher tools</button>
+          </div>
         </div>
 
         <div id="englishBuildControls" class="english-build-controls hidden">
@@ -233,6 +241,15 @@
             <button type="button" data-board-surface="english">English</button>
           </div>
         </div>
+        <div class="english-board-manager-group activity-group">
+          <strong>Activity</strong>
+          <div class="activity-actions" role="group" aria-label="Classroom activity controls">
+            <button type="button" data-activity-action="set-start" title="Use the current board as the activity start state">📌 Set Start</button>
+            <button type="button" data-activity-action="reset-board" title="Reset this board to its start state">↺ Reset Board</button>
+            <button type="button" data-activity-action="reset-lesson" title="Reset all prepared boards">↺ All</button>
+            <button type="button" data-activity-action="play" title="Enter Student Play mode">▶ Play</button>
+          </div>
+        </div>
         <div class="english-board-manager-group lesson-group">
           <strong>Lesson</strong>
           <div class="lesson-actions" role="group" aria-label="Lesson file actions">
@@ -342,6 +359,12 @@
           <button id="englishWorkspaceToolboxToggle" type="button" class="workspace-topbar-btn workspace-menu-btn" aria-expanded="true" title="Show or hide tools">☰</button>
 
           <div class="workspace-topbar-tools" role="toolbar" aria-label="Board selection tools">
+            <div id="englishWorkspaceStudentNav" class="workspace-student-nav student-only" aria-label="Student activity navigation">
+              <button type="button" data-student-board-step="-1" aria-label="Previous activity">‹</button>
+              <strong id="englishWorkspaceStudentBoardName">Board</strong>
+              <button type="button" data-activity-action="reset-board">↺</button>
+              <button type="button" data-student-board-step="1" aria-label="Next activity">›</button>
+            </div>
             <button id="englishWorkspaceBoardUndo" type="button" class="workspace-icon-btn" title="Undo" aria-label="Undo">↶</button>
             <button id="englishWorkspaceBoardRedo" type="button" class="workspace-icon-btn" title="Redo" aria-label="Redo">↷</button>
             <span class="workspace-topbar-separator" aria-hidden="true"></span>
@@ -393,6 +416,16 @@
               <button type="button" data-board-surface="squares">Squares</button>
               <button type="button" data-board-surface="notebook">Notebook</button>
               <button type="button" data-board-surface="english">English</button>
+            </div>
+          </div>
+
+          <div class="workspace-tool-group">
+            <strong>Activity</strong>
+            <div class="workspace-activity-grid">
+              <button type="button" data-activity-action="set-start">📌 Set Start</button>
+              <button type="button" data-activity-action="reset-board">↺ Reset Board</button>
+              <button type="button" data-activity-action="reset-lesson">↺ Reset All</button>
+              <button type="button" data-activity-action="play">▶ Student Play</button>
             </div>
           </div>
 
@@ -478,7 +511,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.22</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.23</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -592,7 +625,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.22</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.23</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
