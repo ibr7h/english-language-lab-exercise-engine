@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.25';
+const APP_VERSION='0.25.1';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const BOARDS_STORAGE_KEY='englishLab.boards.v1';
@@ -160,6 +160,10 @@ class EnglishMagneticBoard {
     this.loadingBoardRecord=false;
     this.foamMarquee=null;
     this.foamResize=null;
+    // Foam coordinates are persisted together with the canvas size they were
+    // authored against. When Normal / Full Board changes the canvas geometry,
+    // positions are remapped proportionally instead of being clamped to an edge.
+    this.foamCanvasSpace=null;
     const savedSnap=localStorage.getItem('englishLab.buildSnapMode');
     this.buildSnapModeSetting=['off','inside','strong'].includes(savedSnap)?savedSnap:'inside';
     this.buildCaseMattersSetting=localStorage.getItem('englishLab.buildCaseMatters')==='true';
@@ -466,7 +470,8 @@ class EnglishMagneticBoard {
       caseMode:record?.caseMode==='lower'?'lower':'upper',
       exercise:record?.exercise?deepClone(record.exercise):null,
       segmentState:record?.segmentState?deepClone(record.segmentState):null,
-      startState:record?.startState?deepClone(record.startState):null
+      startState:record?.startState?deepClone(record.startState):null,
+      foamSpace:this.normalizeFoamSpace(record?.foamSpace)
     };
   }
 
@@ -489,7 +494,8 @@ class EnglishMagneticBoard {
         mode:this.mode,
         caseMode:this.caseMode,
         exercise:this.exercise,
-        segmentState:this.segmentState||null
+        segmentState:this.segmentState||null,
+        foamSpace:this.currentFoamSpace()
       },0);
       this.boards=[first];
       this.activeBoardId=first.id;
@@ -517,6 +523,7 @@ class EnglishMagneticBoard {
     record.caseMode=this.caseMode;
     record.exercise=this.exercise?deepClone(this.exercise):null;
     record.segmentState=this.segmentState?deepClone(this.segmentState):null;
+    record.foamSpace=deepClone(this.foamCanvasSpace||this.currentFoamSpace());
   }
 
   persistBoards(){
@@ -541,6 +548,7 @@ class EnglishMagneticBoard {
       // Load the complete board record atomically. No persistence is allowed
       // until items, ink, surface and mode all belong to the same board.
       this.state.replace(deepClone(record.items||[]));
+      this.foamCanvasSpace=this.normalizeFoamSpace(record.foamSpace);
       this.boardSurface=BOARD_SURFACES.has(record.surface)?record.surface:'current';
       this.caseMode=record.caseMode==='lower'?'lower':'upper';
       this.exercise=record.exercise?deepClone(record.exercise):null;
@@ -634,7 +642,8 @@ class EnglishMagneticBoard {
       mode:this.mode,
       caseMode:this.caseMode,
       exercise:this.exercise?deepClone(this.exercise):null,
-      segmentState:this.segmentState?deepClone(this.segmentState):null
+      segmentState:this.segmentState?deepClone(this.segmentState):null,
+      foamSpace:deepClone(this.foamCanvasSpace||this.currentFoamSpace())
     };
   }
 
@@ -647,6 +656,7 @@ class EnglishMagneticBoard {
     record.caseMode=state.caseMode==='lower'?'lower':'upper';
     record.exercise=state.exercise?deepClone(state.exercise):null;
     record.segmentState=state.segmentState?deepClone(state.segmentState):null;
+    record.foamSpace=this.normalizeFoamSpace(state.foamSpace);
     return true;
   }
 
@@ -870,7 +880,7 @@ class EnglishMagneticBoard {
       if(title)title.textContent='Segment & Blend — move graphemes from sounds to a whole word';
       if(hint)hint.textContent='Spread the foam graphemes to hear the parts, then blend them together to read the word.';
     }
-    this.persist();this.renderBoard();
+    this.persist();this.renderBoard();this.syncWorkspaceBuildControls();
     if(!silent)this.toast(next==='free'?'Free board':next==='build'?'Build word mode':next==='completed'?'Completed words mode':'Segment & Blend');
   }
   bindControls(){
@@ -935,6 +945,9 @@ class EnglishMagneticBoard {
     $('#englishReshuffle')?.addEventListener('click',()=>this.reshuffleExercise());
     $('#englishCheck')?.addEventListener('click',()=>this.checkExercise());
     $('#englishHintBtn')?.addEventListener('click',()=>this.hintExercise());
+    $('#englishWorkspaceBuildReshuffle')?.addEventListener('click',()=>this.reshuffleExercise());
+    $('#englishWorkspaceBuildCheck')?.addEventListener('click',()=>this.checkExercise());
+    $('#englishWorkspaceBuildHint')?.addEventListener('click',()=>this.hintExercise());
     $('#englishShowTarget')?.addEventListener('change',()=>this.renderAssemblySlots());
     $('#englishBuildSnapMode')?.addEventListener('change',event=>this.setBuildSnapMode(event.target.value));
     $('#englishCaseMatters')?.addEventListener('change',event=>this.setBuildCaseMatters(Boolean(event.target.checked)));
@@ -1100,6 +1113,55 @@ class EnglishMagneticBoard {
     });
   }
   canvasRect(){return $('#englishBoardCanvas')?.getBoundingClientRect()||{width:700,height:500,left:0,top:0};}
+
+  normalizeFoamSpace(space){
+    const width=Number(space?.width)||0;
+    const height=Number(space?.height)||0;
+    return width>=2&&height>=2?{width,height}:null;
+  }
+
+  currentFoamSpace(rect=this.canvasRect()){
+    const width=Number(rect?.width)||0;
+    const height=Number(rect?.height)||0;
+    return width>=2&&height>=2?{width,height}:null;
+  }
+
+  syncFoamCoordinatesToCanvas(rect=this.canvasRect()){
+    const next=this.currentFoamSpace(rect);
+    if(!next)return false;
+
+    const previous=this.normalizeFoamSpace(this.foamCanvasSpace);
+    if(!previous){
+      this.foamCanvasSpace=next;
+      return false;
+    }
+
+    if(Math.abs(previous.width-next.width)<1&&Math.abs(previous.height-next.height)<1){
+      this.foamCanvasSpace=next;
+      return false;
+    }
+
+    const previousMaxX=Math.max(4,previous.width-72);
+    const previousMaxY=Math.max(4,previous.height-82);
+    const nextMaxX=Math.max(4,next.width-72);
+    const nextMaxY=Math.max(4,next.height-82);
+    const previousSpanX=Math.max(1,previousMaxX-4);
+    const previousSpanY=Math.max(1,previousMaxY-4);
+    const nextSpanX=Math.max(1,nextMaxX-4);
+    const nextSpanY=Math.max(1,nextMaxY-4);
+
+    this.items.forEach(item=>{
+      if(item.type!=='letter')return;
+      const x=clamp(Number(item.x)||4,4,previousMaxX);
+      const y=clamp(Number(item.y)||4,4,previousMaxY);
+      item.x=4+((x-4)/previousSpanX)*nextSpanX;
+      item.y=4+((y-4)/previousSpanY)*nextSpanY;
+    });
+
+    this.foamCanvasSpace=next;
+    return true;
+  }
+
   createPiece(letter,x,y,extra={}){
     const letterCase=extra.letterCase==='lower'||extra.letterCase==='upper'
       ?extra.letterCase
@@ -1605,8 +1667,9 @@ class EnglishMagneticBoard {
   renderBoard(){
     const canvas=$('#englishBoardCanvas');if(!canvas)return;
     const empty=canvas.querySelector('.english-board-empty');
-    canvas.querySelectorAll('.free-foam-piece').forEach(el=>el.remove());
     const rect=this.canvasRect();
+    this.syncFoamCoordinatesToCanvas(rect);
+    canvas.querySelectorAll('.free-foam-piece').forEach(el=>el.remove());
     const mobile=rect.width<640;
     this.items.forEach(item=>{
       if(item.type!=='letter')return;
@@ -2119,6 +2182,19 @@ class EnglishMagneticBoard {
     return 'Move letters freely. A letter snaps only when you drop it inside an answer slot.';
   }
 
+  syncWorkspaceBuildControls(){
+    const active=this.mode==='build'&&Boolean(this.exercise);
+    const actions=$('#englishWorkspaceBuildActions');
+    if(actions)actions.classList.toggle('hidden',!active);
+
+    const status=$('#englishWorkspaceBuildStatus');
+    const normalStatus=$('#englishExerciseStatus');
+    if(status){
+      status.textContent=active?(normalStatus?.textContent||'Build the word.'):'';
+      status.dataset.type=normalStatus?.dataset.type||'info';
+    }
+  }
+
   syncBuildOptionControls(){
     this.normalizeBuildExercise();
     const snap=this.exercise?.snapMode||this.buildSnapModeSetting;
@@ -2140,6 +2216,7 @@ class EnglishMagneticBoard {
       const hint=$('#englishBoardHint');
       if(hint)hint.textContent=this.buildHintText();
     }
+    this.syncWorkspaceBuildControls();
   }
 
   setBuildSnapMode(mode){
@@ -2515,8 +2592,11 @@ class EnglishMagneticBoard {
   }
 
   setExerciseStatus(message,type='info'){
-    const el=$('#englishExerciseStatus');if(!el)return;
-    el.textContent=message;el.dataset.type=type;
+    const el=$('#englishExerciseStatus');
+    if(el){el.textContent=message;el.dataset.type=type;}
+    const workspace=$('#englishWorkspaceBuildStatus');
+    if(workspace){workspace.textContent=message;workspace.dataset.type=type;}
+    this.syncWorkspaceBuildControls();
   }
 
   async runDiagnostics(showPanel=true){
@@ -2540,6 +2620,13 @@ class EnglishMagneticBoard {
     ),'Multi-stroke selection + Group/Ungroup');
     add('Main navigation',document.documentElement.dataset.mainNavReady==='true','Magnetic Board / Letters / Word Builder / Practice / Learning Path');
     add('Classroom Whiteboard workspace',Boolean(this.workspace&&$('#englishFullscreenBoard')),'Full screen + toolbox + letter strip');
+    add('Full-board Build controls',Boolean(
+      $('#englishWorkspaceBuildActions')&&
+      $('#englishWorkspaceBuildCheck')&&
+      $('#englishWorkspaceBuildHint')&&
+      $('#englishWorkspaceBuildReshuffle')
+    ),'Check / Hint / Reshuffle remain available in Full Board');
+    add('Foam canvas-space remapping',typeof this.syncFoamCoordinatesToCanvas==='function','Preserves relative foam positions across Normal / Full Board');
     add('Full-board topbar tools',Boolean(
       $('#englishWorkspaceSmaller')&&
       $('#englishWorkspaceResetSize')&&
