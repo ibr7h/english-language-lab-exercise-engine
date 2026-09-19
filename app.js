@@ -475,8 +475,8 @@ function activateMainTab(tab) {
   const targetView = tab.dataset.view;
   if (!targetView) return;
 
-  $('.tab').forEach(item => item.classList.toggle('is-active', item === tab));
-  $('.view').forEach(view => view.classList.toggle('is-active', view.id === targetView));
+  document.querySelectorAll('.tab').forEach(item => item.classList.toggle('is-active', item === tab));
+  document.querySelectorAll('.view').forEach(view => view.classList.toggle('is-active', view.id === targetView));
 
   if (targetView === 'magnetic-board' && tab.dataset.boardMode) {
     const mode = tab.dataset.boardMode;
