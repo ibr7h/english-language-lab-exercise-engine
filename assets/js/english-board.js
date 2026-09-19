@@ -144,17 +144,16 @@ class EnglishMagneticBoard {
   get items(){return this.state.items;}
   set items(value){this.state.replace(value);}
   init(){
-    let restored=loadBoardState(localStorage,STORAGE_KEY);
+    const stableRaw=localStorage.getItem(STORAGE_KEY);
+    let restored=stableRaw!==null ? loadBoardState(localStorage,STORAGE_KEY) : null;
     let migratedFrom=null;
 
-    if(!restored?.items?.length){
+    if(stableRaw===null){
       for(const legacyKey of LEGACY_STORAGE_KEYS){
-        const legacy=loadBoardState(localStorage,legacyKey);
-        if(legacy?.items?.length){
-          restored=legacy;
-          migratedFrom=legacyKey;
-          break;
-        }
+        if(localStorage.getItem(legacyKey)===null)continue;
+        restored=loadBoardState(localStorage,legacyKey);
+        migratedFrom=legacyKey;
+        break;
       }
     }
 
