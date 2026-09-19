@@ -362,6 +362,75 @@ footer { padding: 20px 0 36px; color: var(--ink-soft); font-size: .85rem; }
   box-shadow: 0 8px 24px rgba(91, 103, 241, .12);
 }
 
+/* Learning Path 2.0 — alphabet-first lesson card */
+.alphabet-intro-card {
+  display:grid;
+  grid-template-columns:minmax(180px,.8fr) minmax(220px,1.2fr);
+  gap:18px;
+  align-items:center;
+  margin-top:16px;
+  padding:clamp(16px,3vw,26px);
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:linear-gradient(145deg,#fff,#f7f8ff);
+}
+.alphabet-letter-pair {
+  display:flex;
+  justify-content:center;
+  align-items:baseline;
+  gap:clamp(18px,4vw,34px);
+  padding:18px;
+  border-radius:20px;
+  background:#eef1ff;
+  font-family:var(--letter-font);
+  font-weight:900;
+  line-height:.9;
+}
+.alphabet-letter-pair span {
+  font-size:clamp(4.5rem,11vw,8rem);
+}
+.alphabet-lower {
+  font-size:clamp(4rem,10vw,7.2rem) !important;
+}
+.alphabet-intro-facts {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+}
+.alphabet-intro-facts > span {
+  min-height:78px;
+  display:grid;
+  align-content:center;
+  gap:4px;
+  padding:11px 12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#fff;
+}
+.alphabet-intro-facts small {
+  color:var(--ink-soft);
+  font-size:.72rem;
+  font-weight:800;
+}
+.alphabet-intro-facts strong {
+  font-family:var(--letter-font);
+  font-size:1.1rem;
+}
+.alphabet-intro-audio {
+  grid-column:2;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+@media (max-width:700px) {
+  .alphabet-intro-card { grid-template-columns:1fr; }
+  .alphabet-intro-facts { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .alphabet-intro-audio { grid-column:1; }
+}
+@media (max-width:440px) {
+  .alphabet-intro-facts { grid-template-columns:1fr; }
+}
+
 .engine-feedback-row { min-height: 48px; }
 .engine-actions {
   flex-wrap: wrap;
