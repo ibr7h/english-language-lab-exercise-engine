@@ -2768,6 +2768,11 @@ class EnglishMagneticBoard {
 
     add('Magnetic board canvas',Boolean($('#englishBoardCanvas')),'Required UI');
     add('Letter tray',Boolean($('#englishLetterTray')),'A–Z source');
+    add('Foam case switch',
+      document.querySelectorAll('[data-tray-case]').length===3&&
+      document.querySelectorAll('[data-workspace-case]').length===3,
+      'ABC / abc / Aa · both mode exposes 52 selectable letter forms'
+    );
     add('Digraph tray',Boolean($('#englishDigraphTray')),'SH / CH / TH…');
     add('Vowel-team tray',Boolean($('#englishVowelTeamTray')),'AI / EE / OA…');
     add('Build mode controls',Boolean($('#englishBuildControls')),'Shared board builder');
