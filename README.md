@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.21 — Classroom Authoring Tools
+## v0.22 — Lesson Save & Transfer
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,19 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.22 Lesson Save & Transfer
+
+- Adds Save Lesson and Load Saved for a local named lesson snapshot on the current device.
+- Adds Export Lesson to a portable `.englishlab.json` file.
+- Adds Import Lesson with format validation, board-count limits and a 10 MB file-size guard before replacing current boards.
+- Lesson files include all Boards, active board, foam objects, vector ink/groups, lock states, surfaces, modes, Build exercises and Segment state.
+- Lesson files also include phonics/classic color mode, Teacher/Student interface mode, letter font, UI font and whiteboard workspace preferences.
+- Import re-IDs the imported Boards so the restored lesson becomes an independent local collection.
+- Restore is atomic: imported settings cannot overwrite a Board with the pre-import board state during load.
+- On platforms supporting file sharing, Export can open the native share sheet; otherwise it downloads the lesson file.
+- Export uses a Blob fallback so older browser/webOS engines are not dependent on the File constructor.
+- The stable `reference-v0.20.1` branch remains unchanged.
 
 ### v0.21 Classroom Authoring Tools
 
@@ -375,7 +388,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v21` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v22` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -393,6 +406,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.21
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.22
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
