@@ -470,15 +470,30 @@ function renderPractice() {
   });
 }
 
-$('.tab').forEach(tab => tab.addEventListener('click', () => {
-  $('.tab').forEach(item => item.classList.toggle('is-active', item === tab));
-  $('.view').forEach(view => view.classList.toggle('is-active', view.id === tab.dataset.view));
+function activateMainTab(tab) {
+  if (!tab) return;
+  const targetView = tab.dataset.view;
+  if (!targetView) return;
 
-  if (tab.dataset.view === 'magnetic-board' && tab.dataset.boardMode) {
-    window.englishBoard?.setMode?.(tab.dataset.boardMode);
-    document.querySelector('#magnetic-board')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+  $('.tab').forEach(item => item.classList.toggle('is-active', item === tab));
+  $('.view').forEach(view => view.classList.toggle('is-active', view.id === targetView));
+
+  if (targetView === 'magnetic-board' && tab.dataset.boardMode) {
+    const mode = tab.dataset.boardMode;
+    document.body.dataset.requestedBoardMode = mode;
+    window.englishBoard?.setMode?.(mode);
   }
-}));
+}
+
+const mainTabs = document.querySelector('.tabs');
+if (mainTabs) {
+  mainTabs.addEventListener('click', event => {
+    const tab = event.target.closest('.tab');
+    if (!tab || !mainTabs.contains(tab)) return;
+    activateMainTab(tab);
+  });
+  document.documentElement.dataset.mainNavReady = 'true';
+}
 
 $('#caseMode').addEventListener('change', event => {
   state.caseMode = event.target.value;

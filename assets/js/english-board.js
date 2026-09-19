@@ -178,7 +178,8 @@ class EnglishMagneticBoard {
     const caseSelect=$('#englishCase'); if(caseSelect)caseSelect.value=this.caseMode;
     const colorSelect=$('#englishColorMode'); if(colorSelect)colorSelect.value=this.colorMode;
 
-    this.setMode(this.mode||'free',true);
+    const requestedMode=document.body.dataset.requestedBoardMode;
+    this.setMode(['free','build','completed','segment'].includes(requestedMode)?requestedMode:(this.mode||'free'),true);
     this.renderBoard();
     this.updatePlatformBadge();
 
@@ -801,6 +802,7 @@ class EnglishMagneticBoard {
     add('Build mode controls',Boolean($('#englishBuildControls')),'Shared board builder');
     add('Segment & Blend controls',Boolean($('#englishSegmentControls')),'Phonics manipulative');
     add('Student / Teacher switch',Boolean($('#studentModeBtn')&&$('#teacherModeBtn')),'Experience modes');
+    add('Main navigation',document.documentElement.dataset.mainNavReady==='true','Magnetic Board / Letters / Word Builder / Practice / Learning Path');
 
     try{
       const a=createLetterPiece({logicalChar:'A'});
