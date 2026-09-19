@@ -3555,3 +3555,217 @@ body[data-interface-mode="student"] .english-color-legend {
     max-width:42vw;
   }
 }
+
+
+/* v0.23.1 Board Manager Layout */
+.english-board-manager-bar {
+  display:grid;
+  grid-template-columns:1fr;
+  gap:0;
+  padding:0;
+  overflow:visible;
+}
+.english-board-manager-row {
+  display:grid;
+  align-items:center;
+  gap:14px;
+  min-width:0;
+  padding:10px 12px;
+}
+.english-board-manager-row + .english-board-manager-row {
+  border-top:1px solid #e7ecef;
+}
+.board-workspace-row {
+  grid-template-columns:minmax(0,1.35fr) minmax(360px,.85fr);
+}
+.teacher-workflow-row {
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  background:#fbfcfd;
+  border-radius:0 0 15px 15px;
+}
+.english-board-manager-group {
+  min-width:0;
+  width:100%;
+  gap:8px;
+}
+.english-board-manager-group > strong {
+  flex:0 0 auto;
+  min-width:52px;
+  font-size:.72rem;
+  letter-spacing:.01em;
+}
+.boards-group {
+  min-width:0;
+}
+.english-board-tabs {
+  flex:1 1 auto;
+  min-width:80px;
+  max-width:none;
+  padding-block:2px;
+}
+.board-manager-actions {
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.board-manager-icon {
+  flex:0 0 32px;
+}
+.board-manager-icon:disabled {
+  opacity:.52;
+}
+.surface-group {
+  justify-content:flex-end;
+}
+.board-surface-options {
+  flex:0 1 auto;
+  min-width:0;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.board-surface-options::-webkit-scrollbar {
+  display:none;
+}
+.board-surface-options button,
+.activity-actions > button,
+.lesson-actions button {
+  min-height:32px;
+  white-space:nowrap;
+}
+.activity-group,
+.lesson-group {
+  min-width:0;
+  margin-inline-start:0;
+}
+.activity-actions,
+.lesson-actions {
+  min-width:0;
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  flex-wrap:nowrap;
+}
+.lesson-actions {
+  justify-content:flex-end;
+}
+.activity-actions > button,
+.lesson-actions button {
+  flex:0 0 auto;
+}
+.activity-actions button:disabled,
+.lesson-actions button:disabled {
+  opacity:.55;
+  background:#f8fafb;
+  color:#8b979e;
+}
+.activity-more {
+  position:relative;
+  flex:0 0 auto;
+}
+.activity-more > summary {
+  list-style:none;
+  width:34px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  border:1px solid #d8dee2;
+  border-radius:8px;
+  background:#fff;
+  color:#43515a;
+  font-size:1rem;
+  font-weight:900;
+  line-height:1;
+  cursor:pointer;
+  user-select:none;
+}
+.activity-more > summary::-webkit-details-marker {
+  display:none;
+}
+.activity-more[open] > summary {
+  background:#26323a;
+  color:#fff;
+  border-color:#26323a;
+}
+.activity-more-menu {
+  position:absolute;
+  right:0;
+  top:calc(100% + 6px);
+  z-index:120;
+  min-width:170px;
+  padding:6px;
+  border:1px solid #d8dee2;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 12px 28px rgba(31,42,49,.16);
+}
+.activity-more-menu button {
+  width:100%;
+  min-height:34px;
+  border:0;
+  border-radius:7px;
+  background:#fff;
+  color:#7f1d1d;
+  text-align:left;
+  padding:7px 9px;
+  font-size:.69rem;
+  font-weight:800;
+  white-space:nowrap;
+}
+.activity-more-menu button:hover {
+  background:#fff5f5;
+}
+.activity-more-menu button:disabled {
+  opacity:.5;
+  cursor:not-allowed;
+}
+@media(max-width:1050px){
+  .board-workspace-row,
+  .teacher-workflow-row {
+    grid-template-columns:1fr;
+  }
+  .surface-group,
+  .lesson-actions {
+    justify-content:flex-start;
+  }
+}
+@media(max-width:700px){
+  .english-board-manager-row {
+    padding:9px;
+    gap:9px;
+  }
+  .english-board-manager-group {
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  .english-board-manager-group > strong {
+    width:100%;
+    min-width:0;
+  }
+  .boards-group .english-board-tabs {
+    order:2;
+    flex-basis:100%;
+    width:100%;
+  }
+  .boards-group .board-manager-actions {
+    order:1;
+  }
+  .board-surface-options,
+  .activity-actions,
+  .lesson-actions {
+    width:100%;
+    overflow-x:auto;
+    scrollbar-width:none;
+    padding-bottom:2px;
+  }
+  .board-surface-options::-webkit-scrollbar,
+  .activity-actions::-webkit-scrollbar,
+  .lesson-actions::-webkit-scrollbar {
+    display:none;
+  }
+  .activity-more-menu {
+    left:0;
+    right:auto;
+  }
+}
