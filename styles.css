@@ -3051,3 +3051,9 @@ body.board-workspace-active > .tabs {
     padding-inline:3px;
   }
 }
+
+
+/* v0.18.1 Stable Ink Board Space */
+.board-ink-svg {
+  contain:layout paint;
+}

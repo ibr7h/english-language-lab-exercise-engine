@@ -1,5 +1,6 @@
 const WORKSPACE_STORAGE_KEY='englishLab.boardWorkspace.v1';
-const INK_STORAGE_KEY='englishLab.boardInk.v3';
+const INK_STORAGE_KEY='englishLab.boardInk.v4';
+const LEGACY_INK_V3_KEY='englishLab.boardInk.v3';
 const LEGACY_INK_V2_KEY='englishLab.boardInk.v2';
 const LEGACY_INK_V1_KEY='englishLab.boardInk.v1';
 
@@ -65,8 +66,14 @@ export class BoardWorkspace {
 
   loadInk(){
     const current=safeParse(localStorage.getItem(INK_STORAGE_KEY),null);
-    if(current?.version===3&&Array.isArray(current.strokes)){
+    if(current?.version===4&&Array.isArray(current.strokes)){
       this.strokes=current.strokes.map(stroke=>this.normalizeStroke(stroke)).filter(Boolean);
+      return;
+    }
+
+    const legacyV3=safeParse(localStorage.getItem(LEGACY_INK_V3_KEY),null);
+    if(legacyV3?.version===3&&Array.isArray(legacyV3.strokes)){
+      this.pendingLegacyInk={version:3,strokes:legacyV3.strokes};
       return;
     }
 
@@ -91,8 +98,8 @@ export class BoardWorkspace {
       id:String(stroke.id||uid('ink')),
       color:String(stroke.color||'#172132'),
       width:clamp(Number(stroke.width)||5,1,40),
-      anchorX:clamp(Number(stroke.anchorX)||0,0,1),
-      anchorY:clamp(Number(stroke.anchorY)||0,0,1),
+      anchorX:Number(stroke.anchorX)||0,
+      anchorY:Number(stroke.anchorY)||0,
       localPoints:stroke.localPoints.map(point=>({
         x:Number(point.x)||0,
         y:Number(point.y)||0,
@@ -110,37 +117,58 @@ export class BoardWorkspace {
     const base=Math.max(1,Math.min(rect.width,rect.height));
 
     const migrated=[];
-    for(const raw of this.pendingLegacyInk.strokes){
-      if(!raw||!Array.isArray(raw.points)||!raw.points.length)continue;
 
-      const points=raw.points.map(point=>({
-        x:clamp(Number(point.x)||0,0,1),
-        y:clamp(Number(point.y)||0,0,1),
-        pressure:clamp(Number(point.pressure)||.5,0,1)
-      }));
+    if(this.pendingLegacyInk.version===3){
+      for(const raw of this.pendingLegacyInk.strokes){
+        if(!raw||!Array.isArray(raw.localPoints)||!raw.localPoints.length)continue;
+        migrated.push({
+          id:String(raw.id||uid('ink')),
+          color:String(raw.color||'#172132'),
+          width:clamp(Number(raw.width)||5,1,40),
+          anchorX:(Number(raw.anchorX)||0)*rect.width,
+          anchorY:(Number(raw.anchorY)||0)*rect.height,
+          localPoints:raw.localPoints.map(point=>({
+            x:(Number(point.x)||0)*base,
+            y:(Number(point.y)||0)*base,
+            pressure:clamp(Number(point.pressure)||.5,0,1)
+          })),
+          scale:clamp(Number(raw.scale)||1,.25,4),
+          groupId:raw.groupId==null?null:String(raw.groupId)
+        });
+      }
+    }else{
+      for(const raw of this.pendingLegacyInk.strokes){
+        if(!raw||!Array.isArray(raw.points)||!raw.points.length)continue;
 
-      const xs=points.map(point=>point.x);
-      const ys=points.map(point=>point.y);
-      const centerX=(Math.min(...xs)+Math.max(...xs))/2;
-      const centerY=(Math.min(...ys)+Math.max(...ys))/2;
-      const legacyScale=clamp(Number(raw.scale)||1,.25,4);
-      const tx=Number(raw.tx)||0;
-      const ty=Number(raw.ty)||0;
+        const points=raw.points.map(point=>({
+          x:clamp(Number(point.x)||0,0,1),
+          y:clamp(Number(point.y)||0,0,1),
+          pressure:clamp(Number(point.pressure)||.5,0,1)
+        }));
 
-      migrated.push({
-        id:String(raw.id||uid('ink')),
-        color:String(raw.color||'#172132'),
-        width:clamp(Number(raw.width)||5,1,40),
-        anchorX:clamp(centerX+tx,0,1),
-        anchorY:clamp(centerY+ty,0,1),
-        localPoints:points.map(point=>({
-          x:((point.x-centerX)*rect.width)/base,
-          y:((point.y-centerY)*rect.height)/base,
-          pressure:point.pressure
-        })),
-        scale:legacyScale,
-        groupId:null
-      });
+        const xs=points.map(point=>point.x);
+        const ys=points.map(point=>point.y);
+        const centerX=(Math.min(...xs)+Math.max(...xs))/2;
+        const centerY=(Math.min(...ys)+Math.max(...ys))/2;
+        const legacyScale=clamp(Number(raw.scale)||1,.25,4);
+        const tx=Number(raw.tx)||0;
+        const ty=Number(raw.ty)||0;
+
+        migrated.push({
+          id:String(raw.id||uid('ink')),
+          color:String(raw.color||'#172132'),
+          width:clamp(Number(raw.width)||5,1,40),
+          anchorX:(centerX+tx)*rect.width,
+          anchorY:(centerY+ty)*rect.height,
+          localPoints:points.map(point=>({
+            x:(point.x-centerX)*rect.width,
+            y:(point.y-centerY)*rect.height,
+            pressure:point.pressure
+          })),
+          scale:legacyScale,
+          groupId:null
+        });
+      }
     }
 
     this.strokes=migrated;
@@ -283,7 +311,7 @@ export class BoardWorkspace {
   persistInk(){
     try{
       localStorage.setItem(INK_STORAGE_KEY,JSON.stringify({
-        version:3,
+        version:4,
         savedAt:Date.now(),
         strokes:this.strokes
       }));
@@ -770,8 +798,6 @@ export class BoardWorkspace {
     const points=draft?.draftPoints;
     if(!Array.isArray(points)||!points.length)return null;
 
-    const rect=this.inkSvg.getBoundingClientRect();
-    const base=Math.max(1,Math.min(rect.width,rect.height));
     const xs=points.map(point=>point.x);
     const ys=points.map(point=>point.y);
     const centerX=(Math.min(...xs)+Math.max(...xs))/2;
@@ -781,11 +807,11 @@ export class BoardWorkspace {
       id:String(draft.id||uid('ink')),
       color:String(draft.color||'#172132'),
       width:clamp(Number(draft.width)||5,1,40),
-      anchorX:clamp(centerX/Math.max(1,rect.width),0,1),
-      anchorY:clamp(centerY/Math.max(1,rect.height),0,1),
+      anchorX:centerX,
+      anchorY:centerY,
       localPoints:points.map(point=>({
-        x:(point.x-centerX)/base,
-        y:(point.y-centerY)/base,
+        x:point.x-centerX,
+        y:point.y-centerY,
         pressure:point.pressure
       })),
       scale:1,
@@ -794,15 +820,13 @@ export class BoardWorkspace {
   }
 
   renderedPoints(stroke){
-    const rect=this.inkSvg.getBoundingClientRect();
-    const base=Math.max(1,Math.min(rect.width,rect.height));
-    const cx=(Number(stroke.anchorX)||0)*rect.width;
-    const cy=(Number(stroke.anchorY)||0)*rect.height;
+    const cx=Number(stroke.anchorX)||0;
+    const cy=Number(stroke.anchorY)||0;
     const scale=Number(stroke.scale)||1;
 
     return stroke.localPoints.map(point=>({
-      x:cx+(Number(point.x)||0)*base*scale,
-      y:cy+(Number(point.y)||0)*base*scale,
+      x:cx+(Number(point.x)||0)*scale,
+      y:cy+(Number(point.y)||0)*scale,
       pressure:point.pressure
     }));
   }
@@ -977,15 +1001,14 @@ export class BoardWorkspace {
     if(!drag||drag.id!==id||drag.pointerId!==event.pointerId)return;
 
     event.preventDefault();
-    const rect=this.inkSvg.getBoundingClientRect();
-    const dx=(event.clientX-drag.startX)/Math.max(1,rect.width);
-    const dy=(event.clientY-drag.startY)/Math.max(1,rect.height);
+    const dx=event.clientX-drag.startX;
+    const dy=event.clientY-drag.startY;
 
     drag.origins.forEach(origin=>{
       const target=this.findStroke(origin.id);
       if(!target)return;
-      target.anchorX=clamp(origin.anchorX+dx,0,1);
-      target.anchorY=clamp(origin.anchorY+dy,0,1);
+      target.anchorX=origin.anchorX+dx;
+      target.anchorY=origin.anchorY+dy;
       const node=this.inkLayer.querySelector(`[data-stroke-id="${CSS.escape(origin.id)}"]`);
       if(node)node.setAttribute('d',this.pathData(target));
     });
@@ -1052,7 +1075,6 @@ export class BoardWorkspace {
     const selected=this.selectedInkStrokes();
     if(!selected.length)return;
 
-    const rect=this.inkSvg.getBoundingClientRect();
     const bounds=this.selectionBounds(selected);
     if(!bounds)return;
 
@@ -1066,12 +1088,10 @@ export class BoardWorkspace {
 
     this.checkpointInk(label);
     selected.forEach(stroke=>{
-      const ax=(Number(stroke.anchorX)||0)*rect.width;
-      const ay=(Number(stroke.anchorY)||0)*rect.height;
-      const nextX=bounds.cx+(ax-bounds.cx)*safeFactor;
-      const nextY=bounds.cy+(ay-bounds.cy)*safeFactor;
-      stroke.anchorX=clamp(nextX/Math.max(1,rect.width),0,1);
-      stroke.anchorY=clamp(nextY/Math.max(1,rect.height),0,1);
+      const ax=Number(stroke.anchorX)||0;
+      const ay=Number(stroke.anchorY)||0;
+      stroke.anchorX=bounds.cx+(ax-bounds.cx)*safeFactor;
+      stroke.anchorY=bounds.cy+(ay-bounds.cy)*safeFactor;
       stroke.scale=clamp((Number(stroke.scale)||1)*safeFactor,.25,4);
     });
 
@@ -1098,13 +1118,12 @@ export class BoardWorkspace {
     if(!selected.length)return;
 
     this.checkpointInk('DUPLICATE_INK');
-    const rect=this.inkSvg.getBoundingClientRect();
     const newGroupId=selected.length>1?uid('inkgroup'):null;
     const copies=selected.map(stroke=>{
       const copy=clone(stroke);
       copy.id=uid('ink');
-      copy.anchorX=clamp((Number(copy.anchorX)||0)+24/Math.max(1,rect.width),0,1);
-      copy.anchorY=clamp((Number(copy.anchorY)||0)+24/Math.max(1,rect.height),0,1);
+      copy.anchorX=(Number(copy.anchorX)||0)+24;
+      copy.anchorY=(Number(copy.anchorY)||0)+24;
       copy.groupId=newGroupId;
       return copy;
     });
