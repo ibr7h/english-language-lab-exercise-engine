@@ -397,6 +397,14 @@
               <button type="button" data-activity-action="reset-board">↺</button>
               <button type="button" data-student-board-step="1" aria-label="Next activity">›</button>
             </div>
+
+            <div id="englishWorkspaceBuildActions" class="workspace-build-actions hidden" role="group" aria-label="Build a Word controls">
+              <button id="englishWorkspaceBuildReshuffle" type="button" class="workspace-icon-btn" title="Reshuffle build letters" aria-label="Reshuffle build letters">🔀</button>
+              <button id="englishWorkspaceBuildCheck" type="button" class="workspace-build-check" title="Check word order">✓ Check</button>
+              <button id="englishWorkspaceBuildHint" type="button" class="workspace-icon-btn" title="Show build hint" aria-label="Show build hint">💡</button>
+              <span id="englishWorkspaceBuildStatus" class="workspace-build-status" aria-live="polite">Build the word.</span>
+            </div>
+
             <button id="englishWorkspaceBoardUndo" type="button" class="workspace-icon-btn" title="Undo" aria-label="Undo">↶</button>
             <button id="englishWorkspaceBoardRedo" type="button" class="workspace-icon-btn" title="Redo" aria-label="Redo">↷</button>
             <span class="workspace-topbar-separator" aria-hidden="true"></span>
@@ -657,7 +665,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.25</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.25.1</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
