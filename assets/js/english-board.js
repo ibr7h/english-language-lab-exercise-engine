@@ -6,7 +6,7 @@ import { detectPlatformProfile } from './core/platform-profile.js';
 import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 
-const STORAGE_KEY='englishLab.board.v0.8';
+const STORAGE_KEY='englishLab.board.v0.13';
 const ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const VOWELS=new Set(['A','E','I','O','U']);
 const PHONICS_COLORS=Object.freeze({
@@ -18,14 +18,55 @@ const PHONICS_COLORS=Object.freeze({
 });
 const DIGRAPHS=['SH','CH','TH','WH','PH','CK','NG','QU'];
 const VOWEL_TEAMS=['IGH','AI','AY','EE','EA','OA','OE','OO','OU','OW','OI','OY','UE','UI','IE'];
+const KIT_DIGRAPHS=['SH','CH','TH','WH','PH','CK','NG','QU'];
+const KIT_VOWEL_TEAMS=['AI','AY','EE','EA','OA','OO','OI','OY','OW','IGH'];
+
+const SOUND_PROFILES=Object.freeze({
+  A:{sound:'/æ/',example:'apple'}, B:{sound:'/b/',example:'ball'}, C:{sound:'/k/',example:'cat'},
+  D:{sound:'/d/',example:'dog'}, E:{sound:'/ɛ/',example:'egg'}, F:{sound:'/f/',example:'fish'},
+  G:{sound:'/g/',example:'goat'}, H:{sound:'/h/',example:'hat'}, I:{sound:'/ɪ/',example:'igloo'},
+  J:{sound:'/dʒ/',example:'jam'}, K:{sound:'/k/',example:'kite'}, L:{sound:'/l/',example:'lion'},
+  M:{sound:'/m/',example:'moon'}, N:{sound:'/n/',example:'net'}, O:{sound:'/ɑ/',example:'octopus'},
+  P:{sound:'/p/',example:'pig'}, Q:{sound:'/kw/',example:'queen'}, R:{sound:'/ɹ/',example:'rain'},
+  S:{sound:'/s/',example:'sun'}, T:{sound:'/t/',example:'top'}, U:{sound:'/ʌ/',example:'umbrella'},
+  V:{sound:'/v/',example:'van'}, W:{sound:'/w/',example:'web'}, X:{sound:'/ks/',example:'fox'},
+  Y:{sound:'/j/',example:'yes'}, Z:{sound:'/z/',example:'zebra'},
+  SH:{sound:'/ʃ/',example:'ship'}, CH:{sound:'/tʃ/',example:'chip'}, TH:{sound:'/θ/',example:'thin'},
+  WH:{sound:'/w/',example:'whale'}, PH:{sound:'/f/',example:'phone'}, CK:{sound:'/k/',example:'duck'},
+  NG:{sound:'/ŋ/',example:'ring'}, QU:{sound:'/kw/',example:'queen'},
+  AI:{sound:'/eɪ/',example:'rain'}, AY:{sound:'/eɪ/',example:'play'}, EE:{sound:'/iː/',example:'see'},
+  EA:{sound:'/iː/',example:'sea'}, OA:{sound:'/oʊ/',example:'boat'}, OO:{sound:'/uː/',example:'moon'},
+  OI:{sound:'/ɔɪ/',example:'coin'}, OY:{sound:'/ɔɪ/',example:'boy'}, OW:{sound:'/aʊ/',example:'cow'},
+  IGH:{sound:'/aɪ/',example:'light'}
+});
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 
-function speak(text){
+function speak(text,{rate=.82}={}){
   if(!text||!('speechSynthesis'in window))return;
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(text);
-  u.lang='en-US';u.rate=.82;speechSynthesis.speak(u);
+  u.lang='en-US';u.rate=rate;speechSynthesis.speak(u);
+}
+function audioAssetUrl(kind,key){
+  return `./assets/audio/${kind}/${String(key||'').toLowerCase()}.mp3`;
+}
+async function playStructuredAudio(kind,key){
+  const token=String(key||'').toUpperCase();
+  if(!token)return;
+  const profile=SOUND_PROFILES[token]||{};
+  const audio=new Audio(audioAssetUrl(kind,token));
+  try{
+    await audio.play();
+    return;
+  }catch(_){}
+  if(kind==='name'){ speak(token,{rate:.72}); return; }
+  if(kind==='sound'){
+    // TTS cannot reliably produce isolated phonemes; announce a controlled cue until recorded audio is added.
+    speak(profile.example ? `${token}, as in ${profile.example}` : token,{rate:.68});
+    return;
+  }
+  if(kind==='example'){ speak(profile.example||token,{rate:.78}); }
 }
 function colorFor(letter){
   const upper=String(letter||'').toUpperCase();
@@ -85,6 +126,8 @@ class EnglishMagneticBoard {
     this.activeItemId=null;
     this.mode='free';
     this.caseMode='upper';
+    this.colorMode=localStorage.getItem('englishLab.colorMode')||'phonics';
+    this.interfaceMode=localStorage.getItem('englishLab.interfaceMode')||'teacher';
     this.wordCounter=0;
     this.exercise=null;
     this.platform=createPlatformAdapter(detectPlatformProfile());
@@ -102,6 +145,9 @@ class EnglishMagneticBoard {
     }
     this.bindControls();
     this.renderTray();
+    this.renderGraphemeTrays();
+    this.applyInterfaceMode(this.interfaceMode,true);
+    const colorSelect=$('#englishColorMode'); if(colorSelect)colorSelect.value=this.colorMode;
     this.setMode('free',true);
     this.renderBoard();
     this.updatePlatformBadge();
@@ -109,7 +155,7 @@ class EnglishMagneticBoard {
     window.addEventListener('resize',()=>this.renderBoard());
   }
   persist(){
-    saveBoardState(localStorage,STORAGE_KEY,this.state,{mode:this.mode,caseMode:this.caseMode});
+    saveBoardState(localStorage,STORAGE_KEY,this.state,{mode:this.mode,caseMode:this.caseMode,colorMode:this.colorMode,interfaceMode:this.interfaceMode});
   }
   checkpoint(label){this.history.checkpoint(this.state.snapshot(),label);}
   undo(){
@@ -125,13 +171,14 @@ class EnglishMagneticBoard {
     if(el)el.textContent=`${this.platform.profile.label} · ${this.platform.describe()}`;
   }
   setMode(mode,silent=false){
-    const next=['free','build','completed'].includes(mode)?mode:'free';
+    const next=['free','build','completed','segment'].includes(mode)?mode:'free';
     this.mode=next;
     document.body.dataset.englishBoardMode=next;
-    [['free','#englishModeFree'],['build','#englishModeBuild'],['completed','#englishModeCompleted']]
+    [['free','#englishModeFree'],['build','#englishModeBuild'],['completed','#englishModeCompleted'],['segment','#englishModeSegment']]
       .forEach(([key,sel])=>$(sel)?.classList.toggle('active',key===next));
     $('#englishBuildControls')?.classList.toggle('hidden',next!=='build');
     $('#englishCompletedControls')?.classList.toggle('hidden',next!=='completed');
+    $('#englishSegmentControls')?.classList.toggle('hidden',next!=='segment');
     $('#englishAssemblyZone')?.classList.toggle('hidden',!(next==='build'&&this.exercise));
     const title=$('#englishBoardModeTitle'),hint=$('#englishBoardHint');
     if(next==='free'){
@@ -140,17 +187,21 @@ class EnglishMagneticBoard {
     }else if(next==='build'){
       if(title)title.textContent='Build a word — scattered foam letters + answer slots';
       if(hint)hint.textContent='Scatter the target word, then drag each foam letter into the correct slot.';
-    }else{
+    }else if(next==='completed'){
       if(title)title.textContent='Completed words — move the word or detach its letters';
       if(hint)hint.textContent='First tap selects the whole word. Detach lets you move each letter separately.';
+    }else{
+      if(title)title.textContent='Segment & Blend — move graphemes from sounds to a whole word';
+      if(hint)hint.textContent='Spread the foam graphemes to hear the parts, then blend them together to read the word.';
     }
     this.persist();this.renderBoard();
-    if(!silent)this.toast(next==='free'?'Free board':next==='build'?'Build word mode':'Completed words mode');
+    if(!silent)this.toast(next==='free'?'Free board':next==='build'?'Build word mode':next==='completed'?'Completed words mode':'Segment & Blend');
   }
   bindControls(){
     $('#englishModeFree')?.addEventListener('click',()=>this.setMode('free'));
     $('#englishModeBuild')?.addEventListener('click',()=>this.setMode('build'));
     $('#englishModeCompleted')?.addEventListener('click',()=>this.setMode('completed'));
+    $('#englishModeSegment')?.addEventListener('click',()=>this.setMode('segment'));
     $('#englishUndo')?.addEventListener('click',()=>this.undo());
     $('#englishRedo')?.addEventListener('click',()=>this.redo());
     $('#englishSelectAll')?.addEventListener('click',()=>this.selectAll());
@@ -166,7 +217,15 @@ class EnglishMagneticBoard {
     $('#englishScatter')?.addEventListener('click',()=>this.scatterPieces());
     $('#englishSpeak')?.addEventListener('click',()=>this.pronounceBoard());
     $('#englishClear')?.addEventListener('click',()=>this.clearBoard());
-    $('#englishCase')?.addEventListener('change',e=>{this.caseMode=e.target.value;this.renderTray();this.renderBoard();this.persist();});
+    $('#englishCase')?.addEventListener('change',e=>{this.caseMode=e.target.value;this.renderTray();this.renderGraphemeTrays();this.renderBoard();this.persist();});
+    $('#englishColorMode')?.addEventListener('change',e=>{
+      this.colorMode=e.target.value==='classic'?'classic':'phonics';
+      localStorage.setItem('englishLab.colorMode',this.colorMode);
+      this.recolorAllPieces();
+      this.renderTray();this.renderGraphemeTrays();this.renderBoard();
+    });
+    $('#studentModeBtn')?.addEventListener('click',()=>this.applyInterfaceMode('student'));
+    $('#teacherModeBtn')?.addEventListener('click',()=>this.applyInterfaceMode('teacher'));
     $('#englishStartBuild')?.addEventListener('click',()=>this.startBuild());
     $('#englishBuildWord')?.addEventListener('keydown',e=>{if(e.key==='Enter')this.startBuild();});
     $('#englishReshuffle')?.addEventListener('click',()=>this.reshuffleExercise());
@@ -175,7 +234,19 @@ class EnglishMagneticBoard {
     $('#englishShowTarget')?.addEventListener('change',()=>this.renderAssemblySlots());
     $('#englishAddCompleted')?.addEventListener('click',()=>this.addCompletedFromInput());
     $('#englishCompletedWord')?.addEventListener('keydown',e=>{if(e.key==='Enter')this.addCompletedFromInput();});
-    $$('.english-preset-word').forEach(btn=>btn.addEventListener('click',()=>this.addCompletedWord(btn.dataset.word||'')));
+    $('.english-preset-word').forEach(btn=>btn.addEventListener('click',()=>this.addCompletedWord(btn.dataset.word||'')));
+    $('#englishStartSegment')?.addEventListener('click',()=>this.startSegmentBlend());
+    $('#englishSegmentWord')?.addEventListener('keydown',e=>{if(e.key==='Enter')this.startSegmentBlend();});
+    $('.segment-presets [data-segment-word]').forEach(btn=>btn.addEventListener('click',()=>{
+      const input=$('#englishSegmentWord'); if(input)input.value=btn.dataset.segmentWord||'';
+      this.startSegmentBlend();
+    }));
+    $('#englishSpreadSegments')?.addEventListener('click',()=>this.spreadSegments());
+    $('#englishBlendSegments')?.addEventListener('click',()=>this.blendSegments());
+    $('#englishPlaySegmentWord')?.addEventListener('click',()=>{if(this.segmentState?.word)speak(this.segmentState.word);});
+    $('#englishPlayName')?.addEventListener('click',()=>this.playSelectedAudio('name'));
+    $('#englishPlaySound')?.addEventListener('click',()=>this.playSelectedAudio('sound'));
+    $('#englishPlayExample')?.addEventListener('click',()=>this.playSelectedAudio('example'));
     $('#englishBoardCanvas')?.addEventListener('pointerdown',e=>{
       if(e.target.closest('.free-foam-piece'))return;
       if(this.selectedIds.size){this.clearSelection();}
@@ -197,7 +268,14 @@ class EnglishMagneticBoard {
       this.renderBoard();
     }
   }
-  display(letter){return this.caseMode==='lower'?letter.toLowerCase():letter.toUpperCase();}
+  display(letter){return this.caseMode==='lower'?String(letter).toLowerCase():String(letter).toUpperCase();}
+  colorForToken(token,role=null){
+    if(this.colorMode==='classic')return PHONICS_COLORS.consonant;
+    if(role==='digraph')return PHONICS_COLORS.digraph;
+    if(role==='vowel-team')return PHONICS_COLORS.vowelTeam;
+    if(role==='silent-e')return PHONICS_COLORS.silentE;
+    return colorFor(token);
+  }
   renderTray(){
     const tray=$('#englishLetterTray');if(!tray)return;
     tray.innerHTML='';
@@ -205,7 +283,7 @@ class EnglishMagneticBoard {
       const b=document.createElement('button');b.type='button';
       const freeRole=VOWELS.has(letter)?'vowel':'consonant';
       b.className='foam-tray-letter';
-      b.innerHTML=`<span class="foam-glyph ${colorFor(letter)}">${this.escape(this.display(letter))}</span>`;
+      b.innerHTML=`<span class="foam-glyph ${this.colorForToken(letter,freeRole)}">${this.escape(this.display(letter))}</span>`;
       b.dataset.phonicsRole=freeRole;
       b.title=`${letter} · ${freeRole}`;
       b.setAttribute('aria-label',`Add foam letter ${letter}, ${freeRole}`);
@@ -213,12 +291,54 @@ class EnglishMagneticBoard {
       tray.appendChild(b);
     });
   }
+  renderGraphemeTrays(){
+    const render=(selector,tokens,role)=>{
+      const tray=$(selector);if(!tray)return;
+      tray.innerHTML='';
+      tokens.forEach(token=>{
+        const b=document.createElement('button');b.type='button';b.className='grapheme-piece-btn';
+        b.innerHTML=`<span class="foam-glyph ${this.colorForToken(token,role)}">${this.escape(this.display(token))}</span>`;
+        b.title=`${token} · ${role}`;
+        b.setAttribute('aria-label',`Add ${role} ${token}`);
+        b.addEventListener('click',()=>this.addGrapheme(token,role));
+        tray.appendChild(b);
+      });
+    };
+    render('#englishDigraphTray',KIT_DIGRAPHS,'digraph');
+    render('#englishVowelTeamTray',KIT_VOWEL_TEAMS,'vowel-team');
+  }
+  applyInterfaceMode(mode,silent=false){
+    this.interfaceMode=mode==='student'?'student':'teacher';
+    localStorage.setItem('englishLab.interfaceMode',this.interfaceMode);
+    document.body.dataset.interfaceMode=this.interfaceMode;
+    $('#studentModeBtn')?.classList.toggle('active',this.interfaceMode==='student');
+    $('#teacherModeBtn')?.classList.toggle('active',this.interfaceMode==='teacher');
+    if(!silent)this.toast(this.interfaceMode==='student'?'Student mode':'Teacher mode');
+    this.persist();
+  }
+  recolorAllPieces(){
+    this.items.forEach(item=>{
+      item.color=this.colorForToken(item.logicalChar,item.phonicsRole);
+    });
+  }
   canvasRect(){return $('#englishBoardCanvas')?.getBoundingClientRect()||{width:700,height:500,left:0,top:0};}
   createPiece(letter,x,y,extra={}){
     return createLetterPiece({
-      logicalChar:letter,displayGlyph:this.display(letter),color:colorFor(letter),
+      logicalChar:letter,displayGlyph:this.display(letter),
+      color:extra.color||this.colorForToken(letter,extra.phonicsRole||null),
       x,y,rotation:(Math.random()*6-3),...extra
     });
+  }
+  addGrapheme(token,role){
+    if(this.mode==='build'&&this.exercise){this.toast('Finish the build activity first');return;}
+    const rect=this.canvasRect(),count=this.items.length;
+    const x=30+((count*91)%Math.max(120,rect.width-140));
+    const y=50+((Math.floor(count/6)*96)%Math.max(120,rect.height-135));
+    this.checkpoint('ADD_GRAPHEME');
+    const p=this.createPiece(token,x,y,{phonicsRole:role,color:this.colorForToken(token,role)});
+    applyBoardCommand(this.state,{type:BOARD_COMMANDS.ADD_PIECE,piece:p});
+    this.setSelection([p.id],'letter',p.id);this.renderBoard();
+    this.updateSelectedAudio();
   }
   addLetter(letter){
     if(this.mode==='build'&&this.exercise){this.toast('Use the scattered exercise letters in Build mode');return;}
@@ -227,7 +347,8 @@ class EnglishMagneticBoard {
     const x=30+((count*83)%Math.max(120,rect.width-120));
     const y=50+((Math.floor(count/7)*92)%Math.max(120,rect.height-130));
     this.checkpoint('ADD_PIECE');
-    const p=this.createPiece(letter,x,y);
+    const role=VOWELS.has(letter)?'vowel':'consonant';
+    const p=this.createPiece(letter,x,y,{phonicsRole:role,color:this.colorForToken(letter,role)});
     applyBoardCommand(this.state,{type:BOARD_COMMANDS.ADD_PIECE,piece:p});
     this.setSelection([p.id],'letter',p.id);this.renderBoard();speak(letter);
   }
@@ -235,6 +356,7 @@ class EnglishMagneticBoard {
     this.selectedIds=new Set((ids||[]).filter(Boolean));
     this.selectionMode=this.selectedIds.size?mode:'none';
     this.activeItemId=activeId&&this.selectedIds.has(activeId)?activeId:(this.selectedIds.values().next().value||null);
+    this.updateSelectedAudio?.();
   }
   clearSelection(render=true){this.setSelection([], 'none', null);if(render)this.renderBoard();}
   selectAll(){
@@ -269,8 +391,11 @@ class EnglishMagneticBoard {
       item.x=clamp(Number(item.x)||0,4,Math.max(4,rect.width-72));
       item.y=clamp(Number(item.y)||0,4,Math.max(4,rect.height-82));
       const el=document.createElement('button');
-      const visibleColor=normalizeLegacyColor(item.color,item.logicalChar||item.displayGlyph||'');
-      item.color=visibleColor;
+      const legacyColor=normalizeLegacyColor(item.color,item.logicalChar||item.displayGlyph||'');
+      item.color=this.colorMode==='classic'
+        ? PHONICS_COLORS.consonant
+        : (item.phonicsRole ? this.colorForToken(item.logicalChar,item.phonicsRole) : legacyColor);
+      const visibleColor=item.color;
       const pieceHtml=`<span class="foam-piece-glyph foam-glyph ${visibleColor} pointer-events-none">${this.escape(this.display(item.logicalChar))}</span>`;
       decorateBoardPieceElement(el,{
         item,selected:this.selectedIds.has(item.id),selectionMode:this.selectionMode,mobile,
@@ -288,7 +413,7 @@ class EnglishMagneticBoard {
       const active=this.items.find(i=>i.id===this.activeItemId);
       scale.textContent=`${Math.round((active?.scale||1)*100)}%`;
     }
-    this.persist();this.renderAssemblySlots();
+    this.persist();this.renderAssemblySlots();this.updateSelectedAudio();
   }
   bindPiece(el,item){
     el.addEventListener('pointerdown',e=>{
@@ -332,6 +457,22 @@ class EnglishMagneticBoard {
     };
     el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
     el.addEventListener('dblclick',()=>speak(item.logicalChar));
+  }
+  selectedToken(){
+    const item=this.items.find(i=>i.id===this.activeItemId);
+    return item?.logicalChar||'';
+  }
+  updateSelectedAudio(){
+    const label=$('#englishSelectedAudioLabel');if(!label)return;
+    const token=this.selectedToken();
+    if(!token){label.textContent='Select a letter or grapheme.';return;}
+    const profile=SOUND_PROFILES[token]||{};
+    label.textContent=`${token}${profile.sound?' · '+profile.sound:''}${profile.example?' · '+profile.example:''}`;
+  }
+  playSelectedAudio(kind){
+    const token=this.selectedToken();
+    if(!token){this.toast('Select a foam letter first');return;}
+    playStructuredAudio(kind,token);
   }
   resizeSelected(delta){
     const selected=this.items.filter(i=>this.selectedIds.has(i.id)&&pieceCan(i,BOARD_CAPABILITIES.SCALABLE));
@@ -436,6 +577,78 @@ class EnglishMagneticBoard {
     this.items.filter(i=>i.type==='letter').forEach(i=>{const key=i.wordId||'__free__';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(i);});
     const text=[...groups.values()].map(g=>g.sort((a,b)=>a.x-b.x).map(i=>i.logicalChar).join('')).join(' ').trim();
     if(text)speak(text);
+  }
+  segmentGraphemes(word){
+    const text=String(word||'').toUpperCase().replace(/[^A-Z]/g,'');
+    const patterns=[...VOWEL_TEAMS,...DIGRAPHS].sort((a,b)=>b.length-a.length);
+    const out=[];let i=0;
+    while(i<text.length){
+      const pattern=patterns.find(p=>text.startsWith(p,i));
+      if(pattern){out.push(pattern);i+=pattern.length;}
+      else{out.push(text[i]);i+=1;}
+    }
+    return out;
+  }
+  startSegmentBlend(){
+    const input=$('#englishSegmentWord');
+    const word=String(input?.value||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,14);
+    if(!word){this.toast('Type a word first');return;}
+    this.setMode('segment',true);
+    this.checkpoint('START_SEGMENT');
+    this.state.replace([]);this.clearSelection(false);
+    const graphemes=this.segmentGraphemes(word);
+    const phonics=analyzeWordPhonics(word);
+    let cursor=0;
+    const ids=[];
+    const rect=this.canvasRect();
+    graphemes.forEach((token,index)=>{
+      const start=cursor,end=cursor+token.length;
+      const roles=phonics.slice(start,end).map(x=>x.role);
+      const role=roles.includes('vowel-team')?'vowel-team'
+        :roles.includes('digraph')?'digraph'
+        :roles.includes('silent-e')?'silent-e'
+        :(VOWELS.has(token)?'vowel':'consonant');
+      const p=this.createPiece(token,40+index*100,rect.height*.34,{
+        rotation:0,phonicsRole:role,color:this.colorForToken(token,role),
+        segmentIndex:index,segmentWord:word
+      });
+      applyBoardCommand(this.state,{type:BOARD_COMMANDS.ADD_PIECE,piece:p});
+      ids.push(p.id);cursor=end;
+    });
+    this.segmentState={word,graphemes,ids,blended:false};
+    this.spreadSegments(false);
+    this.setSegmentStatus(`${graphemes.length} sound-spelling pieces: ${graphemes.join(' · ')}`);
+    this.renderBoard();
+  }
+  spreadSegments(checkpoint=true){
+    if(!this.segmentState)return;
+    if(checkpoint)this.checkpoint('SPREAD_SEGMENTS');
+    const rect=this.canvasRect(),pieces=this.segmentState.ids.map(id=>this.state.find(id)).filter(Boolean);
+    const gap=Math.min(145,Math.max(90,(rect.width-120)/Math.max(pieces.length,1)));
+    const total=(pieces.length-1)*gap;
+    let x=Math.max(24,(rect.width-total-90)/2);
+    const y=Math.max(90,rect.height*.34);
+    pieces.forEach(piece=>{piece.x=x;piece.y=y;piece.rotation=0;x+=gap;});
+    this.segmentState.blended=false;
+    this.renderBoard();
+  }
+  blendSegments(){
+    if(!this.segmentState)return;
+    this.checkpoint('BLEND_SEGMENTS');
+    const rect=this.canvasRect(),pieces=this.segmentState.ids.map(id=>this.state.find(id)).filter(Boolean);
+    const gap=58;
+    const total=(pieces.length-1)*gap;
+    let x=Math.max(24,(rect.width-total-90)/2);
+    const y=Math.max(90,rect.height*.34);
+    pieces.forEach(piece=>{piece.x=x;piece.y=y;piece.rotation=0;x+=gap;});
+    this.segmentState.blended=true;
+    this.renderBoard();
+    this.setSegmentStatus(`Blend: ${this.segmentState.word}`,'good');
+    setTimeout(()=>speak(this.segmentState?.word||''),260);
+  }
+  setSegmentStatus(message,type='info'){
+    const el=$('#englishSegmentStatus');if(!el)return;
+    el.textContent=message;el.dataset.type=type;
   }
   startBuild(){
     const input=$('#englishBuildWord');const word=String(input?.value||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,14);

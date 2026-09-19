@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.11 — exact Arabic-project foam rendering
+## v0.13 — Foam Kit 2.0 + Segment & Blend + Student Mode
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,17 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.13 Foam Kit 2.0
+
+- A–Z tray remains an unlimited source: tapping the same letter creates another board piece.
+- Digraph tray: SH, CH, TH, WH, PH, CK, NG, QU.
+- Vowel-team tray: AI, AY, EE, EA, OA, OO, OI, OY, OW, IGH.
+- Phonics color mode and Classic single-color mode.
+- Multi-letter graphemes are first-class movable board pieces.
+- Selected-piece audio architecture has separate Name, Sound and Example channels. It first looks for recorded MP3 assets under `assets/audio/{name|sound|example}/` and falls back to speech synthesis when recordings are not present.
+- Segment & Blend uses the same foam pieces on the magnetic board. Graphemes spread apart for segmentation and move together for blending.
+- Student Mode hides teacher controls while preserving the board, foam kit and learning actions.
 
 ### Expanded educational fonts
 
@@ -147,7 +158,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v11` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v13` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -165,6 +176,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.11
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.13
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.

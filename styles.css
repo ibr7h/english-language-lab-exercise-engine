@@ -2035,3 +2035,151 @@ textarea {
 .english-board-empty[hidden] {
   display: none !important;
 }
+
+
+/* v0.13 Foam Kit 2.0 */
+.app-header-actions {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.experience-switch {
+  display:inline-flex;
+  padding:3px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#fff;
+  box-shadow:0 4px 12px rgba(31,42,68,.06);
+}
+.experience-btn {
+  border:0;
+  border-radius:999px;
+  padding:7px 10px;
+  background:transparent;
+  color:var(--ink-soft);
+  font-size:.76rem;
+  font-weight:850;
+}
+.experience-btn.active {
+  background:#1d2433;
+  color:#fff;
+}
+body[data-interface-mode="student"] .teacher-only {
+  display:none !important;
+}
+body[data-interface-mode="student"] .app-header h1 {
+  font-size:clamp(1.25rem,4.8vw,2rem);
+}
+body[data-interface-mode="student"] .english-engine-panel {
+  padding:8px;
+}
+body[data-interface-mode="student"] .english-mode-row {
+  justify-content:center;
+}
+body[data-interface-mode="student"] #englishPlatformBadge {
+  display:none;
+}
+
+.kit-copy-hint {
+  margin:7px 0 0;
+  text-align:center;
+  color:var(--ink-soft);
+  font-size:.7rem;
+  font-weight:700;
+}
+.foam-subtray {
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px dashed #d7cbb8;
+}
+.foam-subtray-title {
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:baseline;
+  margin-bottom:8px;
+}
+.foam-subtray-title strong { font-size:.82rem; }
+.foam-subtray-title span { font-size:.66rem; color:var(--ink-soft); }
+.grapheme-tray {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+}
+.grapheme-piece-btn {
+  min-height:52px;
+  border:0;
+  background:transparent;
+  display:grid;
+  place-items:center;
+  padding:2px;
+  touch-action:manipulation;
+}
+.grapheme-piece-btn .foam-glyph {
+  font-size:clamp(1.35rem,4vw,2rem);
+  letter-spacing:-.04em;
+}
+.selected-audio-panel {
+  margin-top:14px;
+  padding:11px;
+  border-radius:14px;
+  border:1px solid #cbd5e1;
+  background:#f8fafc;
+  display:grid;
+  gap:7px;
+}
+.selected-audio-panel > strong { font-size:.8rem; }
+#englishSelectedAudioLabel {
+  color:var(--ink-soft);
+  font-size:.72rem;
+  line-height:1.4;
+}
+.selected-audio-actions {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+}
+.selected-audio-actions button,
+.segment-actions button {
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:9px;
+  padding:7px 6px;
+  font-size:.7rem;
+  font-weight:850;
+}
+
+.english-segment-controls {
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px dashed var(--line);
+}
+.segment-actions {
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  margin-top:9px;
+}
+.segment-actions .exercise-check-btn {
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+}
+body[data-english-board-mode="segment"] .english-board-gridline {
+  opacity:.45;
+}
+.free-foam-piece[data-phonics-role="digraph"] .foam-piece-glyph,
+.free-foam-piece[data-phonics-role="vowel-team"] .foam-piece-glyph {
+  letter-spacing:-.06em;
+}
+
+/* In student mode the board and foam kit dominate the screen. */
+@media (max-width:640px){
+  .app-header-actions { width:100%; justify-content:space-between; }
+  .experience-switch { flex:1 1 auto; justify-content:center; }
+  .experience-btn { flex:1 1 50%; }
+  .grapheme-tray { grid-template-columns:repeat(5,minmax(0,1fr)); }
+  body[data-interface-mode="student"] .english-board-canvas { min-height:520px; }
+}

@@ -20,8 +20,14 @@
       <p class="eyebrow">English Language Lab · Magnetic Foam Kit</p>
       <h1>Move letters. Build words. Learn by doing.</h1>
     </div>
-    <div class="progress-pill" aria-live="polite">
-      <span id="progressCount">0</span> completed
+    <div class="app-header-actions">
+      <div class="experience-switch" role="group" aria-label="Experience mode">
+        <button id="studentModeBtn" class="experience-btn">👧 Student</button>
+        <button id="teacherModeBtn" class="experience-btn active">👩‍🏫 Teacher</button>
+      </div>
+      <div class="progress-pill" aria-live="polite">
+        <span id="progressCount">0</span> completed
+      </div>
     </div>
   </header>
 
@@ -43,13 +49,19 @@
           <p class="section-note">Built on the same board model as the Arabic project: free pieces, grouped words, undo/redo, selection, resizing, scattering and word-building exercises.</p>
         </div>
         <div class="magnetic-toolbar compact-toolbar">
-          <label class="compact-control">Case
+          <label class="compact-control teacher-only">Colors
+            <select id="englishColorMode">
+              <option value="phonics">Phonics colors</option>
+              <option value="classic">Classic single color</option>
+            </select>
+          </label>
+          <label class="compact-control teacher-only">Case
             <select id="englishCase">
               <option value="upper">ABC</option>
               <option value="lower">abc</option>
             </select>
           </label>
-          <label class="compact-control">Letter font
+          <label class="compact-control teacher-only">Letter font
             <select id="letterFontPicker">
               <optgroup label="Educational">
                 <option value="teachers">Teachers</option>
@@ -77,7 +89,7 @@
               </optgroup>
             </select>
           </label>
-          <label class="compact-control">App font
+          <label class="compact-control teacher-only">App font
             <select id="uiFontPicker">
               <option value="system">System</option>
               <option value="rounded">Rounded</option>
@@ -94,6 +106,7 @@
             <button id="englishModeFree" class="english-mode-btn active">🧲 Free Board</button>
             <button id="englishModeBuild" class="english-mode-btn">🧩 Build a Word</button>
             <button id="englishModeCompleted" class="english-mode-btn">🔗 Completed Words</button>
+            <button id="englishModeSegment" class="english-mode-btn">🔊 Segment & Blend</button>
           </div>
           <div id="englishPlatformBadge" class="english-platform-badge">Shared board core</div>
         </div>
@@ -122,6 +135,27 @@
           <div id="englishExerciseStatus" class="english-exercise-status">Type a word, then scatter its foam letters.</div>
         </div>
 
+        <div id="englishSegmentControls" class="english-segment-controls hidden">
+          <div class="english-input-group">
+            <label for="englishSegmentWord">Word</label>
+            <input id="englishSegmentWord" type="text" value="SHIP" maxlength="14" autocomplete="off" />
+            <button id="englishStartSegment" class="primary-btn">🧩 Segment</button>
+          </div>
+          <div class="english-presets segment-presets">
+            <button type="button" data-segment-word="CAT">CAT</button>
+            <button type="button" data-segment-word="SHIP">SHIP</button>
+            <button type="button" data-segment-word="RAIN">RAIN</button>
+            <button type="button" data-segment-word="MOON">MOON</button>
+            <button type="button" data-segment-word="CAKE">CAKE</button>
+          </div>
+          <div class="segment-actions">
+            <button id="englishSpreadSegments">↔ Segment</button>
+            <button id="englishBlendSegments" class="exercise-check-btn">→← Blend</button>
+            <button id="englishPlaySegmentWord">🔊 Word</button>
+          </div>
+          <div id="englishSegmentStatus" class="english-exercise-status">Choose a word. Graphemes will become movable foam pieces.</div>
+        </div>
+
         <div id="englishCompletedControls" class="english-completed-controls hidden">
           <div class="english-input-group">
             <label for="englishCompletedWord">Add a completed word</label>
@@ -138,7 +172,7 @@
         </div>
       </div>
 
-      <div class="english-board-tools">
+      <div class="english-board-tools teacher-only">
         <button id="englishUndo" class="board-selection-btn">↶ Undo</button>
         <button id="englishRedo" class="board-selection-btn">↷ Redo</button>
         <button id="englishSelectAll" class="board-selection-btn">☑ Select all</button>
@@ -201,6 +235,27 @@
             <small>26 reusable pieces</small>
           </div>
           <div id="englishLetterTray" class="english-letter-tray"></div>
+          <p class="kit-copy-hint">Tap a piece repeatedly to create unlimited copies.</p>
+
+          <div class="foam-subtray">
+            <div class="foam-subtray-title"><strong>Digraphs</strong><span>one sound · two letters</span></div>
+            <div id="englishDigraphTray" class="grapheme-tray"></div>
+          </div>
+
+          <div class="foam-subtray">
+            <div class="foam-subtray-title"><strong>Vowel teams</strong><span>common teams</span></div>
+            <div id="englishVowelTeamTray" class="grapheme-tray"></div>
+          </div>
+
+          <div id="englishSelectedAudio" class="selected-audio-panel">
+            <strong>Selected foam sound</strong>
+            <span id="englishSelectedAudioLabel">Select a letter or grapheme.</span>
+            <div class="selected-audio-actions">
+              <button id="englishPlayName">🔤 Name</button>
+              <button id="englishPlaySound">🔊 Sound</button>
+              <button id="englishPlayExample">💬 Example</button>
+            </div>
+          </div>
 
           <div class="english-color-legend" aria-label="Phonics color legend">
             <strong>Phonics color key</strong>
@@ -322,7 +377,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.12</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.13</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>

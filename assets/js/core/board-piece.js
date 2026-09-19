@@ -12,7 +12,7 @@ export const BOARD_CAPABILITIES = Object.freeze({
 function id(prefix='piece'){ return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`; }
 export function createLetterPiece(data={}) {
   const logicalChar=String(data.logicalChar??'').toUpperCase();
-  if(!/^[A-Z]$/.test(logicalChar)) throw new Error('LETTER_REQUIRES_A_Z');
+  if(!/^[A-Z]{1,4}$/.test(logicalChar)) throw new Error('LETTER_REQUIRES_A_Z_GRAPHEME');
   return {
     id:String(data.id||id('letter')),
     type:'letter',
