@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.23';
+const APP_VERSION='0.23.1';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const BOARDS_STORAGE_KEY='englishLab.boards.v1';
@@ -764,8 +764,9 @@ class EnglishMagneticBoard {
         button.classList.toggle('has-start-state',Boolean(record.startState));
         button.dataset.prepared=record.startState?'true':'false';
         button.textContent=record.name||`Board ${index+1}`;
-        button.title=`${record.startState?'Prepared activity · ':''}Open ${button.textContent}`;
-        button.setAttribute('aria-label',button.title);
+        const boardLabel=`${record.startState?'Prepared activity · ':''}Open ${button.textContent}`;
+        button.removeAttribute('title');
+        button.setAttribute('aria-label',boardLabel);
         button.addEventListener('click',()=>this.switchBoard(record.id));
         host.appendChild(button);
       });
