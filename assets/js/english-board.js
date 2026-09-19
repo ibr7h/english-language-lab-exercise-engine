@@ -2046,111 +2046,437 @@ class EnglishMagneticBoard {
     const el=$('#englishSegmentStatus');if(!el)return;
     el.textContent=message;el.dataset.type=type;
   }
+  validBuildSnapMode(mode){
+    return ['off','inside','strong'].includes(mode)?mode:'inside';
+  }
+
+  normalizeBuildExercise(){
+    const ex=this.exercise;
+    if(!ex)return null;
+
+    ex.word=String(ex.word||ex.sourceWord||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,14);
+    ex.sourceWord=String(ex.sourceWord||ex.word).replace(/[^A-Za-z]/g,'').slice(0,14)||ex.word;
+    ex.letters=Array.isArray(ex.letters)&&ex.letters.length===ex.word.length?[...ex.letters]:[...ex.word];
+    ex.slots=Array.isArray(ex.slots)&&ex.slots.length===ex.word.length?[...ex.slots]:Array(ex.word.length).fill(null);
+    ex.snapMode=this.validBuildSnapMode(ex.snapMode||'inside');
+    ex.caseMatters=Boolean(ex.caseMatters);
+    ex.expectedCases=Array.isArray(ex.expectedCases)&&ex.expectedCases.length===ex.word.length
+      ?ex.expectedCases.map(value=>value==='lower'?'lower':'upper')
+      :[...ex.sourceWord].map(char=>char===char.toLowerCase()?'lower':'upper');
+    ex.attempts=Math.max(0,Number(ex.attempts)||0);
+    ex.feedback=Array.isArray(ex.feedback)&&ex.feedback.length===ex.word.length?[...ex.feedback]:null;
+    ex.hintIndex=Number.isInteger(ex.hintIndex)&&ex.hintIndex>=0&&ex.hintIndex<ex.word.length?ex.hintIndex:null;
+    ex.completed=Boolean(ex.completed);
+    return ex;
+  }
+
+  buildHintText(){
+    const mode=this.validBuildSnapMode(this.exercise?.snapMode||this.buildSnapModeSetting);
+    if(mode==='off')return 'Move letters freely. Drop inside a slot to assign it; the letter stays exactly where you release it.';
+    if(mode==='strong')return 'Move letters freely. Nearby slots attract the letter when you release it.';
+    return 'Move letters freely. A letter snaps only when you drop it inside an answer slot.';
+  }
+
+  syncBuildOptionControls(){
+    this.normalizeBuildExercise();
+    const snap=this.exercise?.snapMode||this.buildSnapModeSetting;
+    const caseMatters=typeof this.exercise?.caseMatters==='boolean'
+      ?this.exercise.caseMatters
+      :this.buildCaseMattersSetting;
+
+    const snapSelect=$('#englishBuildSnapMode');
+    if(snapSelect)snapSelect.value=this.validBuildSnapMode(snap);
+    const caseToggle=$('#englishCaseMatters');
+    if(caseToggle)caseToggle.checked=Boolean(caseMatters);
+
+    if(this.exercise?.sourceWord){
+      const input=$('#englishBuildWord');
+      if(input)input.value=this.exercise.sourceWord;
+    }
+
+    if(this.mode==='build'){
+      const hint=$('#englishBoardHint');
+      if(hint)hint.textContent=this.buildHintText();
+    }
+  }
+
+  setBuildSnapMode(mode){
+    const next=this.validBuildSnapMode(mode);
+    this.buildSnapModeSetting=next;
+    localStorage.setItem('englishLab.buildSnapMode',next);
+    if(this.exercise){
+      this.exercise.snapMode=next;
+      this.exercise.feedback=null;
+      this.exercise.hintIndex=null;
+      this.exercise.completed=false;
+      this.renderAssemblySlots();
+      this.persist();
+    }
+    this.syncBuildOptionControls();
+    const label=next==='off'?'Off':next==='strong'?'Strong':'Inside';
+    this.toast(`Build snap: ${label}`);
+  }
+
+  setBuildCaseMatters(enabled){
+    const next=Boolean(enabled);
+    this.buildCaseMattersSetting=next;
+    localStorage.setItem('englishLab.buildCaseMatters',String(next));
+    if(this.exercise){
+      this.exercise.caseMatters=next;
+      this.exercise.feedback=null;
+      this.exercise.hintIndex=null;
+      this.exercise.completed=false;
+      this.renderAssemblySlots();
+      this.persist();
+    }
+    this.syncBuildOptionControls();
+    this.toast(next?'Case matters: on':'Case matters: off');
+  }
+
   startBuild(){
-    const input=$('#englishBuildWord');const word=String(input?.value||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,14);
-    if(!word){this.toast('Type an English word first');return;}
+    const input=$('#englishBuildWord');
+    const sourceWord=String(input?.value||'').replace(/[^A-Za-z]/g,'').slice(0,14);
+    if(!sourceWord){this.toast('Type an English word first');return;}
+
+    const word=sourceWord.toUpperCase();
+    const snapMode=this.validBuildSnapMode($('#englishBuildSnapMode')?.value||this.buildSnapModeSetting);
+    const caseMatters=Boolean($('#englishCaseMatters')?.checked);
+    this.buildSnapModeSetting=snapMode;
+    this.buildCaseMattersSetting=caseMatters;
+    localStorage.setItem('englishLab.buildSnapMode',snapMode);
+    localStorage.setItem('englishLab.buildCaseMatters',String(caseMatters));
+
     if(this.mode!=='build')this.setMode('build',true);
-    this.checkpoint('START_EXERCISE');this.state.replace([]);this.clearSelection(false);
-    this.exercise={id:`exercise_${Date.now()}`,word,letters:[...word],slots:Array(word.length).fill(null),attempts:0};
+    this.checkpoint('START_EXERCISE');
+    this.state.replace([]);
+    this.clearSelection(false);
+
+    const expectedCases=[...sourceWord].map(char=>char===char.toLowerCase()?'lower':'upper');
+    this.exercise={
+      id:`exercise_${Date.now()}`,
+      word,
+      sourceWord,
+      expectedCases,
+      letters:[...word],
+      slots:Array(word.length).fill(null),
+      attempts:0,
+      snapMode,
+      caseMatters,
+      feedback:null,
+      hintIndex:null,
+      completed:false
+    };
+
     const order=[...this.exercise.letters.keys()];
-    for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+    for(let i=order.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [order[i],order[j]]=[order[j],order[i]];
+    }
+
     const rect=this.canvasRect();
     const phonics=analyzeWordPhonics(word);
     order.forEach((targetIndex,k)=>{
       const cols=Math.max(2,Math.min(word.length,Math.floor((rect.width-50)/90)));
       const col=k%cols,row=Math.floor(k/cols);
-      const role=phonics[targetIndex]||{color:colorFor(word[targetIndex]),role:VOWELS.has(word[targetIndex])?'vowel':'consonant'};
-      const p=this.createPiece(word[targetIndex],35+col*90+(Math.random()*18-9),65+row*100+(Math.random()*18-9),{
-        exerciseId:this.exercise.id,exerciseTargetIndex:targetIndex,color:role.color,phonicsRole:role.role
+      const role=phonics[targetIndex]||{
+        color:colorFor(word[targetIndex]),
+        role:VOWELS.has(word[targetIndex])?'vowel':'consonant'
+      };
+      const piece=this.createPiece(word[targetIndex],35+col*90+(Math.random()*18-9),65+row*100+(Math.random()*18-9),{
+        exerciseId:this.exercise.id,
+        exerciseTargetIndex:targetIndex,
+        color:role.color,
+        phonicsRole:role.role,
+        letterCase:expectedCases[targetIndex]
       });
-      applyBoardCommand(this.state,{type:BOARD_COMMANDS.ADD_PIECE,piece:p});
+      applyBoardCommand(this.state,{type:BOARD_COMMANDS.ADD_PIECE,piece});
     });
-    $('#englishAssemblyZone')?.classList.remove('hidden');this.renderBoard();this.setExerciseStatus(`Scattered ${word.length} foam letters. Arrange them in the slots.`);
+
+    $('#englishAssemblyZone')?.classList.remove('hidden');
+    this.syncBuildOptionControls();
+    this.renderBoard();
+    const snapLabel=snapMode==='off'?'Snap off':snapMode==='strong'?'Strong snap':'Inside snap';
+    this.setExerciseStatus(`Scattered ${word.length} foam letters · ${snapLabel}${caseMatters?' · case matters':''}.`);
   }
+
   reshuffleExercise(){
     if(!this.exercise){this.startBuild();return;}
+    this.normalizeBuildExercise();
+    this.checkpoint('RESHUFFLE_EXERCISE');
+    this.clearSelection(false);
     this.exercise.slots=Array(this.exercise.word.length).fill(null);
-    this.items.forEach(i=>i.exerciseSlot=null);this.scatterPieces();this.renderAssemblySlots();this.setExerciseStatus('Letters scattered again.');
+    this.exercise.feedback=null;
+    this.exercise.hintIndex=null;
+    this.exercise.completed=false;
+    this.items.forEach(item=>{if(item.exerciseId===this.exercise.id)item.exerciseSlot=null;});
+
+    const pieces=this.items.filter(item=>item.exerciseId===this.exercise.id);
+    const rect=this.canvasRect();
+    pieces.forEach((item,index)=>{
+      const cols=Math.max(2,Math.min(pieces.length,Math.floor((rect.width-50)/90)));
+      const col=index%cols,row=Math.floor(index/cols);
+      item.x=35+col*90+(Math.random()*18-9);
+      item.y=65+row*100+(Math.random()*18-9);
+      item.rotation=0;
+    });
+
+    this.renderBoard();
+    this.setExerciseStatus('Letters scattered again. Build the word when you are ready.');
   }
+
   slotGeometry(){
-    const canvas=this.canvasRect();const zone=$('#englishAssemblySlots');if(!zone)return[];
-    const zoneRect=zone.getBoundingClientRect();
+    const canvas=this.canvasRect();
+    const zone=$('#englishAssemblySlots');if(!zone)return[];
     return [...zone.querySelectorAll('.english-answer-slot')].map((el,index)=>{
-      const r=el.getBoundingClientRect();
-      return {index,left:r.left-canvas.left,top:r.top-canvas.top,width:r.width,height:r.height,cx:r.left-canvas.left+r.width/2,cy:r.top-canvas.top+r.height/2};
+      const rect=el.getBoundingClientRect();
+      return {
+        index,
+        left:rect.left-canvas.left,
+        top:rect.top-canvas.top,
+        width:rect.width,
+        height:rect.height,
+        cx:rect.left-canvas.left+rect.width/2,
+        cy:rect.top-canvas.top+rect.height/2
+      };
     });
   }
-  snapDraggedToNearestSlot(pieceId){
-    if(!this.exercise)return;
-    const item=this.state.find(pieceId);if(!item)return;
-    const slots=this.slotGeometry();if(!slots.length){this.renderBoard();return;}
 
-    // Build mode remains free: first release any old slot assignment.
+  findBuildSlotCandidate(pieceX,pieceY,slots=this.slotGeometry(),mode=this.exercise?.snapMode){
+    if(!this.exercise||!Array.isArray(slots)||!slots.length)return null;
+    const snapMode=this.validBuildSnapMode(mode||'inside');
+    const px=Number(pieceX)||0;
+    const py=Number(pieceY)||0;
+    const cx=px+35,cy=py+38;
+
+    const exact=slots.find(slot=>
+      cx>=slot.left&&cx<=slot.left+slot.width&&
+      cy>=slot.top&&cy<=slot.top+slot.height
+    );
+    if(exact)return exact;
+    if(snapMode!=='strong')return null;
+
+    const margin=42;
+    const nearby=slots.filter(slot=>
+      cx>=slot.left-margin&&cx<=slot.left+slot.width+margin&&
+      cy>=slot.top-margin&&cy<=slot.top+slot.height+margin
+    );
+    if(!nearby.length)return null;
+    nearby.sort((a,b)=>Math.hypot(cx-a.cx,cy-a.cy)-Math.hypot(cx-b.cx,cy-b.cy));
+    return nearby[0]||null;
+  }
+
+  clearBuildDropPreview(){
+    document.querySelectorAll('.english-answer-slot.drop-target,.english-answer-slot.drop-target-strong,.english-answer-slot.drop-target-off')
+      .forEach(slot=>slot.classList.remove('drop-target','drop-target-strong','drop-target-off'));
+  }
+
+  previewBuildDrop(pieceX,pieceY,slots){
+    if(!this.exercise)return null;
+    const candidate=this.findBuildSlotCandidate(pieceX,pieceY,slots,this.exercise.snapMode);
+    this.clearBuildDropPreview();
+    if(candidate){
+      const slot=$(`.english-answer-slot[data-slot="${candidate.index}"]`);
+      if(slot){
+        slot.classList.add('drop-target');
+        if(this.exercise.snapMode==='strong')slot.classList.add('drop-target-strong');
+        if(this.exercise.snapMode==='off')slot.classList.add('drop-target-off');
+      }
+    }
+    return candidate?.index??null;
+  }
+
+  displaceBuildPiece(piece,slot){
+    if(!piece||!slot)return;
+    const rect=this.canvasRect();
+    piece.exerciseSlot=null;
+    piece.x=clamp(slot.left,4,Math.max(4,rect.width-72));
+    piece.y=clamp(slot.top-92,4,Math.max(4,rect.height-82));
+  }
+
+  snapDraggedToNearestSlot(pieceId,slots=null){
+    if(!this.exercise)return;
+    this.normalizeBuildExercise();
+    const item=this.state.find(pieceId);if(!item)return;
+    const geometry=Array.isArray(slots)&&slots.length?slots:this.slotGeometry();
+    if(!geometry.length){this.renderBoard();return;}
+
     this.exercise.slots=this.exercise.slots.map(id=>id===pieceId?null:id);
     item.exerciseSlot=null;
 
-    const px=item.x+35,py=item.y+38;
-    const target=slots.find(slot=>
-      px>=slot.left&&px<=slot.left+slot.width&&
-      py>=slot.top&&py<=slot.top+slot.height
-    );
-
+    const target=this.findBuildSlotCandidate(item.x,item.y,geometry,this.exercise.snapMode);
     if(target){
-      const displaced=this.exercise.slots[target.index];
-      if(displaced){
-        const old=this.state.find(displaced);
-        if(old)old.exerciseSlot=null;
+      const displacedId=this.exercise.slots[target.index];
+      if(displacedId&&displacedId!==pieceId){
+        this.displaceBuildPiece(this.state.find(displacedId),target);
       }
+
       this.exercise.slots[target.index]=pieceId;
       item.exerciseSlot=target.index;
-      item.x=target.left+(target.width-70)/2;
-      item.y=target.top+(target.height-76)/2;
+
+      if(this.exercise.snapMode!=='off'){
+        item.x=target.left+(target.width-70)/2;
+        item.y=target.top+(target.height-76)/2;
+      }
     }
 
+    this.exercise.feedback=null;
+    this.exercise.hintIndex=null;
+    this.exercise.completed=false;
     this.renderBoard();
+    this.updateBuildProgressStatus(Boolean(target));
   }
+
+  buildSlotEvaluation(index,pieceId=this.exercise?.slots?.[index]){
+    const ex=this.normalizeBuildExercise();
+    if(!ex||!pieceId)return 'empty';
+    const item=this.state.find(pieceId);
+    if(!item)return 'empty';
+
+    const expectedChar=ex.word[index]||'';
+    if(String(item.logicalChar||'').toUpperCase()!==expectedChar)return 'wrong';
+
+    if(ex.caseMatters){
+      const expectedCase=ex.expectedCases[index]||'upper';
+      const actualCase=item.letterCase==='lower'?'lower':'upper';
+      if(actualCase!==expectedCase)return 'case';
+    }
+    return 'correct';
+  }
+
+  expectedBuildGlyph(index){
+    const ex=this.normalizeBuildExercise();
+    if(!ex)return '';
+    const char=ex.word[index]||'';
+    return (ex.expectedCases[index]==='lower')?char.toLowerCase():char.toUpperCase();
+  }
+
+  updateBuildProgressStatus(droppedIntoSlot=false){
+    const ex=this.normalizeBuildExercise();if(!ex)return;
+    const placed=ex.slots.filter(Boolean).length;
+    if(placed===ex.word.length){
+      this.setExerciseStatus('All letters are placed. Press Check order.');
+      return;
+    }
+    if(droppedIntoSlot){
+      this.setExerciseStatus(`Placed ${placed} of ${ex.word.length} letters. ${ex.word.length-placed} to go.`);
+    }else{
+      this.setExerciseStatus(`${placed} of ${ex.word.length} letters are in slots.`);
+    }
+  }
+
   renderAssemblySlots(){
     const zone=$('#englishAssemblyZone'),slots=$('#englishAssemblySlots'),target=$('#englishTargetBadge');
     if(!zone||!slots)return;
-    if(!this.exercise){zone.classList.add('hidden');return;}
+    const ex=this.normalizeBuildExercise();
+    if(!ex){zone.classList.add('hidden');return;}
+
     zone.classList.remove('hidden');
+    zone.dataset.snapMode=ex.snapMode;
+    zone.classList.toggle('build-complete',Boolean(ex.completed));
+
     if(target){
       const show=$('#englishShowTarget')?.checked!==false;
-      target.textContent=show?this.exercise.word:`${this.exercise.word.length} letters`;
+      target.textContent=show?ex.sourceWord:`${ex.word.length} letters`;
     }
+
     slots.innerHTML='';
-    this.exercise.word.split('').forEach((letter,index)=>{
-      const el=document.createElement('div');el.className='english-answer-slot';el.dataset.slot=String(index);
-      const pieceId=this.exercise.slots[index],item=pieceId?this.state.find(pieceId):null;
-      if(item){el.classList.add('filled');el.textContent=this.displayPiece(item);}
-      else el.innerHTML='<span>'+String(index+1)+'</span>';
+    ex.word.split('').forEach((letter,index)=>{
+      const el=document.createElement('div');
+      el.className='english-answer-slot';
+      el.dataset.slot=String(index);
+
+      const pieceId=ex.slots[index];
+      const item=pieceId?this.state.find(pieceId):null;
+      if(item){
+        el.classList.add('filled');
+        if(ex.snapMode==='off'){
+          el.innerHTML='<span class="slot-accepted" aria-hidden="true">✓</span>';
+        }else{
+          el.textContent=this.displayPiece(item);
+        }
+      }else{
+        el.innerHTML='<span>'+String(index+1)+'</span>';
+      }
+
+      const feedback=ex.feedback?.[index];
+      if(['correct','wrong','case','empty'].includes(feedback)){
+        el.classList.add(`feedback-${feedback}`);
+      }
+      if(ex.hintIndex===index)el.classList.add('hint-target');
+
+      const expected=this.expectedBuildGlyph(index);
+      el.setAttribute('aria-label',item
+        ?`Position ${index+1}, filled`
+        :`Position ${index+1}, expected ${expected}`);
       slots.appendChild(el);
     });
   }
+
   checkExercise(){
-    if(!this.exercise)return;
-    this.exercise.attempts++;
-    const actual=this.exercise.slots.map(id=>id?this.state.find(id)?.logicalChar||'':'').join('');
-    if(actual===this.exercise.word){this.setExerciseStatus('Correct! The word is complete.','good');speak(this.exercise.word);}
-    else if(actual.length<this.exercise.word.length||this.exercise.slots.some(x=>!x)){this.setExerciseStatus('Place every foam letter into a slot first.','bad');}
-    else{
-      const correct=this.exercise.word.split('').filter((c,i)=>c===actual[i]).length;
-      this.setExerciseStatus(`Not yet — ${correct} of ${this.exercise.word.length} letters are in the correct position.`,'bad');
+    const ex=this.normalizeBuildExercise();if(!ex)return;
+    ex.attempts++;
+    ex.hintIndex=null;
+
+    const evaluations=ex.slots.map((pieceId,index)=>this.buildSlotEvaluation(index,pieceId));
+    ex.feedback=evaluations;
+    const correct=evaluations.filter(value=>value==='correct').length;
+    const empty=evaluations.filter(value=>value==='empty').length;
+    const caseErrors=evaluations.filter(value=>value==='case').length;
+    const wrong=evaluations.filter(value=>value==='wrong').length;
+
+    if(correct===ex.word.length){
+      ex.completed=true;
+      this.renderAssemblySlots();
+      const display=ex.sourceWord||ex.word;
+      this.setExerciseStatus(`Correct! ${display} is complete ✓ · attempt ${ex.attempts}.`,'good');
+      speak(display);
+    }else if(empty){
+      ex.completed=false;
+      this.renderAssemblySlots();
+      this.setExerciseStatus(
+        `Place ${empty} more letter${empty===1?'':'s'} · ${correct} of ${ex.word.length} positions are correct so far.`,
+        'bad'
+      );
+    }else{
+      ex.completed=false;
+      this.renderAssemblySlots();
+      let detail=`${correct} of ${ex.word.length} positions are correct.`;
+      if(wrong)detail+=` ${wrong} need${wrong===1?'s':''} a different letter.`;
+      if(caseErrors)detail+=` ${caseErrors} ${caseErrors===1?'has':'have'} the right letter but wrong case.`;
+      this.setExerciseStatus(detail,'bad');
     }
+    this.persist();
   }
+
   hintExercise(){
-    if(!this.exercise)return;
-    const index=this.exercise.slots.findIndex((id,i)=>!id||this.state.find(id)?.logicalChar!==this.exercise.word[i]);
+    const ex=this.normalizeBuildExercise();if(!ex)return;
+    const index=ex.slots.findIndex((pieceId,i)=>this.buildSlotEvaluation(i,pieceId)!=='correct');
     if(index<0){this.checkExercise();return;}
-    const needed=this.exercise.word[index];
-    const candidate=this.items.find(i=>i.logicalChar===needed&&i.exerciseSlot!==index);
-    if(!candidate)return;
-    this.setSelection([candidate.id],'letter',candidate.id);this.renderBoard();this.setExerciseStatus(`Hint: move ${needed} to position ${index+1}.`);
+
+    const needed=ex.word[index];
+    const expectedCase=ex.expectedCases[index]||'upper';
+    const candidate=this.items.find(item=>
+      item.exerciseId===ex.id&&
+      String(item.logicalChar||'').toUpperCase()===needed&&
+      item.exerciseSlot!==index&&
+      (!ex.caseMatters||(item.letterCase==='lower'?'lower':'upper')===expectedCase)
+    );
+
+    ex.hintIndex=index;
+    this.renderAssemblySlots();
+    if(candidate){
+      this.setSelection([candidate.id],'letter',candidate.id);
+      this.renderBoard();
+    }
+    const glyph=this.expectedBuildGlyph(index);
+    this.setExerciseStatus(`Hint: move ${glyph} to position ${index+1}.`);
   }
+
   setExerciseStatus(message,type='info'){
     const el=$('#englishExerciseStatus');if(!el)return;
     el.textContent=message;el.dataset.type=type;
   }
+
   async runDiagnostics(showPanel=true){
     const checks=[];
     const add=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail||'')});
