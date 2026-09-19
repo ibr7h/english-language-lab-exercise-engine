@@ -137,8 +137,17 @@
             <button type="button" onclick="document.getElementById('englishBuildWord').value='MOON';document.getElementById('englishStartBuild').click()">MOON</button>
             <button type="button" onclick="document.getElementById('englishBuildWord').value='FISH';document.getElementById('englishStartBuild').click()">FISH</button>
           </div>
-          <div class="english-options">
+          <div class="english-options english-build-options">
             <label><input id="englishShowTarget" type="checkbox" checked /> Show target word</label>
+            <label class="build-option-control">
+              <span>Snap</span>
+              <select id="englishBuildSnapMode" aria-label="Build snap mode">
+                <option value="off">Off</option>
+                <option value="inside" selected>Inside</option>
+                <option value="strong">Strong</option>
+              </select>
+            </label>
+            <label><input id="englishCaseMatters" type="checkbox" /> Case matters</label>
           </div>
           <div class="english-action-row">
             <button id="englishReshuffle">🔀 Reshuffle</button>
@@ -534,7 +543,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.24</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.25</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -648,7 +657,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.24</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.25</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>
