@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.15';
+const APP_VERSION='0.15.1';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=2;
 const LEGACY_STORAGE_KEYS=['englishLab.board.v0.13','englishLab.board.v0.8'];
@@ -477,7 +477,7 @@ class EnglishMagneticBoard {
       const active=this.items.find(i=>i.id===this.activeItemId);
       scale.textContent=`${Math.round((active?.scale||1)*100)}%`;
     }
-    this.persist();this.renderAssemblySlots();this.updateSelectedAudio();
+    this.persist();this.renderAssemblySlots();this.updateSelectedAudio();this.workspace?.updateFoamToolState();
   }
   bindPiece(el,item){
     el.addEventListener('pointerdown',e=>{
@@ -819,6 +819,17 @@ class EnglishMagneticBoard {
     add('Student / Teacher switch',Boolean($('#studentModeBtn')&&$('#teacherModeBtn')),'Experience modes');
     add('Main navigation',document.documentElement.dataset.mainNavReady==='true','Magnetic Board / Letters / Word Builder / Practice / Learning Path');
     add('Classroom Whiteboard workspace',Boolean(this.workspace&&$('#englishFullscreenBoard')),'Full screen + toolbox + letter strip');
+    add('Full-board foam tools',Boolean(
+      $('#englishWorkspaceSmaller')&&
+      $('#englishWorkspaceResetSize')&&
+      $('#englishWorkspaceLarger')&&
+      $('#englishWorkspaceDuplicate')&&
+      $('#englishWorkspaceDelete')&&
+      $('#englishWorkspaceAlign')&&
+      $('#englishWorkspaceScatter')&&
+      $('#englishWorkspaceBoardUndo')&&
+      $('#englishWorkspaceBoardRedo')
+    ),'Resize / duplicate / delete / align / scatter / undo / redo');
     add('Ink canvas',Boolean($('#englishInkCanvas')),'Pen / eraser layer');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
 

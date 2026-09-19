@@ -311,6 +311,30 @@
             </div>
           </div>
 
+          <div id="englishWorkspaceFoamTools" class="workspace-tool-group workspace-collapsible-group">
+            <button id="englishWorkspaceFoamToolsToggle" type="button" class="workspace-group-toggle" aria-expanded="true" aria-controls="englishWorkspaceFoamToolsBody">
+              <span><strong>Foam Tools</strong><small id="englishWorkspaceSelectionStatus">No letter selected</small></span>
+              <span class="workspace-group-chevron" aria-hidden="true">⌃</span>
+            </button>
+            <div id="englishWorkspaceFoamToolsBody" class="workspace-collapsible-body">
+              <div class="workspace-foam-size">
+                <button id="englishWorkspaceSmaller" type="button" title="Smaller">A−</button>
+                <button id="englishWorkspaceResetSize" type="button" title="Reset size"><span id="englishWorkspaceScaleValue">100%</span></button>
+                <button id="englishWorkspaceLarger" type="button" title="Larger">A+</button>
+              </div>
+              <div class="workspace-foam-actions">
+                <button id="englishWorkspaceDuplicate" type="button">⧉ Duplicate</button>
+                <button id="englishWorkspaceDelete" type="button" class="workspace-danger">🗑 Delete</button>
+                <button id="englishWorkspaceAlign" type="button">📏 Align</button>
+                <button id="englishWorkspaceScatter" type="button">🎲 Scatter</button>
+              </div>
+              <div class="workspace-foam-history">
+                <button id="englishWorkspaceBoardUndo" type="button">↶ Undo</button>
+                <button id="englishWorkspaceBoardRedo" type="button">↷ Redo</button>
+              </div>
+            </div>
+          </div>
+
           <div class="workspace-tool-group">
             <strong>Writing guides</strong>
             <div class="workspace-guide-grid">
@@ -340,13 +364,6 @@
             </div>
           </div>
 
-          <div class="workspace-tool-group">
-            <strong>Board history</strong>
-            <div class="workspace-segmented">
-              <button id="englishWorkspaceBoardUndo" type="button">↶ Undo</button>
-              <button id="englishWorkspaceBoardRedo" type="button">↷ Redo</button>
-            </div>
-          </div>
         </aside>
 
         <div id="englishWorkspaceLetterStrip" class="workspace-letter-strip">
@@ -373,7 +390,7 @@
           <button id="englishCloseDiagnostics" type="button" class="secondary-btn">Close</button>
         </div>
         <div class="diagnostics-summary">
-          <span>App <strong id="englishDiagVersion">v0.15</strong></span>
+          <span>App <strong id="englishDiagVersion">v0.15.1</strong></span>
           <span>Platform <strong id="englishDiagPlatform">—</strong></span>
           <span>Board pieces <strong id="englishDiagPieces">0</strong></span>
         </div>
@@ -487,7 +504,7 @@
     <div id="dialogContent"></div>
   </dialog>
 
-  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.15</p></footer>
+  <footer><p>© 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.15.1</p></footer>
 
   <script src="src/data/content.js"></script>
   <script src="src/engine/exercise-engine.js"></script>

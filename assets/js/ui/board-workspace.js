@@ -27,6 +27,7 @@ export class BoardWorkspace {
       penWidth:5,
       strip:'letters',
       toolboxOpen:true,
+      foamToolsOpen:true,
       ...safeParse(localStorage.getItem(WORKSPACE_STORAGE_KEY),{})
     };
     const ink=safeParse(localStorage.getItem(INK_STORAGE_KEY),{});
@@ -47,11 +48,15 @@ export class BoardWorkspace {
     this.setPenWidth(this.settings.penWidth,false);
     this.setStrip(this.settings.strip,false);
     this.setToolboxOpen(this.settings.toolboxOpen,false);
+    this.setFoamToolsOpen(this.settings.foamToolsOpen,false);
     this.renderStrip();
     this.setupInkCanvas();
     this.syncCaseButtons();
     this.resizeInkCanvas();
-    requestAnimationFrame(()=>this.redrawInk());
+    requestAnimationFrame(()=>{
+      this.redrawInk();
+      this.updateFoamToolState();
+    });
 
     if('ResizeObserver'in window){
       this.resizeObserver=new ResizeObserver(()=>{
@@ -74,6 +79,7 @@ export class BoardWorkspace {
     document.querySelector('#englishFullscreenBoard')?.addEventListener('click',()=>this.enter());
     document.querySelector('#englishWorkspaceExit')?.addEventListener('click',()=>this.exit());
     document.querySelector('#englishWorkspaceToolboxToggle')?.addEventListener('click',()=>this.setToolboxOpen(!this.settings.toolboxOpen));
+    document.querySelector('#englishWorkspaceFoamToolsToggle')?.addEventListener('click',()=>this.setFoamToolsOpen(!this.settings.foamToolsOpen));
 
     document.querySelectorAll('[data-workspace-tool]').forEach(btn=>{
       btn.addEventListener('click',()=>this.setTool(btn.dataset.workspaceTool));
@@ -95,6 +101,13 @@ export class BoardWorkspace {
     document.querySelector('#englishInkUndo')?.addEventListener('click',()=>this.undoInk());
     document.querySelector('#englishInkRedo')?.addEventListener('click',()=>this.redoInk());
     document.querySelector('#englishClearInk')?.addEventListener('click',()=>this.clearInk());
+    document.querySelector('#englishWorkspaceSmaller')?.addEventListener('click',()=>this.board.resizeSelected(-.1));
+    document.querySelector('#englishWorkspaceResetSize')?.addEventListener('click',()=>this.board.resetSelectedSize());
+    document.querySelector('#englishWorkspaceLarger')?.addEventListener('click',()=>this.board.resizeSelected(.1));
+    document.querySelector('#englishWorkspaceDuplicate')?.addEventListener('click',()=>this.board.duplicateSelected());
+    document.querySelector('#englishWorkspaceDelete')?.addEventListener('click',()=>this.board.deleteSelected());
+    document.querySelector('#englishWorkspaceAlign')?.addEventListener('click',()=>this.board.autoAlignRows());
+    document.querySelector('#englishWorkspaceScatter')?.addEventListener('click',()=>this.board.scatterPieces());
     document.querySelector('#englishWorkspaceBoardUndo')?.addEventListener('click',()=>this.board.undo());
     document.querySelector('#englishWorkspaceBoardRedo')?.addEventListener('click',()=>this.board.redo());
 
@@ -122,6 +135,7 @@ export class BoardWorkspace {
     this.section.classList.add('is-board-workspace');
     document.querySelector('#englishWorkspaceChrome')?.setAttribute('aria-hidden','false');
     this.setToolboxOpen(this.settings.toolboxOpen,false);
+    this.setFoamToolsOpen(this.settings.foamToolsOpen,false);
     this.renderStrip();
     this.syncCaseButtons();
 
@@ -161,6 +175,54 @@ export class BoardWorkspace {
     const button=document.querySelector('#englishWorkspaceToolboxToggle');
     if(button)button.setAttribute('aria-expanded',String(this.settings.toolboxOpen));
     if(persist)this.persistSettings();
+  }
+
+  setFoamToolsOpen(open,persist=true){
+    this.settings.foamToolsOpen=Boolean(open);
+    const group=document.querySelector('#englishWorkspaceFoamTools');
+    group?.classList.toggle('is-collapsed',!this.settings.foamToolsOpen);
+    const button=document.querySelector('#englishWorkspaceFoamToolsToggle');
+    if(button)button.setAttribute('aria-expanded',String(this.settings.foamToolsOpen));
+    if(persist)this.persistSettings();
+  }
+
+  updateFoamToolState(){
+    const selectedCount=this.board?.selectedIds?.size||0;
+    const total=this.board?.items?.length||0;
+    const active=this.board?.items?.find?.(item=>item.id===this.board.activeItemId)||null;
+    const needsSelection=[
+      '#englishWorkspaceSmaller',
+      '#englishWorkspaceResetSize',
+      '#englishWorkspaceLarger',
+      '#englishWorkspaceDuplicate',
+      '#englishWorkspaceDelete'
+    ];
+    needsSelection.forEach(selector=>{
+      const button=document.querySelector(selector);
+      if(button)button.disabled=selectedCount===0;
+    });
+
+    const align=document.querySelector('#englishWorkspaceAlign');
+    const scatter=document.querySelector('#englishWorkspaceScatter');
+    if(align)align.disabled=total===0;
+    if(scatter)scatter.disabled=total===0;
+
+    const undo=document.querySelector('#englishWorkspaceBoardUndo');
+    const redo=document.querySelector('#englishWorkspaceBoardRedo');
+    if(undo)undo.disabled=!this.board?.history?.canUndo;
+    if(redo)redo.disabled=!this.board?.history?.canRedo;
+
+    const scale=document.querySelector('#englishWorkspaceScaleValue');
+    if(scale)scale.textContent=`${Math.round((active?.scale||1)*100)}%`;
+
+    const status=document.querySelector('#englishWorkspaceSelectionStatus');
+    if(status){
+      status.textContent=selectedCount===0
+        ? 'No letter selected'
+        : selectedCount===1
+          ? `Selected: ${active?.logicalChar||'1 piece'}`
+          : `${selectedCount} pieces selected`;
+    }
   }
 
   setTool(tool,persist=true){

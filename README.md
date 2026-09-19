@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.15 — Classroom Whiteboard Mode
+## v0.15.1 — Full Board Foam Tools
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,16 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.15.1 Full Board Foam Tools
+
+- Full Board now exposes the same foam-piece commands used by the normal board.
+- Foam Tools includes Smaller, Reset Size, Larger, Duplicate, Delete, Align, Scatter, Undo and Redo.
+- Selection-dependent commands disable automatically until at least one foam piece is selected.
+- Align and Scatter remain available for all board pieces when no specific selection is required.
+- Undo/Redo reflect the real BoardHistory state.
+- The current selected-piece scale is shown inside Full Board.
+- Foam Tools can be collapsed independently, while the existing Tools button can still hide/show the entire toolbox.
 
 ### v0.15 Classroom Whiteboard Mode
 
@@ -203,7 +213,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v15` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v15-1` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -221,6 +231,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.15
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.15.1
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.

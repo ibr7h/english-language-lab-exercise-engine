@@ -2653,3 +2653,106 @@ body.board-workspace-active > .tabs {
   .workspace-letter-piece .foam-glyph { font-size:1.95rem; }
   .workspace-topbar { left:5px; right:5px; }
 }
+
+
+/* v0.15.1 Full Board Foam Tools */
+.workspace-collapsible-group {
+  padding-top:5px;
+}
+.workspace-group-toggle {
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  border:0;
+  background:transparent;
+  padding:5px 0 8px;
+  color:#47545c;
+  text-align:left;
+}
+.workspace-group-toggle > span:first-child {
+  min-width:0;
+}
+.workspace-group-toggle strong {
+  display:block;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.workspace-group-toggle small {
+  display:block;
+  margin-top:2px;
+  color:#7a8790;
+  font-size:.62rem;
+  font-weight:700;
+  text-transform:none;
+  letter-spacing:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.workspace-group-chevron {
+  font-size:1rem;
+  transition:transform .18s ease;
+}
+.workspace-collapsible-group.is-collapsed .workspace-group-chevron {
+  transform:rotate(180deg);
+}
+.workspace-collapsible-body {
+  display:grid;
+  gap:7px;
+  padding-bottom:4px;
+}
+.workspace-collapsible-group.is-collapsed .workspace-collapsible-body {
+  display:none;
+}
+.workspace-foam-size,
+.workspace-foam-actions,
+.workspace-foam-history {
+  display:grid;
+  gap:6px;
+}
+.workspace-foam-size {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+.workspace-foam-actions {
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.workspace-foam-history {
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.workspace-foam-size button,
+.workspace-foam-actions button,
+.workspace-foam-history button {
+  min-height:34px;
+  border:1px solid #d6dde1;
+  background:#fff;
+  border-radius:9px;
+  padding:7px 5px;
+  color:#33414a;
+  font-size:.69rem;
+  font-weight:850;
+}
+.workspace-foam-size button {
+  font-size:.77rem;
+  font-weight:950;
+}
+.workspace-foam-size button:nth-child(2) {
+  min-width:56px;
+}
+.workspace-foam-actions .workspace-danger {
+  color:#9f2f34;
+  border-color:#efc4c6;
+  background:#fff4f4;
+}
+.workspace-foam-size button:disabled,
+.workspace-foam-actions button:disabled,
+.workspace-foam-history button:disabled {
+  opacity:.38;
+  cursor:not-allowed;
+  filter:grayscale(.35);
+}
+#magnetic-board.workspace-toolbox-collapsed #englishWorkspaceFoamTools {
+  pointer-events:none;
+}
