@@ -7,7 +7,7 @@ import { createPlatformAdapter } from './core/platform-adapter.js';
 import { decorateBoardPieceElement } from './ui/board-piece-view.js';
 import { BoardWorkspace } from './ui/board-workspace.js';
 
-const APP_VERSION='0.19.1';
+const APP_VERSION='0.19.2';
 const STORAGE_KEY='englishLab.board';
 const STORAGE_SCHEMA_VERSION=3;
 const BOARDS_STORAGE_KEY='englishLab.boards.v1';
@@ -153,6 +153,7 @@ class EnglishMagneticBoard {
     this.activeBoardId=null;
     this.boardSurface='current';
     this.boardsReady=false;
+    this.loadingBoardRecord=false;
   }
   get items(){return this.state.items;}
   set items(value){this.state.replace(value);}
@@ -232,7 +233,7 @@ class EnglishMagneticBoard {
       interfaceMode:this.interfaceMode,
       boardSurface:this.boardSurface
     });
-    if(this.boardsReady)this.persistBoards();
+    if(this.boardsReady&&!this.loadingBoardRecord)this.persistBoards();
     return saved;
   }
 
@@ -305,7 +306,7 @@ class EnglishMagneticBoard {
   }
 
   persistBoards(){
-    if(!this.boardsReady)return false;
+    if(!this.boardsReady||this.loadingBoardRecord)return false;
     this.captureActiveBoard();
     try{
       localStorage.setItem(BOARDS_STORAGE_KEY,JSON.stringify({
@@ -320,24 +321,60 @@ class EnglishMagneticBoard {
 
   loadBoardRecord(record,{persist=true,toast=true}={}){
     if(!record)return;
-    this.state.replace(deepClone(record.items||[]));
-    this.workspace?.importInkState?.(record.ink||[]);
-    this.boardSurface=BOARD_SURFACES.has(record.surface)?record.surface:'current';
-    this.caseMode=record.caseMode==='lower'?'lower':'upper';
-    this.exercise=record.exercise?deepClone(record.exercise):null;
-    this.segmentState=record.segmentState?deepClone(record.segmentState):null;
-    this.mode=['free','build','completed','segment'].includes(record.mode)?record.mode:'free';
-    this.history=new BoardHistory(80);
-    this.clearSelection(false);
-    this.applyBoardSurface();
-    this.setMode(this.mode,true);
-    this.renderTray();
-    this.renderGraphemeTrays();
-    this.workspace?.renderStrip();
-    this.workspace?.syncCaseButtons();
-    const caseSelect=$('#englishCase');if(caseSelect)caseSelect.value=this.caseMode;
-    this.renderBoard();
-    this.renderBoardManager();
+
+    this.loadingBoardRecord=true;
+    try{
+      // Load the complete board record atomically. No persistence is allowed
+      // until items, ink, surface and mode all belong to the same board.
+      this.state.replace(deepClone(record.items||[]));
+      this.boardSurface=BOARD_SURFACES.has(record.surface)?record.surface:'current';
+      this.caseMode=record.caseMode==='lower'?'lower':'upper';
+      this.exercise=record.exercise?deepClone(record.exercise):null;
+      this.segmentState=record.segmentState?deepClone(record.segmentState):null;
+      this.mode=['free','build','completed','segment'].includes(record.mode)?record.mode:'free';
+
+      this.workspace?.importInkState?.(record.ink||[],{syncBoard:false});
+      this.history=new BoardHistory(80);
+      this.clearSelection(false);
+      this.applyBoardSurface();
+
+      // Update UI without leaking a partial board back into storage.
+      document.body.dataset.englishBoardMode=this.mode;
+      [['free','#englishModeFree'],['build','#englishModeBuild'],['completed','#englishModeCompleted'],['segment','#englishModeSegment']]
+        .forEach(([key,sel])=>$(sel)?.classList.toggle('active',key===this.mode));
+      $('#englishBuildControls')?.classList.toggle('hidden',this.mode!=='build');
+      $('#englishCompletedControls')?.classList.toggle('hidden',this.mode!=='completed');
+      $('#englishSegmentControls')?.classList.toggle('hidden',this.mode!=='segment');
+      $('#englishAssemblyZone')?.classList.toggle('hidden',!(this.mode==='build'&&this.exercise));
+
+      const title=$('#englishBoardModeTitle'),hint=$('#englishBoardHint');
+      if(this.mode==='free'){
+        if(title)title.textContent='Free magnetic board — every letter is independent';
+        if(hint)hint.textContent='Pick a foam letter, move it anywhere, resize it, duplicate it, or build freely.';
+      }else if(this.mode==='build'){
+        if(title)title.textContent='Build a word — scattered foam letters + answer slots';
+        if(hint)hint.textContent='Move letters freely anywhere. A letter snaps only when you drop it inside an answer slot.';
+      }else if(this.mode==='completed'){
+        if(title)title.textContent='Completed words — move the word or detach its letters';
+        if(hint)hint.textContent='First tap selects the whole word. Detach lets you move each letter separately.';
+      }else{
+        if(title)title.textContent='Segment & Blend — move graphemes from sounds to a whole word';
+        if(hint)hint.textContent='Spread the foam graphemes to hear the parts, then blend them together to read the word.';
+      }
+
+      this.renderTray();
+      this.renderGraphemeTrays();
+      this.workspace?.renderStrip();
+      this.workspace?.syncCaseButtons();
+      const caseSelect=$('#englishCase');if(caseSelect)caseSelect.value=this.caseMode;
+
+      // renderBoard() calls persist(), so keep the guard active through render.
+      this.renderBoard();
+      this.renderBoardManager();
+    }finally{
+      this.loadingBoardRecord=false;
+    }
+
     if(persist)this.persistBoards();
     if(toast)this.toast(record.name);
   }
@@ -1224,6 +1261,7 @@ class EnglishMagneticBoard {
     add('Vector ink layer',Boolean($('#englishInkSvg')&&$('#englishInkObjects')),'Stable board-space SVG objects across Normal / Full Board');
     add('Smooth foam drag pipeline',typeof requestAnimationFrame==='function','RAF + translate3d + single commit on pointer release');
     add('Multiple boards',Boolean($('#englishBoardTabs')&&$('#englishWorkspaceBoardTabs')),'Independent board pages + per-board ink/surface');
+    add('Atomic board loading',Object.prototype.hasOwnProperty.call(this,'loadingBoardRecord'),'Prevents cross-board surface/state overwrite during switch');
     add('Board surfaces',document.querySelectorAll('[data-board-surface]').length>=8,'Current / Squares / Notebook / English');
     add('Build free movement',true,'Slot capture only when dropped inside a slot');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');

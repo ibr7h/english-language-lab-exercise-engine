@@ -318,7 +318,7 @@ export class BoardWorkspace {
     return clone(this.strokes);
   }
 
-  importInkState(strokes=[]){
+  importInkState(strokes=[],{syncBoard=true}={}){
     this.strokes=Array.isArray(strokes)?clone(strokes).map(stroke=>this.normalizeStroke(stroke)).filter(Boolean):[];
     this.selectedStrokeId=null;
     this.selectedStrokeIds.clear();
@@ -327,7 +327,7 @@ export class BoardWorkspace {
     this.strokeDrag=null;
     this.inkPast=[];
     this.inkFuture=[];
-    this.persistInk();
+    this.persistInk({syncBoard});
     this.renderInk();
     this.updateFoamToolState();
   }
@@ -336,7 +336,7 @@ export class BoardWorkspace {
     try{localStorage.setItem(WORKSPACE_STORAGE_KEY,JSON.stringify(this.settings));}catch(_){}
   }
 
-  persistInk(){
+  persistInk({syncBoard=true}={}){
     try{
       localStorage.setItem(INK_STORAGE_KEY,JSON.stringify({
         version:4,
@@ -344,7 +344,7 @@ export class BoardWorkspace {
         strokes:this.strokes
       }));
     }catch(_){}
-    this.board?.persistBoards?.();
+    if(syncBoard)this.board?.persistBoards?.();
   }
 
   checkpointInk(label='INK'){

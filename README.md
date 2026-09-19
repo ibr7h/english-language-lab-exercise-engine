@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.19.1 — Multiple Boards & Surfaces
+## v0.19.2 — Per-Board Surface Isolation
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,15 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.19.2 Per-Board Surface Isolation
+
+- Fixes board backgrounds being overwritten when switching between multiple boards.
+- Root cause: `importInkState()` synchronized the board collection halfway through `loadBoardRecord()`, before the target board's surface and mode were loaded.
+- Board switching is now atomic through a `loadingBoardRecord` persistence guard.
+- Ink import supports `syncBoard:false` for internal board restoration, preventing partial records from being written back.
+- A board is persisted only after its items, ink, surface, case, exercise and mode all belong to the same active board.
+- Each Board now reliably retains its own Current / Squares / Notebook / English surface across switches and reloads.
 
 ### v0.19 Multiple Boards & Surfaces
 
@@ -324,7 +333,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v19-1` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v19-2` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -342,6 +351,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.19.1
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.19.2
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
