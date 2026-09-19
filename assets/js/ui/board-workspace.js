@@ -497,7 +497,14 @@ export class BoardWorkspace {
   }
 
   syncCaseButtons(){
-    document.querySelectorAll('[data-workspace-case]').forEach(btn=>btn.classList.toggle('active',btn.dataset.workspaceCase===this.board.caseMode));
+    const mode=['upper','lower','both'].includes(this.board.trayCaseMode)
+      ?this.board.trayCaseMode
+      :this.board.caseMode;
+    document.querySelectorAll('[data-workspace-case]').forEach(btn=>{
+      const active=btn.dataset.workspaceCase===mode;
+      btn.classList.toggle('active',active);
+      btn.setAttribute('aria-pressed',String(active));
+    });
   }
 
   setStrip(kind,persist=true){
@@ -511,30 +518,37 @@ export class BoardWorkspace {
   stripItems(){
     if(this.settings.strip==='digraphs')return this.digraphs.map(token=>({token,role:'digraph'}));
     if(this.settings.strip==='vowel-teams')return this.vowelTeams.map(token=>({token,role:'vowel-team'}));
-    return this.alphabet.map(token=>({token,role:'letter'}));
+    const mode=['upper','lower','both'].includes(this.board.trayCaseMode)
+      ?this.board.trayCaseMode
+      :this.board.caseMode;
+    const cases=mode==='both'?['upper','lower']:[mode==='lower'?'lower':'upper'];
+    return this.alphabet.flatMap(token=>cases.map(letterCase=>({token,role:'letter',letterCase})));
   }
 
   renderStrip(){
     if(!this.stripScroller)return;
     this.stripScroller.innerHTML='';
 
-    this.stripItems().forEach(({token,role})=>{
+    this.stripItems().forEach(({token,role,letterCase})=>{
       const btn=document.createElement('button');
       btn.type='button';
       btn.className='workspace-letter-piece';
 
       const resolvedRole=role==='letter'?(/[AEIOU]/.test(token)?'vowel':'consonant'):role;
       const color=this.board.colorForToken(token,resolvedRole);
+      const glyph=role==='letter'
+        ?this.board.display(token,letterCase)
+        :this.board.display(token);
 
-      btn.innerHTML=`<span class="foam-glyph ${color}">${this.board.escape(this.board.display(token))}</span>`;
-      btn.title=`Add ${token}`;
-      btn.setAttribute('aria-label',`Add foam ${token}`);
+      btn.innerHTML=`<span class="foam-glyph ${color}">${this.board.escape(glyph)}</span>`;
+      btn.title=`Add ${glyph}`;
+      btn.setAttribute('aria-label',`Add foam ${glyph}`);
 
       btn.addEventListener('click',()=>{
-        if(role==='letter')this.board.addLetter(token);
+        if(role==='letter')this.board.addLetter(token,letterCase);
         else this.board.addGrapheme(token,role);
       });
-      this.board.bindTrayDirectDrag?.(btn,token,role);
+      this.board.bindTrayDirectDrag?.(btn,token,role,{letterCase});
 
       this.stripScroller.appendChild(btn);
     });
