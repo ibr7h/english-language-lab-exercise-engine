@@ -2,7 +2,7 @@
 
 A standalone English-first PWA built around a physical-style magnetic whiteboard and movable foam letters, with phonics, spelling and a structured early reading curriculum.
 
-## v0.23.1 — Teacher Workflow Layout
+## v0.24 — Selection & Direct Manipulation
 
 The primary student experience now mirrors the original foam-letter kit: a magnetic whiteboard, a full A–Z foam tray, free placement, duplication, deletion, scattering and alignment. The structured curriculum remains underneath it with the hierarchy:
 
@@ -13,6 +13,22 @@ The curriculum is data-driven and lives in:
 `src/data/exercises.json`
 
 Its schema is now version 2. The same reusable engine renders the lesson path, activities and exercise interactions.
+
+### v0.24 Selection & Direct Manipulation
+
+- Adds rectangle/marquee selection for foam letters: while Move is active, drag on empty board space to select every foam piece whose center falls inside the rectangle.
+- A simple tap on empty board space clears the current foam and ink selection.
+- Adds a persistent visual bounding box around selected foam objects in both Normal and Full Board.
+- Adds four direct corner resize handles with enlarged invisible touch targets for iPhone/iPad use.
+- Direct resize scales every selected foam object around the opposite selection corner, preserving relative spacing between objects.
+- Resize is frame-synchronized with requestAnimationFrame and commits one Undo checkpoint for the gesture rather than continuously rebuilding the board.
+- Locked selections show a locked bounding box and cannot be resized until unlocked.
+- Fixes an older multi-selection behavior where dragging one already-selected foam piece could collapse a group selection back to one piece.
+- Moving any member of an existing multi-selection now moves the whole selected group while the bounding box follows the gesture.
+- Duplicate now supports an entire foam multi-selection, preserving relative layout and recreating word grouping with independent IDs.
+- Existing group Delete, Lock/Unlock, toolbar Resize and keyboard movement continue to operate on the same selected set.
+- Ink keeps its existing Lasso + group bounding-box workflow; foam rectangle selection is a complementary Move-mode interaction.
+- The stable `reference-v0.20.1` branch remains unchanged.
 
 ### v0.23.1 Teacher Workflow Layout
 
@@ -417,7 +433,7 @@ Array-answer exercises reuse one movable-token engine supporting drag, touch sel
 
 ## PWA behavior
 
-The v0.10 service worker uses cache `english-language-lab-v23-1` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
+The v0.10 service worker uses cache `english-language-lab-v24` and stores the curriculum JSON and exercise engine for offline use after the first successful load.
 
 ## Audio
 
@@ -435,6 +451,6 @@ Then open `http://localhost:8080`.
 
 ## Copyright
 
-Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.23.1
+Copyright © 2026 Ibrahim Alneami — All Rights Reserved. · Version v0.24
 
 No license is granted for resale, redistribution, or commercial reuse without written permission.
