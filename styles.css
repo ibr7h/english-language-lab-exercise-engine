@@ -3769,3 +3769,119 @@ body[data-interface-mode="student"] .english-color-legend {
     right:auto;
   }
 }
+
+
+/* v0.24 Selection & Direct Manipulation */
+.foam-selection-marquee {
+  position:absolute;
+  z-index:44;
+  box-sizing:border-box;
+  border:1.5px dashed #2563eb;
+  border-radius:8px;
+  background:rgba(37,99,235,.08);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.45);
+  pointer-events:none;
+}
+.foam-selection-marquee[hidden] {
+  display:none !important;
+}
+
+.foam-selection-overlay {
+  position:absolute;
+  z-index:46;
+  box-sizing:border-box;
+  border:1.5px dashed rgba(15,118,110,.86);
+  border-radius:9px;
+  background:rgba(15,118,110,.025);
+  pointer-events:none;
+  transform-origin:0 0;
+}
+.foam-selection-overlay[hidden] {
+  display:none !important;
+}
+.foam-selection-overlay.is-locked {
+  border-color:rgba(79,70,229,.75);
+  background:rgba(79,70,229,.025);
+}
+.foam-selection-label {
+  position:absolute;
+  left:8px;
+  top:-25px;
+  max-width:160px;
+  padding:3px 7px;
+  border:1px solid rgba(15,118,110,.24);
+  border-radius:999px;
+  background:rgba(255,255,255,.96);
+  color:#0f766e;
+  box-shadow:0 3px 9px rgba(31,42,49,.08);
+  font-size:.58rem;
+  font-weight:850;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  pointer-events:none;
+}
+.foam-selection-overlay.is-locked .foam-selection-label {
+  color:#4338ca;
+  border-color:rgba(79,70,229,.24);
+}
+
+.foam-resize-handle {
+  position:absolute;
+  z-index:2;
+  width:20px;
+  height:20px;
+  min-width:20px;
+  min-height:20px;
+  margin:0;
+  padding:0;
+  border:2px solid #0f766e;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(31,42,49,.2);
+  pointer-events:auto;
+  touch-action:none;
+}
+.foam-resize-handle::before {
+  content:"";
+  position:absolute;
+  inset:-9px;
+  border-radius:50%;
+}
+.foam-resize-handle.handle-nw { left:0; top:0; transform:translate(-50%,-50%); cursor:nwse-resize; }
+.foam-resize-handle.handle-ne { right:0; top:0; transform:translate(50%,-50%); cursor:nesw-resize; }
+.foam-resize-handle.handle-se { right:0; bottom:0; transform:translate(50%,50%); cursor:nwse-resize; }
+.foam-resize-handle.handle-sw { left:0; bottom:0; transform:translate(-50%,50%); cursor:nesw-resize; }
+.foam-selection-overlay.is-locked .foam-resize-handle {
+  display:none;
+}
+
+/* Existing v0.12 reset disables pseudo-elements on foam pieces; restore the lock badge explicitly. */
+.free-foam-piece.is-locked::after {
+  content:"🔒" !important;
+  display:grid !important;
+}
+
+.english-board-canvas[data-workspace-tool="move"] {
+  cursor:default;
+}
+.english-board-canvas[data-workspace-tool="move"] .free-foam-piece {
+  cursor:grab;
+}
+
+@media(max-width:700px){
+  .foam-resize-handle {
+    width:22px;
+    height:22px;
+    min-width:22px;
+    min-height:22px;
+  }
+  .foam-resize-handle::before {
+    inset:-11px;
+  }
+  .foam-selection-label {
+    top:-27px;
+    font-size:.56rem;
+  }
+}
