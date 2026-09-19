@@ -2,6 +2,10 @@
   'use strict';
 
   const SUPPORTED_TYPES = new Set([
+    'letter-intro',
+    'letter-recognition',
+    'case-match',
+    'beginning-sound',
     'word-build',
     'letter-order',
     'missing-letter',
@@ -9,6 +13,8 @@
     'word-family',
     'sentence-build'
   ]);
+
+  const INFO_TYPES = new Set(['letter-intro']);
 
   const STORAGE_KEY = 'englishLab.curriculumProgress.v1';
 
@@ -433,7 +439,8 @@
       const fallback = {
         solved: [],
         attempts: {},
-        lastLocation: null
+        lastLocation: null,
+        lastIds: null
       };
 
       const stored = safeJsonParse(
@@ -451,12 +458,49 @@
           stored.lastLocation &&
           typeof stored.lastLocation === 'object'
             ? stored.lastLocation
+            : null,
+        lastIds:
+          stored.lastIds &&
+          typeof stored.lastIds === 'object'
+            ? stored.lastIds
             : null
       };
     }
 
+    locationIds(location = this.location) {
+      const level = this.data.levels[location.level];
+      const unit = level?.units?.[location.unit];
+      const lesson = unit?.lessons?.[location.lesson];
+      const activity = lesson?.activities?.[location.activity];
+      const exercise = activity?.exercises?.[location.exercise];
+      if (!level || !unit || !lesson || !activity || !exercise) return null;
+      return {
+        levelId: level.id,
+        unitId: unit.id,
+        lessonId: lesson.id,
+        activityId: activity.id,
+        exerciseId: exercise.id
+      };
+    }
+
+    locationFromIds(ids) {
+      if (!ids) return null;
+      const level = this.data.levels.findIndex(item => item.id === ids.levelId);
+      if (level < 0) return null;
+      const unit = this.data.levels[level].units.findIndex(item => item.id === ids.unitId);
+      if (unit < 0) return null;
+      const lesson = this.data.levels[level].units[unit].lessons.findIndex(item => item.id === ids.lessonId);
+      if (lesson < 0) return null;
+      const activity = this.data.levels[level].units[unit].lessons[lesson].activities.findIndex(item => item.id === ids.activityId);
+      if (activity < 0) return null;
+      const exercise = this.data.levels[level].units[unit].lessons[lesson].activities[activity].exercises.findIndex(item => item.id === ids.exerciseId);
+      if (exercise < 0) return null;
+      return { level, unit, lesson, activity, exercise };
+    }
+
     saveProgress() {
       this.progress.lastLocation = { ...this.location };
+      this.progress.lastIds = this.locationIds();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.progress));
     }
 
@@ -525,16 +569,35 @@
     }
 
     restoreLocation() {
+      const byIds = this.locationFromIds(this.progress.lastIds);
+      if (byIds && this.locationExists(byIds)) {
+        const lessonRef = this.lessonRefFromLocation(byIds);
+        if (lessonRef && this.isLessonUnlockedById(lessonRef.lesson.id)) {
+          this.location = byIds;
+          return;
+        }
+      }
+
       const saved = this.progress.lastLocation;
       if (!saved) return;
 
-      const candidate = {
+      let candidate = {
         level: Number(saved.level) || 0,
         unit: Number(saved.unit) || 0,
         lesson: Number(saved.lesson) || 0,
         activity: Number(saved.activity) || 0,
         exercise: Number(saved.exercise) || 0
       };
+
+      // v1 progress stored only numeric indexes when the legacy Foundations
+      // level was the first/only level. Remap that location after inserting
+      // Alphabet Foundations ahead of it.
+      if (!this.progress.lastIds && Number(saved.level) === 0) {
+        const legacyLevel = this.data.levels.findIndex(
+          level => level.id === 'level-1-foundations'
+        );
+        if (legacyLevel > 0) candidate = { ...candidate, level: legacyLevel };
+      }
 
       if (this.locationExists(candidate)) {
         const lessonRef = this.lessonRefFromLocation(candidate);
@@ -639,8 +702,26 @@
     isLessonUnlockedById(lessonId) {
       const refs = this.allLessonRefs();
       const index = refs.findIndex(ref => ref.lesson.id === lessonId);
+      if (index < 0) return false;
 
-      if (index <= 0) return index === 0;
+      const lesson = refs[index].lesson;
+      const progress = this.lessonProgress(lesson);
+
+      // Never relock work a learner already started before a curriculum update.
+      if (progress.completed > 0) return true;
+
+      const prerequisites = Array.isArray(lesson.prerequisites)
+        ? lesson.prerequisites.filter(Boolean)
+        : [];
+
+      if (prerequisites.length) {
+        return prerequisites.every(id => {
+          const required = refs.find(ref => ref.lesson.id === id)?.lesson;
+          return required ? this.isLessonComplete(required) : false;
+        });
+      }
+
+      if (index === 0) return true;
       return this.isLessonComplete(refs[index - 1].lesson);
     }
 
@@ -1008,8 +1089,8 @@
 
             <div class="engine-actions">
               <button id="enginePrevBtn" class="secondary-btn">Previous</button>
-              <button id="engineResetBtn" class="secondary-btn">Reset</button>
-              <button id="engineCheckBtn" class="primary-btn">Check</button>
+              <button id="engineResetBtn" class="secondary-btn" ${INFO_TYPES.has(exercise.type) ? 'hidden' : ''}>Reset</button>
+              <button id="engineCheckBtn" class="primary-btn">${INFO_TYPES.has(exercise.type) ? 'I’m ready ✓' : 'Check'}</button>
               <button id="engineNextBtn" class="secondary-btn">Next</button>
             </div>
           </article>
@@ -1111,6 +1192,39 @@
       });
     }
 
+    renderLetterIntro(exercise) {
+      const host = this.root.querySelector('#engineInteraction');
+      const upper = String(exercise.uppercase || '').slice(0, 4);
+      const lower = String(exercise.lowercase || '').slice(0, 4);
+      const letterName = String(exercise.letterName || upper);
+      const sound = String(exercise.sound || '');
+      const keyword = String(exercise.keyword || '');
+      const emoji = String(exercise.emoji || '');
+
+      host.innerHTML = `
+        <div class="alphabet-intro-card">
+          <div class="alphabet-letter-pair" aria-label="Uppercase ${upper} and lowercase ${lower}">
+            <span class="alphabet-upper">${upper}</span>
+            <span class="alphabet-lower">${lower}</span>
+          </div>
+          <div class="alphabet-intro-facts">
+            <span><small>Letter name</small><strong>${letterName}</strong></span>
+            ${sound ? `<span><small>Sound</small><strong>${sound}</strong></span>` : ''}
+            ${keyword ? `<span><small>Example</small><strong>${emoji ? emoji + ' ' : ''}${keyword}</strong></span>` : ''}
+          </div>
+          <div class="alphabet-intro-audio">
+            <button type="button" class="secondary-btn" data-letter-speak="name">🔤 Hear ${letterName}</button>
+            ${keyword ? `<button type="button" class="secondary-btn" data-letter-speak="example">🔊 Hear ${keyword}</button>` : ''}
+          </div>
+        </div>
+      `;
+
+      host.querySelector('[data-letter-speak="name"]')
+        ?.addEventListener('click', () => speak(exercise.nameAudio || letterName));
+      host.querySelector('[data-letter-speak="example"]')
+        ?.addEventListener('click', () => speak(exercise.soundAudio || keyword));
+    }
+
     renderChoices(exercise) {
       const host = this.root.querySelector('#engineInteraction');
       host.innerHTML = '<div class="engine-choice-grid"></div>';
@@ -1159,6 +1273,21 @@
     check() {
       const exercise = this.currentExercise();
       this.incrementAttempt(exercise.id);
+
+      if (INFO_TYPES.has(exercise.type)) {
+        const firstSolve = this.markSolved(exercise);
+        const lessonComplete = this.isLessonComplete(this.currentLesson());
+        this.setFeedback(
+          lessonComplete
+            ? 'Great! This lesson step is complete.'
+            : firstSolve
+              ? 'Great! You are ready for the next step.'
+              : 'Completed previously. You can review it again.',
+          'good'
+        );
+        this.refreshProgressVisuals();
+        return;
+      }
 
       let correct = false;
       let incomplete = false;
@@ -1266,6 +1395,8 @@
       const exercise = this.currentExercise();
       this.setFeedback('', '');
 
+      if (INFO_TYPES.has(exercise.type)) return;
+
       if (Array.isArray(exercise.answer)) {
         this.manipulator?.reset();
       } else {
@@ -1289,7 +1420,9 @@
       this.renderShell(exercise);
       this.renderPrompt(exercise);
 
-      if (Array.isArray(exercise.answer)) {
+      if (INFO_TYPES.has(exercise.type)) {
+        this.renderLetterIntro(exercise);
+      } else if (Array.isArray(exercise.answer)) {
         this.renderManipulator(exercise);
       } else {
         this.renderChoices(exercise);
