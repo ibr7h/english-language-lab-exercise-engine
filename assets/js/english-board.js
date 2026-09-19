@@ -2545,6 +2545,46 @@ class EnglishMagneticBoard {
     }
   }
 
+  placeSelectedBuildPieceInSlot(index){
+    const ex=this.normalizeBuildExercise();
+    if(!ex||!Number.isInteger(index)||index<0||index>=ex.word.length)return false;
+
+    const piece=this.state.find(this.activeItemId);
+    if(!piece||piece.exerciseId!==ex.id){
+      this.toast('Select one of the scattered build letters first');
+      return false;
+    }
+    if(piece.locked){
+      this.toast('Object locked');
+      return false;
+    }
+
+    const geometry=this.slotGeometry();
+    const target=geometry.find(slot=>slot.index===index);
+    if(!target)return false;
+
+    this.checkpoint('PLACE_BUILD_PIECE');
+    ex.slots=ex.slots.map(id=>id===piece.id?null:id);
+    piece.exerciseSlot=null;
+
+    const displacedId=ex.slots[index];
+    if(displacedId&&displacedId!==piece.id){
+      this.displaceBuildPiece(this.state.find(displacedId),target);
+    }
+
+    ex.slots[index]=piece.id;
+    piece.exerciseSlot=index;
+    piece.x=target.left+(target.width-70)/2;
+    piece.y=target.top+(target.height-76)/2;
+    ex.feedback=null;
+    ex.hintIndex=null;
+    ex.completed=false;
+    this.keyboardGrabbed=false;
+    this.renderBoard();
+    this.updateBuildProgressStatus(true);
+    return true;
+  }
+
   renderAssemblySlots(){
     const zone=$('#englishAssemblyZone'),slots=$('#englishAssemblySlots'),target=$('#englishTargetBadge');
     if(!zone||!slots)return;
@@ -2564,6 +2604,8 @@ class EnglishMagneticBoard {
       const el=document.createElement('div');
       el.className='english-answer-slot';
       el.dataset.slot=String(index);
+      el.tabIndex=0;
+      el.setAttribute('role','button');
 
       const pieceId=ex.slots[index];
       const item=pieceId?this.state.find(pieceId):null;
@@ -2586,8 +2628,14 @@ class EnglishMagneticBoard {
 
       const expected=this.expectedBuildGlyph(index);
       el.setAttribute('aria-label',item
-        ?`Position ${index+1}, filled`
-        :`Position ${index+1}, expected ${expected}`);
+        ?`Position ${index+1}, filled. Select a letter then activate this slot to replace it.`
+        :`Position ${index+1}, expected ${expected}. Select a letter then activate this slot.`);
+      el.addEventListener('click',()=>this.placeSelectedBuildPieceInSlot(index));
+      el.addEventListener('keydown',event=>{
+        if(!['Enter',' '].includes(event.key))return;
+        event.preventDefault();
+        this.placeSelectedBuildPieceInSlot(index);
+      });
       slots.appendChild(el);
     });
   }
@@ -2719,6 +2767,8 @@ class EnglishMagneticBoard {
     add('Build free movement',true,'Move remains free; snap behavior is configurable');
     add('Build 2.0 snap modes',Boolean($('#englishBuildSnapMode')&&$('#englishCaseMatters')),'Off / Inside / Strong + Case Matters');
     add('Build slot feedback',typeof this.buildSlotEvaluation==='function'&&typeof this.previewBuildDrop==='function','Live target + correct/wrong/case feedback');
+    add('Tap / keyboard slot placement',typeof this.placeSelectedBuildPieceInSlot==='function','Selected build letters can be placed without precision dragging');
+    add('Keyboard / webOS activation',this.platform.actionForKey('Enter')?.type==='activate','OK selects/releases foam objects; arrows move selected objects');
     add('Exercise-aware Undo / Redo',typeof this.historySnapshot==='function','Foam + Build slots + Segment state');
     add('Writing guide layer',Boolean($('#englishWritingGuides')),'Blank / baseline / 3-line / 4-line');
 
